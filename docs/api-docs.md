@@ -59,25 +59,24 @@ Returns detailed info for a single region.
 ### `GET /risk/{region_id}`
 Returns current and recent risk score history for a region.
 
+⚠️ **`model_version: "rule-based-v1"` — not ML yet.** Real weather + real nearby-fire-detection inputs, run through a simplified fire-danger formula (humidity/wind/temp/fire-count weighted). Honest interim until enough historical data accumulates to train a real ML model (see roadmap in CONTEXT.md). `history` will be empty until the hourly ingestion job has run more than once for a region.
+
 **Query params:**
 | Param | Type | Default | Description |
 |---|---|---|---|
 | days | int | 7 | Number of past days of history to return |
 
-**Response 200:**
+**Response 200 (current production shape):**
 ```json
 {
   "region_id": "uk-nainital",
   "current": {
-    "risk_level": "High",
-    "risk_score": 0.78,
-    "timestamp": "2026-08-30T14:00:00Z",
-    "model_version": "v1.2"
+    "risk_level": "Low",
+    "risk_score": 0.03,
+    "timestamp": "2026-08-31T20:44:12Z",
+    "model_version": "rule-based-v1"
   },
-  "history": [
-    { "timestamp": "2026-08-29T14:00:00Z", "risk_level": "Moderate", "risk_score": 0.55 },
-    { "timestamp": "2026-08-28T14:00:00Z", "risk_level": "Moderate", "risk_score": 0.51 }
-  ]
+  "history": []
 }
 ```
 
@@ -88,22 +87,22 @@ Returns current and recent risk score history for a region.
 ## 3. Air Quality
 
 ### `GET /aqi/{region_id}`
-Returns current AQI and short-term forecast for a region, using India's National AQI standard (CPCB).
+Returns current AQI for a region, using India's National AQI standard (CPCB). Forecast is not yet implemented — see note below.
 
-**Response 200:**
+**Response 200 (current production shape):**
 ```json
 {
   "region_id": "dl-delhi",
-  "current_aqi": 312,
-  "category": "Very Poor",
+  "current_aqi": 56,
+  "category": "Satisfactory",
   "dominant_pollutant": "PM2.5",
-  "timestamp": "2026-08-30T14:00:00Z",
-  "forecast": [
-    { "timestamp": "2026-08-30T18:00:00Z", "predicted_aqi": 330, "lower_bound": 300, "upper_bound": 360 },
-    { "timestamp": "2026-08-31T00:00:00Z", "predicted_aqi": 290, "lower_bound": 260, "upper_bound": 320 }
-  ]
+  "timestamp": "2026-08-31T11:23:44Z",
+  "forecast": [],
+  "forecast_note": "Forecasting model not yet built — needs several weeks of accumulated historical data first. current_aqi above is real (live CPCB data)."
 }
 ```
+
+⚠️ **`forecast` is intentionally empty for now.** `current_aqi` is real, live CPCB data — but the forecast array will only be populated once a real forecasting model exists (needs historical data the ingestion pipeline hasn't accumulated yet, started Aug 31, 2026). Do not hardcode a fake forecast on the frontend to fill this gap — show "forecast coming soon" instead.
 
 **AQI categories (India National AQI — CPCB):** `Good (0–50)` | `Satisfactory (51–100)` | `Moderate (101–200)` | `Poor (201–300)` | `Very Poor (301–400)` | `Severe (401–500)`
 

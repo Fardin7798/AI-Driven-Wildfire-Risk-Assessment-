@@ -169,6 +169,70 @@ def fetch_aqi(conn):
     return inserted
 
 
+# ---------------------------------------------------------------------------
+# 4. Fire risk score — rule-based v1 (real inputs, not ML yet)
+#
+# Full ML training needs weeks of historical data we don't have yet.
+# This is an honest interim: a simplified fire-danger formula driven by
+# REAL weather + REAL nearby fire detections, not a hardcoded number.
+# ---------------------------------------------------------------------------
+
+def compute_risk(conn):
+    regions = get_regions(conn)
+    updated = 0
+    with conn.cursor() as cur:
+        for r in regions:
+            cur.execute(
+                """SELECT humidity, wind_speed, temp FROM raw_weather
+                   WHERE region_id = %s ORDER BY timestamp DESC LIMIT 1""",
+                (r["id"],),
+            )
+            w = cur.fetchone()
+            if not w:
+                continue
+
+            cur.execute(
+                """SELECT count(*) AS n FROM raw_fire_detections
+                   WHERE timestamp > now() - interval '24 hours'
+                     AND lat BETWEEN %s - 1 AND %s + 1
+                     AND lon BETWEEN %s - 1 AND %s + 1""",
+                (r["lat"], r["lat"], r["lon"], r["lon"]),
+            )
+            fire_count = cur.fetchone()["n"]
+
+            humidity = float(w["humidity"] or 50)
+            wind = float(w["wind_speed"] or 0)
+            temp = float(w["temp"] or 25)
+
+            score = (1 - humidity / 100) * 0.45
+            score += min(wind / 40, 1) * 0.25
+            score += min(fire_count / 5, 1) * 0.20
+            score += (0.10 if temp > 35 else 0.0)
+            score = round(min(max(score, 0), 1), 2)
+
+            if score >= 0.75:
+                level = "Extreme"
+            elif score >= 0.5:
+                level = "High"
+            elif score >= 0.25:
+                level = "Moderate"
+            else:
+                level = "Low"
+
+            cur.execute(
+                """INSERT INTO risk_scores (region_id, timestamp, risk_level, risk_score, model_version)
+                   VALUES (%s, now(), %s, %s, %s)""",
+                (r["id"], level, score, "rule-based-v1"),
+            )
+            cur.execute(
+                "UPDATE regions SET current_risk_level = %s WHERE id = %s",
+                (level, r["id"]),
+            )
+            updated += 1
+    conn.commit()
+    return updated
+
+
 def fetch_all():
     conn = get_conn()
     try:
@@ -176,6 +240,7 @@ def fetch_all():
             "weather_rows": fetch_weather(conn),
             "fire_rows": fetch_fire_detections(conn),
             "aqi_rows": fetch_aqi(conn),
+            "risk_regions_updated": compute_risk(conn),
         }
     finally:
         conn.close()

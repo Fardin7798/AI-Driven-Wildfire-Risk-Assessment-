@@ -160,19 +160,46 @@ def get_region(region_id: str):
 
 @app.get("/risk/{region_id}")
 def get_risk(region_id: str, days: int = Query(7, ge=1, le=90)):
-    region = get_region_or_404(region_id)
+    get_region_or_404(region_id)
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT risk_level, risk_score, timestamp, model_version FROM risk_scores
+                   WHERE region_id = %s ORDER BY timestamp DESC LIMIT 1""",
+                (region_id,),
+            )
+            current = cur.fetchone()
+            cur.execute(
+                """SELECT timestamp, risk_level, risk_score FROM risk_scores
+                   WHERE region_id = %s AND timestamp > now() - (%s || ' days')::interval
+                   ORDER BY timestamp DESC OFFSET 1""",
+                (region_id, days),
+            )
+            history = cur.fetchall()
+    finally:
+        conn.close()
+
+    if not current:
+        # no risk score computed yet for this region — ingestion hasn't run
+        raise HTTPException(status_code=404, detail="No risk data yet for this region — run ingestion first")
+
     return {
         "region_id": region_id,
         "current": {
-            "risk_level": region["current_risk_level"],
-            "risk_score": 0.78,
-            "timestamp": region["last_updated"],
-            "model_version": "v1.2",
+            "risk_level": current["risk_level"],
+            "risk_score": float(current["risk_score"]),
+            "timestamp": current["timestamp"].isoformat().replace("+00:00", "Z"),
+            "model_version": current["model_version"],
         },
         "history": [
-            {"timestamp": "2026-08-29T14:00:00Z", "risk_level": "Moderate", "risk_score": 0.55},
-            {"timestamp": "2026-08-28T14:00:00Z", "risk_level": "Moderate", "risk_score": 0.51},
-        ][:days],
+            {
+                "timestamp": h["timestamp"].isoformat().replace("+00:00", "Z"),
+                "risk_level": h["risk_level"],
+                "risk_score": float(h["risk_score"]),
+            }
+            for h in history
+        ],
     }
 
 
@@ -205,10 +232,8 @@ def get_aqi(region_id: str):
         "category": aqi_category(aqi),
         "dominant_pollutant": "PM2.5",
         "timestamp": region["last_updated"],
-        "forecast": [
-            {"timestamp": "2026-08-30T18:00:00Z", "predicted_aqi": aqi + 18, "lower_bound": aqi - 12, "upper_bound": aqi + 48},
-            {"timestamp": "2026-08-31T00:00:00Z", "predicted_aqi": aqi - 22, "lower_bound": aqi - 52, "upper_bound": aqi + 8},
-        ],
+        "forecast": [],
+        "forecast_note": "Forecasting model not yet built — needs several weeks of accumulated historical data first. current_aqi above is real (live CPCB data).",
     }
 
 
@@ -261,15 +286,44 @@ def get_trends(
     metric: Literal["risk", "aqi", "both"] = "both",
 ):
     get_region_or_404(region_id)
-    data = [
-        {"date": "2026-08-01", "risk_score": 0.35, "aqi": 45},
-        {"date": "2026-08-02", "risk_score": 0.40, "aqi": 52},
-    ]
-    if metric == "risk":
-        data = [{"date": d["date"], "risk_score": d["risk_score"]} for d in data]
-    elif metric == "aqi":
-        data = [{"date": d["date"], "aqi": d["aqi"]} for d in data]
-    return {"region_id": region_id, "data": data[:days]}
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT date_trunc('day', timestamp)::date AS date, avg(risk_score) AS risk_score
+                   FROM risk_scores WHERE region_id = %s
+                     AND timestamp > now() - (%s || ' days')::interval
+                   GROUP BY 1 ORDER BY 1""",
+                (region_id, days),
+            )
+            risk_rows = {r["date"].isoformat(): float(r["risk_score"]) for r in cur.fetchall()}
+
+            cur.execute(
+                """SELECT date_trunc('day', timestamp)::date AS date, avg(pollutant_avg) AS aqi
+                   FROM raw_aqi WHERE region_id = %s AND pollutant_id = 'PM2.5'
+                     AND timestamp > now() - (%s || ' days')::interval
+                   GROUP BY 1 ORDER BY 1""",
+                (region_id, days),
+            )
+            aqi_rows = {r["date"].isoformat(): round(float(r["aqi"]), 1) for r in cur.fetchall()}
+    finally:
+        conn.close()
+
+    all_dates = sorted(set(risk_rows) | set(aqi_rows))
+    data = []
+    for date in all_dates:
+        point = {"date": date}
+        if metric in ("risk", "both") and date in risk_rows:
+            point["risk_score"] = risk_rows[date]
+        if metric in ("aqi", "both") and date in aqi_rows:
+            point["aqi"] = aqi_rows[date]
+        data.append(point)
+
+    return {
+        "region_id": region_id,
+        "data": data,
+        "note": "Real data, aggregated daily from actual ingestion — history is only as deep as the pipeline has been running (started Aug 31, 2026).",
+    }
 
 
 # ---------------------------------------------------------------------------
