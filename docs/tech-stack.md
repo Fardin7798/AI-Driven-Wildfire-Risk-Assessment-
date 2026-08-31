@@ -56,7 +56,7 @@ This document lists the complete technology stack for the project, organized by 
 
 | Component | Technology | Why |
 |---|---|---|
-| **Database hosting** | Supabase (Postgres + PostGIS free tier) | Free-tier hosted Postgres with a one-click PostGIS toggle — no local DB setup needed, accessible from anywhere for demos. 500 MB free, sufficient for a student project. Not yet provisioned. |
+| **Database hosting** | ✅ **Supabase (Postgres + PostGIS) — live** | Project `wildfire-aqi-db`, Mumbai region (ap-south-1). PostGIS enabled, core schema + seed regions loaded. ⚠️ **Must connect via the Supavisor pooler** (`aws-0-ap-south-1.pooler.supabase.com:6543`), not the direct `db.*.supabase.co:5432` host — the direct host is IPv6-only on the free tier and Render has no IPv6 egress, which caused a live `Network is unreachable` failure before this was caught. |
 | **Backend hosting** | ✅ **Render (free tier) — live** | Deployed via the Render MCP connector, auto-deploys on every push to `main`. Live at https://wildfire-aqi-backend.onrender.com (Singapore region). ⚠️ Free tier spins down after 15 min idle — first request after idle takes ~1 min to wake up. |
 | **Local dev (optional)** | Docker + Docker Compose | Still useful for fully offline local development if needed, but Render + Supabase is the primary path now |
 | **Version Control** | Git + GitHub | Standard, already set up for this project |
