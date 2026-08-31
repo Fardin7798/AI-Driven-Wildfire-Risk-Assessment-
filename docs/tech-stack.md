@@ -1,20 +1,20 @@
-# Tech Stack — Wildfire Risk & AQI Monitoring Platform (BC)
+# Tech Stack — Wildfire Risk & AQI Monitoring Platform (India)
 
 ## Overview
 This document lists the complete technology stack for the project, organized by layer, along with the reasoning behind each choice. All tools are free/open-source; no paid services or physical hardware are required for development or demo.
 
 ---
 
-## 1. Data Sources (External APIs)
+## 1. Data Sources (External APIs — India-specific)
 
 | Source | Data Provided | Cost | Notes |
 |---|---|---|---|
-| **NASA FIRMS** | Active fire detections (VIIRS/MODIS) | Free (API key required) | Near real-time thermal anomaly data |
-| **Open-Meteo** | Weather (temp, humidity, wind, rainfall) | Free, no key needed | Primary weather data source |
-| **NOAA HRRR / GFS** | High-resolution weather forecasts | Free | Optional, for more precise modeling |
-| **BC Wildfire Service** | Historical fire records, current situation reports | Free, public data | Region-specific ground truth |
-| **PurpleAir** | Real-time AQI/PM2.5 readings | Free tier (API key required) | Community sensor network |
-| **Copernicus / Sentinel-2** | NDVI vegetation dryness index | Free | Optional — improves fire risk accuracy |
+| **NASA FIRMS** | Active fire detections (VIIRS/MODIS) | Free (API key required) | ✅ **Verified working (Aug 31, 2026)** — live-tested with a real MAP_KEY, returned 118 real fire detections across India (bbox 68,8,97,31, VIIRS_SNPP_NRT). **Primary fire data source** — see FSI note below for why FIRMS replaces FSI as primary. |
+| **Forest Survey of India (FSI) Fire Alert System** | Near real-time forest fire hotspots (MODIS/VIIRS) | Free, public (site only) | ⚠️ **Verified: no public REST API.** fsiforestfire.gov.in is live and updates every 15 min, but API/WMS access is restricted to State Forest Departments. General public gets SMS alerts or the map UI only — not usable for automated ingestion. Demoted to reference/cross-check only; NASA FIRMS (same underlying MODIS/VIIRS data) is the primary fire source instead. |
+| **IMD (via data.gov.in) / Open-Meteo** | Weather (temp, humidity, wind, rainfall) | Free | ✅ **Verified working** — Open-Meteo live-tested with real Nainital data (no key needed, no signup). Using as primary weather source; IMD dataset via data.gov.in not separately verified. |
+| **CPCB (via data.gov.in API)** | Real-time National AQI from monitoring stations | Free (API key required — sign up at data.gov.in) | ✅ **Verified working (Aug 31, 2026)** — live-tested with a real personal API key, returned real-time data (3,416+ records nationwide, confirmed India + Uttarakhand + Delhi state filters working). Primary AQI data source. |
+| **SAFAR (IITM Pune)** | AQI forecasts for Delhi-NCR and select metro cities | Free, public | ⚠️ **Verified: no public API** — safar.tropmet.res.in is a static-image website only (was unreachable during testing). Not usable for automated ingestion; CPCB + Open-Meteo cover the MVP without it. |
+| **Bhuvan (ISRO) / Copernicus-Sentinel** | NDVI vegetation dryness index | Free | Optional — improves fire risk accuracy |
 
 ---
 
@@ -75,8 +75,9 @@ This document lists the complete technology stack for the project, organized by 
 
 ## 7. Why This Stack Overall
 
-- **No hardware required** — every data source is a public API; nothing needs to be self-hosted or physically built.
-- **No paid services required** — every tool listed has a free tier sufficient for a student/academic-scale project.
+- **No hardware required** — every data source is a public Indian government API; nothing needs to be self-hosted or physically built.
+- **No paid services required** — every tool listed has a free tier sufficient for a student/academic-scale project (data.gov.in API key is free).
 - **Consistent language** — Python across backend + ML keeps the codebase simpler to maintain and reason about.
 - **Open-source mapping** — avoids Google Maps billing/API key friction entirely.
 - **Realistic for the project timeline** (~2–3 months) — every tool here is mainstream, well-documented, and has a low learning curve compared to more specialized alternatives.
+- **India-specific caveat** — FSI fire data API access needs early verification (may need scraping); this should be the first technical spike in the project.

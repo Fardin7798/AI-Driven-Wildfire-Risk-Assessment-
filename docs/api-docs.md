@@ -1,4 +1,4 @@
-# API Documentation — Wildfire Risk & AQI Monitoring Platform (BC)
+# API Documentation — Wildfire Risk & AQI Monitoring Platform (India)
 
 **Base URL (local dev):** `http://localhost:8000`
 **Format:** JSON
@@ -9,15 +9,16 @@
 ## 1. Regions
 
 ### `GET /regions`
-Returns a list of all monitored regions with their current status summary.
+Returns a list of all monitored regions (districts/cities) with their current status summary.
 
 **Response 200:**
 ```json
 [
   {
-    "region_id": "bc-kelowna",
-    "name": "Kelowna",
-    "centroid": { "lat": 49.8880, "lon": -119.4960 },
+    "region_id": "uk-nainital",
+    "name": "Nainital",
+    "state": "Uttarakhand",
+    "centroid": { "lat": 29.3803, "lon": 79.4636 },
     "current_risk_level": "High",
     "current_aqi": 112,
     "last_updated": "2026-08-30T14:00:00Z"
@@ -33,13 +34,14 @@ Returns detailed info for a single region.
 **Path params:**
 | Param | Type | Description |
 |---|---|---|
-| region_id | string | Unique region identifier (e.g., `bc-kelowna`) |
+| region_id | string | Unique region identifier (e.g., `uk-nainital`, `dl-delhi`) |
 
 **Response 200:**
 ```json
 {
-  "region_id": "bc-kelowna",
-  "name": "Kelowna",
+  "region_id": "uk-nainital",
+  "name": "Nainital",
+  "state": "Uttarakhand",
   "geometry": "GeoJSON Polygon",
   "current_risk_level": "High",
   "current_aqi": 112,
@@ -51,7 +53,7 @@ Returns detailed info for a single region.
 
 ---
 
-## 2. Wildfire Risk
+## 2. Forest Fire Risk
 
 ### `GET /risk/{region_id}`
 Returns current and recent risk score history for a region.
@@ -64,7 +66,7 @@ Returns current and recent risk score history for a region.
 **Response 200:**
 ```json
 {
-  "region_id": "bc-kelowna",
+  "region_id": "uk-nainital",
   "current": {
     "risk_level": "High",
     "risk_score": 0.78,
@@ -85,46 +87,47 @@ Returns current and recent risk score history for a region.
 ## 3. Air Quality
 
 ### `GET /aqi/{region_id}`
-Returns current AQI and short-term forecast for a region.
+Returns current AQI and short-term forecast for a region, using India's National AQI standard (CPCB).
 
 **Response 200:**
 ```json
 {
-  "region_id": "bc-kelowna",
-  "current_aqi": 112,
-  "category": "Unhealthy for Sensitive Groups",
+  "region_id": "dl-delhi",
+  "current_aqi": 312,
+  "category": "Very Poor",
+  "dominant_pollutant": "PM2.5",
   "timestamp": "2026-08-30T14:00:00Z",
   "forecast": [
-    { "timestamp": "2026-08-30T18:00:00Z", "predicted_aqi": 120, "lower_bound": 100, "upper_bound": 140 },
-    { "timestamp": "2026-08-31T00:00:00Z", "predicted_aqi": 95, "lower_bound": 80, "upper_bound": 110 }
+    { "timestamp": "2026-08-30T18:00:00Z", "predicted_aqi": 330, "lower_bound": 300, "upper_bound": 360 },
+    { "timestamp": "2026-08-31T00:00:00Z", "predicted_aqi": 290, "lower_bound": 260, "upper_bound": 320 }
   ]
 }
 ```
 
-**AQI categories:** `Good` | `Moderate` | `Unhealthy for Sensitive Groups` | `Unhealthy` | `Very Unhealthy` | `Hazardous`
+**AQI categories (India National AQI — CPCB):** `Good (0–50)` | `Satisfactory (51–100)` | `Moderate (101–200)` | `Poor (201–300)` | `Very Poor (301–400)` | `Severe (401–500)`
 
 ---
 
 ## 4. Alerts
 
 ### `GET /alerts`
-Returns all currently active alerts across regions (High/Extreme fire risk or Unhealthy+ AQI).
+Returns all currently active alerts across regions (High/Extreme fire risk or Poor+/Severe AQI).
 
 **Response 200:**
 ```json
 [
   {
-    "region_id": "bc-kelowna",
-    "alert_type": "wildfire_risk",
+    "region_id": "uk-nainital",
+    "alert_type": "forest_fire_risk",
     "severity": "High",
-    "message": "High wildfire risk due to low humidity and high wind speed.",
+    "message": "High forest fire risk due to low humidity and high wind speed.",
     "triggered_at": "2026-08-30T14:00:00Z"
   },
   {
-    "region_id": "bc-kamloops",
+    "region_id": "dl-delhi",
     "alert_type": "air_quality",
-    "severity": "Unhealthy",
-    "message": "AQI has reached Unhealthy levels due to nearby smoke.",
+    "severity": "Very Poor",
+    "message": "AQI has reached Very Poor levels, likely linked to stubble burning.",
     "triggered_at": "2026-08-30T13:00:00Z"
   }
 ]
@@ -146,7 +149,7 @@ Returns historical time-series data for charting (risk score + AQI combined).
 **Response 200:**
 ```json
 {
-  "region_id": "bc-kelowna",
+  "region_id": "uk-nainital",
   "data": [
     { "date": "2026-08-01", "risk_score": 0.35, "aqi": 45 },
     { "date": "2026-08-02", "risk_score": 0.40, "aqi": 52 }
@@ -164,16 +167,16 @@ Returns safety tips and evacuation resource links relevant to the region's curre
 **Response 200:**
 ```json
 {
-  "region_id": "bc-kelowna",
+  "region_id": "uk-nainital",
   "current_risk_level": "High",
   "tips": [
     "Keep an emergency go-bag ready.",
-    "Monitor local news and official BC Wildfire Service updates.",
-    "Avoid outdoor burning and report smoke sightings."
+    "Monitor official Forest Survey of India (FSI) and State Forest Department updates.",
+    "Avoid outdoor burning and report smoke/fire sightings to the nearest forest office."
   ],
   "evacuation_resources": [
-    { "title": "BC Wildfire Service — Current Situation", "url": "https://wildfiresituation.nrs.gov.bc.ca/" },
-    { "title": "Emergency Management BC", "url": "https://www.emergencyinfobc.gov.bc.ca/" }
+    { "title": "Forest Survey of India — Fire Alerts", "url": "https://fsiforestfire.gov.in/" },
+    { "title": "National Disaster Management Authority (NDMA)", "url": "https://ndma.gov.in/" }
   ]
 }
 ```
@@ -199,6 +202,7 @@ Returns safety tips and evacuation resource links relevant to the region's curre
 ---
 
 ## 8. Notes
-- All timestamps are in UTC (ISO 8601 format).
-- Data freshness depends on ingestion schedule (weather: ~15–60 min, fire: few hours, AQI: hourly).
+- All timestamps are in UTC (ISO 8601 format) internally; display in IST (UTC+5:30) on the frontend.
+- Data freshness depends on ingestion schedule (weather: ~15–60 min, fire: every few hours per FSI satellite pass, AQI: hourly).
+- CPCB AQI data requires a free data.gov.in API key — stored server-side, never exposed to the frontend.
 - No authentication required for MVP; add API keys/rate-limiting before any public deployment.

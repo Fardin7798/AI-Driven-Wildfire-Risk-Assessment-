@@ -141,11 +141,11 @@ Run these once the backend is up, to confirm each endpoint responds correctly.
 
 ```bash
 curl http://localhost:8000/regions
-curl http://localhost:8000/risk/bc-kelowna
-curl http://localhost:8000/aqi/bc-kelowna
+curl http://localhost:8000/risk/uk-nainital
+curl http://localhost:8000/aqi/dl-delhi
 curl http://localhost:8000/alerts
-curl http://localhost:8000/trends/bc-kelowna
-curl http://localhost:8000/preparedness/bc-kelowna
+curl http://localhost:8000/trends/uk-nainital
+curl http://localhost:8000/preparedness/uk-nainital
 ```
 
 **Expected result:** Each returns a `200 OK` with JSON — not a `500` or connection refused.
@@ -154,15 +154,23 @@ curl http://localhost:8000/preparedness/bc-kelowna
 
 ## 7. Data Ingestion Test (external APIs reachable)
 
-```bash
-# Test Open-Meteo (no key needed)
-curl "https://api.open-meteo.com/v1/forecast?latitude=49.88&longitude=-119.49&current_weather=true"
+> ✅ **Live-verified working (Aug 31, 2026)** — all three APIs confirmed returning real India data using personal keys stored in `.env` (see `.env.example` for the required variable names). Keys are intentionally not pasted here — load them from `.env` instead of hardcoding.
 
-# Test NASA FIRMS (replace YOUR_KEY)
-curl "https://firms.modaps.eosdis.nasa.gov/api/area/csv/YOUR_KEY/VIIRS_SNPP_NRT/world/1"
+```bash
+# Load keys from .env first
+export $(grep -v '^#' .env | xargs)
+
+# Test Open-Meteo (no key needed) — Nainital, Uttarakhand
+curl "https://api.open-meteo.com/v1/forecast?latitude=29.3803&longitude=79.4636&current_weather=true"
+
+# Test NASA FIRMS — bounding box around Uttarakhand
+curl "https://firms.modaps.eosdis.nasa.gov/api/area/csv/${NASA_FIRMS_MAP_KEY}/VIIRS_SNPP_NRT/77,28,81,31/1"
+
+# Test CPCB via data.gov.in
+curl "https://api.data.gov.in/resource/3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69?api-key=${CPCB_DATA_GOV_IN_API_KEY}&format=json&limit=5&filters[state]=Delhi"
 ```
 
-**Expected result:** Both return data, not an auth error or timeout.
+**Expected result:** All three return data, not an auth error or timeout. (Confirmed: FIRMS returned 118 real detections nationwide; CPCB returned 3,416+ nationwide records with working state filters.)
 
 ---
 
@@ -193,5 +201,5 @@ docker compose up -d --build && docker compose ps
 | `npm run build` fails | TypeScript type error | Run `npm run typecheck` to see exact error |
 | `docker compose up` fails on postgres | Port 5432 already in use | `docker ps` to find conflicting container, or change port in `docker-compose.yml` |
 | API returns 500 on `/risk/{region_id}` | Region not in DB yet | Check `regions` table has been seeded |
-| FIRMS/PurpleAir requests fail | Missing/invalid API key | Check `.env` file has correct keys |
+| FIRMS/CPCB requests fail | Missing/invalid API key | Check `.env` file has correct keys |
 | PostGIS function not found | Extension not enabled | Run `CREATE EXTENSION postgis;` in the DB |

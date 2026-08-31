@@ -11,10 +11,10 @@
 
 ## Project Overview
 
-- **Name:** AI-Driven Wildfire Risk Assessment, Air Quality Monitoring, and Community Preparedness Platform (BC)
-- **Description:** A web dashboard that predicts wildfire risk, monitors real-time air quality, and gives BC communities preparedness info (evacuation routes, safety tips) — built entirely on free public APIs, no hardware.
-- **Status:** Planning complete — implementation not yet started
-- **Last worked on:** Wrote PRD, architecture, API docs, and tech stack docs. Set up Graphify + Git/GitHub in the project folder.
+- **Name:** AI-Driven Wildfire Risk Assessment, Air Quality Monitoring, and Community Preparedness Platform (India)
+- **Description:** A web dashboard that predicts forest fire risk, monitors real-time air quality, and gives Indian communities preparedness info (evacuation routes, safety tips) — built entirely on free public Indian government APIs, no hardware.
+- **Status:** Planning complete, all 3 core APIs verified live — ready to start implementation
+- **Last worked on:** Live-verified NASA FIRMS, CPCB/data.gov.in, and Open-Meteo with real personal API keys (Aug 31, 2026) — all confirmed returning real India data. Fixed stale Canada/BC references in CONTEXT.md and TEST.md. Next: set up backend project structure + Docker Compose.
 
 ---
 
@@ -25,7 +25,7 @@
 - **Database:** PostgreSQL + PostGIS
 - **ML:** XGBoost (fire risk classification), Prophet (AQI forecasting), SHAP (explainability — stretch goal)
 - **Hosting:** Local/Docker for MVP; Render or Railway free tier if a live demo is needed
-- **Key data APIs:** NASA FIRMS, Open-Meteo, BC Wildfire Service, PurpleAir, Copernicus/Sentinel (optional)
+- **Key data APIs:** Forest Survey of India (FSI) Fire Alert System, NASA FIRMS (cross-check), IMD/Open-Meteo, CPCB (via data.gov.in API), SAFAR (IITM Pune), Bhuvan/Copernicus-Sentinel (optional)
 - **Dev tooling:** Claude Code, Graphify (codebase knowledge graph), Claude Task Master (PRD → tasks)
 
 Full reasoning for each choice: see `docs/tech-stack.md`
@@ -40,7 +40,6 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 │   ├── PRD_Wildfire_AQI_Platform.md
 │   ├── architecture.md
 │   ├── api-docs.md
-│   ├── instructions.md
 │   └── tech-stack.md
 ├── backend/                  # (not yet created) FastAPI app, ingestion, ML models
 ├── frontend/                 # (not yet created) React + Vite dashboard
@@ -54,7 +53,8 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 
 **regions**
 - `id` — unique identifier
-- `name` — region name (e.g. Kelowna)
+- `name` — region name (e.g. Nainital)
+- `state` — Indian state (e.g. Uttarakhand)
 - `geometry` — region polygon (PostGIS)
 - `centroid` — lat/lon center point
 
@@ -129,8 +129,9 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 
 ## Roadmap
 
-1. Set up backend project structure + Docker Compose (Postgres + PostGIS)
-2. Build data ingestion scripts (weather, fire, AQI) — test each API independently
+1. ~~Verify FSI fire data access and get a data.gov.in API key~~ ✅ **Done (Aug 31, 2026)** — FSI has no public API (confirmed), using NASA FIRMS instead. CPCB and FIRMS personal API keys obtained and live-tested successfully.
+2. Set up backend project structure + Docker Compose (Postgres + PostGIS)
+3. Build data ingestion scripts (weather, fire, AQI) — test each API independently
 3. Train and validate the fire-risk ML model on historical data
 4. Build FastAPI endpoints to serve predictions + AQI data
 5. Build the React dashboard, connect to the API
@@ -159,4 +160,4 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 - **Author:** Fardin (Fardin7798)
 - **GitHub:** https://github.com/Fardin7798/AI-Driven-Wildfire-Risk-Assessment-
 - **Live URL:** none yet
-- **Other docs:** `docs/PRD_Wildfire_AQI_Platform.md`, `docs/architecture.md`, `docs/api-docs.md`, `docs/instructions.md`, `docs/tech-stack.md`
+- **Other docs:** `docs/PRD_Wildfire_AQI_Platform.md`, `docs/architecture.md`, `docs/api-docs.md`, `docs/tech-stack.md`
