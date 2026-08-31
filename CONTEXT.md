@@ -13,8 +13,8 @@
 
 - **Name:** AI-Driven Wildfire Risk Assessment, Air Quality Monitoring, and Community Preparedness Platform (India)
 - **Description:** A web dashboard that predicts forest fire risk, monitors real-time air quality, and gives Indian communities preparedness info (evacuation routes, safety tips) — built entirely on free public Indian government APIs, no hardware.
-- **Status:** Backend live on Render, connected to a real Supabase Postgres+PostGIS database (`/regions`, `/regions/{id}`, `/alerts` serve real DB rows). Real data ingestion (FIRMS/CPCB/Open-Meteo → DB) not yet built.
-- **Last worked on:** Provisioned Supabase (Mumbai region), created the core schema from `docs/architecture.md`, seeded 2 pilot regions, and rewired the backend to query it. Hit and fixed a real bug: Supabase's direct connection host is IPv6-only on the free tier and Render has no IPv6 egress (`Network is unreachable`) — fixed by switching to the Supavisor pooler connection string (`aws-0-ap-south-1.pooler.supabase.com:6543`). Next: build the data ingestion pipeline to populate `raw_weather`, `raw_fire_detections`, `raw_aqi` from the 3 verified APIs.
+- **Status:** Full data pipeline live — real weather, fire, and AQI data flows from the 3 verified APIs into Supabase, and the API serves it. ML risk model not yet built (risk_level/risk_score are still placeholder-generated).
+- **Last worked on:** Built `backend/ingestion.py` (fetch_weather, fetch_fire_detections, fetch_aqi), wired into `main.py` via APScheduler (hourly) plus a manual `POST /admin/ingest` trigger. Hit and fixed 2 real bugs during live testing: (1) data.gov.in silently blocks the default python-requests User-Agent, causing every CPCB call to hang until timeout — fixed with a browser-like header; (2) NASA FIRMS returns `acq_time` unpadded (e.g. `"807"` not `"0807"`), which produced invalid timestamps and crashed inserts — fixed with `.zfill(4)`. Production-verified: `POST /admin/ingest` → `{"weather_rows":2,"fire_rows":99,"aqi_rows":58}`, and `/aqi/dl-delhi` now returns a real live PM2.5-derived AQI (56, "Satisfactory") instead of the old seed value (312). Next: train the ML fire-risk model on accumulated historical data.
 
 ---
 
@@ -106,10 +106,10 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 
 ## Features Built
 
-- [ ] Data ingestion pipeline (weather, fire, AQI APIs)
+- [x] Data ingestion pipeline (weather, fire, AQI APIs) — live, hourly scheduler + manual `POST /admin/ingest` trigger, all 3 sources verified writing real rows to Supabase
 - [ ] Fire risk ML model (training + validation)
 - [ ] AQI forecasting model
-- [x] Backend API (FastAPI) — skeleton with seed data, live on Render; real data ingestion still pending
+- [x] Backend API (FastAPI) — connected to real Supabase DB, live on Render
 - [ ] Frontend dashboard + map
 - [ ] Preparedness content + alerts
 - [x] Project planning (PRD, architecture, API docs, tech stack)
@@ -120,10 +120,10 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 ## Current WIP & Bugs
 
 **In progress:**
-- Backend skeleton (seed data) is live on Render — next step is provisioning Supabase and building the real data ingestion pipeline (weather + fire + AQI API calls) to replace it.
+- Full data pipeline is live (weather + fire + AQI flowing into Supabase hourly). Next: train the fire-risk ML model on accumulated historical data, then build the React dashboard.
 
 **Known bugs:**
-- None currently open. (Resolved: Render's default Python 3.14 lacked prebuilt `pydantic-core` wheels, causing build failures — fixed by pinning `PYTHON_VERSION=3.12.3`.)
+- None currently open. Resolved during setup: (1) Render's default Python 3.14 lacked prebuilt `pydantic-core` wheels — fixed by pinning `PYTHON_VERSION=3.12.3`. (2) Supabase's direct DB connection is IPv6-only on the free tier and Render has no IPv6 egress — fixed by using the Supavisor pooler. (3) data.gov.in silently blocks the default python-requests User-Agent — fixed with a browser-like header. (4) NASA FIRMS returns unpadded `acq_time` (e.g. `"807"` not `"0807"`) — fixed with `.zfill(4)`.
 
 ---
 
@@ -132,7 +132,7 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 1. ~~Verify FSI fire data access and get a data.gov.in API key~~ ✅ **Done (Aug 31, 2026)** — FSI has no public API (confirmed), using NASA FIRMS instead. CPCB and FIRMS personal API keys obtained and live-tested successfully.
 2. ~~Deploy a minimal backend skeleton~~ ✅ **Done (Aug 31, 2026)** — FastAPI backend matching `docs/api-docs.md` deployed live on Render with seed data
 3. ~~Provision Supabase (Postgres+PostGIS) and connect it to the Render backend~~ ✅ **Done (Aug 31, 2026)** — schema created, seeded, connected via Supavisor pooler (fixed an IPv6/IPv4 connectivity bug in the process)
-4. Build data ingestion scripts (weather, fire, AQI) — replace generated risk/AQI/trends values with real API calls writing to the DB
+4. ~~Build data ingestion scripts (weather, fire, AQI)~~ ✅ **Done (Aug 31, 2026)** — hourly scheduler + manual trigger live, all 3 sources verified writing real data to Supabase
 5. Train and validate the fire-risk ML model on historical data
 6. Build FastAPI endpoints to serve predictions + AQI data (upgrade from seed data)
 7. Build the React dashboard, connect to the deployed API
