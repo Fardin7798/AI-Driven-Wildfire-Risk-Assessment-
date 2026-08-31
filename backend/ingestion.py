@@ -98,7 +98,7 @@ def fetch_fire_detections(conn):
         for line in lines[1:]:
             vals = line.split(",")
             row = dict(zip(header, vals))
-            timestamp = f"{row['acq_date']}T{row['acq_time'][:2]}:{row['acq_time'][2:]}:00Z"
+            timestamp = f"{row['acq_date']}T{row['acq_time'].zfill(4)[:2]}:{row['acq_time'].zfill(4)[2:]}:00Z"
             cur.execute(
                 """INSERT INTO raw_fire_detections (lat, lon, confidence, frp, timestamp, source)
                    VALUES (%s, %s, %s, %s, %s, %s)""",
