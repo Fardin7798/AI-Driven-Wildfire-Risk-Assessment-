@@ -1,23 +1,21 @@
-"""
-AI-Driven Wildfire Risk Assessment, Air Quality Monitoring,
-and Community Preparedness Platform (India)
-
-Minimal FastAPI backend skeleton — matches docs/api-docs.md contract exactly.
-Live data ingestion (FIRMS/CPCB/Open-Meteo) not yet wired in; endpoints
-return seed data shaped exactly like the documented responses so the
-frontend and deployment pipeline can be built against a stable contract.
-Swap the SEED_REGIONS lookups for real DB queries once ingestion is built.
-"""
+import os
 from datetime import datetime, timezone
 from typing import Literal
 
+import psycopg2
+import psycopg2.extras
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+load_dotenv()
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
 app = FastAPI(
     title="Wildfire Risk & AQI Monitoring Platform (India)",
-    version="0.1.0",
+    version="0.2.0",
 )
 
 app.add_middleware(
@@ -27,37 +25,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------------------------------
-# Seed data (placeholder until real ingestion + DB are wired in)
-# ---------------------------------------------------------------------------
 
-SEED_REGIONS = {
-    "uk-nainital": {
-        "region_id": "uk-nainital",
-        "name": "Nainital",
-        "state": "Uttarakhand",
-        "centroid": {"lat": 29.3803, "lon": 79.4636},
-        "current_risk_level": "High",
-        "current_aqi": 112,
-        "last_updated": "2026-08-30T14:00:00Z",
-    },
-    "dl-delhi": {
-        "region_id": "dl-delhi",
-        "name": "Delhi",
-        "state": "Delhi",
-        "centroid": {"lat": 28.6139, "lon": 77.2090},
-        "current_risk_level": "Low",
-        "current_aqi": 312,
-        "last_updated": "2026-08-30T14:00:00Z",
-    },
-}
+def get_db_connection():
+    if not DATABASE_URL:
+        raise HTTPException(status_code=500, detail="DATABASE_URL not configured")
+    return psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
 
 
 def get_region_or_404(region_id: str) -> dict:
-    region = SEED_REGIONS.get(region_id)
-    if not region:
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id AS region_id, name, state, current_risk_level, current_aqi,
+                       last_updated, ST_X(centroid) AS lon, ST_Y(centroid) AS lat
+                FROM regions WHERE id = %s
+                """,
+                (region_id,),
+            )
+            row = cur.fetchone()
+    finally:
+        conn.close()
+    if not row:
         raise HTTPException(status_code=404, detail="Region not found")
-    return region
+    return {
+        "region_id": row["region_id"],
+        "name": row["name"],
+        "state": row["state"],
+        "centroid": {"lat": float(row["lat"]), "lon": float(row["lon"])},
+        "current_risk_level": row["current_risk_level"],
+        "current_aqi": int(row["current_aqi"]),
+        "last_updated": row["last_updated"].isoformat().replace("+00:00", "Z"),
+    }
+
+
 
 
 # ---------------------------------------------------------------------------
@@ -77,7 +79,31 @@ def health():
 
 @app.get("/regions")
 def list_regions():
-    return list(SEED_REGIONS.values())
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id AS region_id, name, state, current_risk_level, current_aqi,
+                       last_updated, ST_X(centroid) AS lon, ST_Y(centroid) AS lat
+                FROM regions ORDER BY id
+                """
+            )
+            rows = cur.fetchall()
+    finally:
+        conn.close()
+    return [
+        {
+            "region_id": r["region_id"],
+            "name": r["name"],
+            "state": r["state"],
+            "centroid": {"lat": float(r["lat"]), "lon": float(r["lon"])},
+            "current_risk_level": r["current_risk_level"],
+            "current_aqi": int(r["current_aqi"]),
+            "last_updated": r["last_updated"].isoformat().replace("+00:00", "Z"),
+        }
+        for r in rows
+    ]
 
 
 @app.get("/regions/{region_id}")
@@ -152,23 +178,32 @@ def get_aqi(region_id: str):
 
 @app.get("/alerts")
 def get_alerts():
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id AS region_id, current_risk_level, current_aqi, last_updated FROM regions")
+            regions = cur.fetchall()
+    finally:
+        conn.close()
+
     alerts = []
-    for region in SEED_REGIONS.values():
+    for region in regions:
+        last_updated = region["last_updated"].isoformat().replace("+00:00", "Z")
         if region["current_risk_level"] in ("High", "Extreme"):
             alerts.append({
                 "region_id": region["region_id"],
                 "alert_type": "forest_fire_risk",
                 "severity": region["current_risk_level"],
                 "message": "High forest fire risk due to low humidity and high wind speed.",
-                "triggered_at": region["last_updated"],
+                "triggered_at": last_updated,
             })
         if region["current_aqi"] > 300:
             alerts.append({
                 "region_id": region["region_id"],
                 "alert_type": "air_quality",
-                "severity": aqi_category(region["current_aqi"]),
+                "severity": aqi_category(int(region["current_aqi"])),
                 "message": "AQI has reached unhealthy levels.",
-                "triggered_at": region["last_updated"],
+                "triggered_at": last_updated,
             })
     return alerts
 
