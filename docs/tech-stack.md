@@ -56,9 +56,10 @@ This document lists the complete technology stack for the project, organized by 
 
 | Component | Technology | Why |
 |---|---|---|
-| **Containerization** | Docker + Docker Compose | Runs Postgres, backend, and frontend together with one command — no manual environment setup |
+| **Database hosting** | Supabase (Postgres + PostGIS free tier) | Free-tier hosted Postgres with a one-click PostGIS toggle — no local DB setup needed, accessible from anywhere for demos. 500 MB free, sufficient for a student project. Not yet provisioned. |
+| **Backend hosting** | ✅ **Render (free tier) — live** | Deployed via the Render MCP connector, auto-deploys on every push to `main`. Live at https://wildfire-aqi-backend.onrender.com (Singapore region). ⚠️ Free tier spins down after 15 min idle — first request after idle takes ~1 min to wake up. |
+| **Local dev (optional)** | Docker + Docker Compose | Still useful for fully offline local development if needed, but Render + Supabase is the primary path now |
 | **Version Control** | Git + GitHub | Standard, already set up for this project |
-| **Hosting (optional, for live demo)** | Render / Railway (free tier) | No-cost hosting sufficient for a student project demo |
 
 ---
 
@@ -80,4 +81,4 @@ This document lists the complete technology stack for the project, organized by 
 - **Consistent language** — Python across backend + ML keeps the codebase simpler to maintain and reason about.
 - **Open-source mapping** — avoids Google Maps billing/API key friction entirely.
 - **Realistic for the project timeline** (~2–3 months) — every tool here is mainstream, well-documented, and has a low learning curve compared to more specialized alternatives.
-- **India-specific caveat** — FSI fire data API access needs early verification (may need scraping); this should be the first technical spike in the project.
+- **India-specific caveat (resolved)** — FSI fire data has no public API (verified Aug 31, 2026); NASA FIRMS is used as the primary fire source instead, live-verified working.

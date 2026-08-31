@@ -13,8 +13,8 @@
 
 - **Name:** AI-Driven Wildfire Risk Assessment, Air Quality Monitoring, and Community Preparedness Platform (India)
 - **Description:** A web dashboard that predicts forest fire risk, monitors real-time air quality, and gives Indian communities preparedness info (evacuation routes, safety tips) — built entirely on free public Indian government APIs, no hardware.
-- **Status:** Planning complete, all 3 core APIs verified live — ready to start implementation
-- **Last worked on:** Live-verified NASA FIRMS, CPCB/data.gov.in, and Open-Meteo with real personal API keys (Aug 31, 2026) — all confirmed returning real India data. Fixed stale Canada/BC references in CONTEXT.md and TEST.md. Next: set up backend project structure + Docker Compose.
+- **Status:** Backend skeleton live-deployed on Render — API contract implemented with seed data, real ingestion not yet wired in
+- **Last worked on:** Built a minimal FastAPI backend matching `docs/api-docs.md` (all 6 endpoints + `/health`), tested locally, pushed to GitHub, and deployed to Render (https://wildfire-aqi-backend.onrender.com) using the Supabase+Render MCP connectors. Fixed a Render build failure (Python 3.14 default lacked prebuilt `pydantic-core` wheels) by pinning `PYTHON_VERSION=3.12.3`. Next: connect a real Supabase Postgres+PostGIS database and wire in live data ingestion (FIRMS/CPCB/Open-Meteo) to replace the seed data.
 
 ---
 
@@ -24,7 +24,7 @@
 - **Backend:** Python, FastAPI, APScheduler
 - **Database:** PostgreSQL + PostGIS
 - **ML:** XGBoost (fire risk classification), Prophet (AQI forecasting), SHAP (explainability — stretch goal)
-- **Hosting:** Local/Docker for MVP; Render or Railway free tier if a live demo is needed
+- **Hosting:** Render (backend, live at https://wildfire-aqi-backend.onrender.com) + Supabase (Postgres+PostGIS, not yet provisioned) — free tiers
 - **Key data APIs:** Forest Survey of India (FSI) Fire Alert System, NASA FIRMS (cross-check), IMD/Open-Meteo, CPCB (via data.gov.in API), SAFAR (IITM Pune), Bhuvan/Copernicus-Sentinel (optional)
 - **Dev tooling:** Claude Code, Graphify (codebase knowledge graph), Claude Task Master (PRD → tasks)
 
@@ -109,7 +109,7 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 - [ ] Data ingestion pipeline (weather, fire, AQI APIs)
 - [ ] Fire risk ML model (training + validation)
 - [ ] AQI forecasting model
-- [ ] Backend API (FastAPI)
+- [x] Backend API (FastAPI) — skeleton with seed data, live on Render; real data ingestion still pending
 - [ ] Frontend dashboard + map
 - [ ] Preparedness content + alerts
 - [x] Project planning (PRD, architecture, API docs, tech stack)
@@ -120,23 +120,24 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 ## Current WIP & Bugs
 
 **In progress:**
-- Nothing coded yet — next step is setting up the backend ingestion pipeline (weather + fire + AQI API calls).
+- Backend skeleton (seed data) is live on Render — next step is provisioning Supabase and building the real data ingestion pipeline (weather + fire + AQI API calls) to replace it.
 
 **Known bugs:**
-- None yet (no code written).
+- None currently open. (Resolved: Render's default Python 3.14 lacked prebuilt `pydantic-core` wheels, causing build failures — fixed by pinning `PYTHON_VERSION=3.12.3`.)
 
 ---
 
 ## Roadmap
 
 1. ~~Verify FSI fire data access and get a data.gov.in API key~~ ✅ **Done (Aug 31, 2026)** — FSI has no public API (confirmed), using NASA FIRMS instead. CPCB and FIRMS personal API keys obtained and live-tested successfully.
-2. Set up backend project structure + Docker Compose (Postgres + PostGIS)
-3. Build data ingestion scripts (weather, fire, AQI) — test each API independently
-3. Train and validate the fire-risk ML model on historical data
-4. Build FastAPI endpoints to serve predictions + AQI data
-5. Build the React dashboard, connect to the API
-6. Add preparedness content and alert logic
-7. Testing, polish, documentation
+2. ~~Deploy a minimal backend skeleton~~ ✅ **Done (Aug 31, 2026)** — FastAPI backend matching `docs/api-docs.md` deployed live on Render with seed data
+3. Provision Supabase (Postgres+PostGIS) and connect it to the Render backend
+4. Build data ingestion scripts (weather, fire, AQI) — replace seed data with real API calls
+5. Train and validate the fire-risk ML model on historical data
+6. Build FastAPI endpoints to serve predictions + AQI data (upgrade from seed data)
+7. Build the React dashboard, connect to the deployed API
+8. Add preparedness content and alert logic
+9. Testing, polish, documentation
 
 ---
 
@@ -159,5 +160,5 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 
 - **Author:** Fardin (Fardin7798)
 - **GitHub:** https://github.com/Fardin7798/AI-Driven-Wildfire-Risk-Assessment-
-- **Live URL:** none yet
+- **Live URL:** Backend deployed — https://wildfire-aqi-backend.onrender.com (Render, free tier, Singapore region, auto-deploys on push to `main`)
 - **Other docs:** `docs/PRD_Wildfire_AQI_Platform.md`, `docs/architecture.md`, `docs/api-docs.md`, `docs/tech-stack.md`

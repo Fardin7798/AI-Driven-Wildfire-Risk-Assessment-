@@ -1,6 +1,7 @@
 # API Documentation — Wildfire Risk & AQI Monitoring Platform (India)
 
 **Base URL (local dev):** `http://localhost:8000`
+**Base URL (production):** `https://wildfire-aqi-backend.onrender.com` (deployed on Render, free tier — ⚠️ currently serving seed/mock data shaped exactly like the responses below; real data ingestion not yet wired in)
 **Format:** JSON
 **Auth:** None required for MVP (all endpoints public/read-only)
 
