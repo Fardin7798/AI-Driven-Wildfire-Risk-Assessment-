@@ -1,29 +1,59 @@
+import logging
 import os
 from datetime import datetime, timezone
 from typing import Literal
 
 import psycopg2
 import psycopg2.extras
+from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+import ingestion
+
 load_dotenv()
+logger = logging.getLogger("uvicorn.error")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 app = FastAPI(
     title="Wildfire Risk & AQI Monitoring Platform (India)",
-    version="0.2.0",
+    version="0.3.0",
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # tighten before public launch
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+
+def run_ingestion_job():
+    try:
+        result = ingestion.fetch_all()
+        logger.info(f"Ingestion job completed: {result}")
+    except Exception as e:
+        logger.error(f"Ingestion job failed: {e}")
+
+
+scheduler = BackgroundScheduler()
+# Per docs/architecture.md cadence: weather ~15-60min, AQI hourly, fire every
+# few hours. Using one combined hourly job for MVP simplicity (free-tier
+# Render spins down when idle, so this only runs while the service is awake).
+scheduler.add_job(run_ingestion_job, "interval", hours=1, id="ingestion_job")
+
+
+@app.on_event("startup")
+def start_scheduler():
+    scheduler.start()
+
+
+@app.on_event("shutdown")
+def stop_scheduler():
+    scheduler.shutdown(wait=False)
 
 
 def get_db_connection():
@@ -70,6 +100,17 @@ def get_region_or_404(region_id: str) -> dict:
 @app.get("/health")
 def health():
     return {"status": "ok", "time": datetime.now(timezone.utc).isoformat()}
+
+
+@app.post("/admin/ingest")
+def trigger_ingestion():
+    """Manually trigger a data ingestion run (for demo/testing).
+    No auth required for MVP per docs/api-docs.md — this only pulls and
+    writes read-only ingestion data, it does not touch user data."""
+    try:
+        return ingestion.fetch_all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ---------------------------------------------------------------------------
