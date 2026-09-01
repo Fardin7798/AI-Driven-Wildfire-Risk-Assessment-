@@ -8,3 +8,4 @@ apscheduler==3.10.4
 xgboost==3.4.1
 scikit-learn==1.9.0
 joblib==1.6.0
+prophet==1.4.0

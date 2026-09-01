@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timezone
 from typing import Literal
 
+import joblib
 import psycopg2
 import psycopg2.extras
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -17,6 +18,15 @@ load_dotenv()
 logger = logging.getLogger("uvicorn.error")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
+
+# Prophet AQI forecast models — one per region, trained in
+# ml/aqi_forecasting_training.ipynb. Loaded lazily/defensively: missing a
+# model file for a region just means no forecast for that region, not a crash.
+_AQI_MODELS = {}
+for _region_id in ("uk-nainital", "dl-delhi"):
+    _path = os.path.join(os.path.dirname(__file__), f"aqi_forecast_{_region_id}.pkl")
+    if os.path.exists(_path):
+        _AQI_MODELS[_region_id] = joblib.load(_path)
 
 app = FastAPI(
     title="Wildfire Risk & AQI Monitoring Platform (India)",
@@ -226,14 +236,34 @@ def aqi_category(aqi: int) -> str:
 def get_aqi(region_id: str):
     region = get_region_or_404(region_id)
     aqi = region["current_aqi"]
+
+    forecast = []
+    forecast_note = None
+    model = _AQI_MODELS.get(region_id)
+    if model is not None:
+        future = model.make_future_dataframe(periods=3)
+        pred = model.predict(future).tail(3)
+        forecast = [
+            {
+                "timestamp": row["ds"].strftime("%Y-%m-%dT00:00:00Z"),
+                "predicted_aqi": round(max(row["yhat"], 0)),
+                "lower_bound": round(max(row["yhat_lower"], 0)),
+                "upper_bound": round(max(row["yhat_upper"], 0)),
+            }
+            for _, row in pred.iterrows()
+        ]
+        forecast_note = "Prophet model trained on ~1 year of real historical PM2.5 (Open-Meteo Air Quality API). Forecast is PM2.5-based, not the full CPCB sub-index formula."
+    else:
+        forecast_note = "No forecast model available for this region yet."
+
     return {
         "region_id": region_id,
         "current_aqi": aqi,
         "category": aqi_category(aqi),
         "dominant_pollutant": "PM2.5",
         "timestamp": region["last_updated"],
-        "forecast": [],
-        "forecast_note": "Forecasting model not yet built — needs several weeks of accumulated historical data first. current_aqi above is real (live CPCB data).",
+        "forecast": forecast,
+        "forecast_note": forecast_note,
     }
 
 
