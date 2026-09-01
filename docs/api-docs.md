@@ -87,7 +87,7 @@ Returns current and recent risk score history for a region.
 ## 3. Air Quality
 
 ### `GET /aqi/{region_id}`
-Returns current AQI for a region, using India's National AQI standard (CPCB). Forecast is not yet implemented — see note below.
+Returns current AQI and a real Prophet-based forecast for a region, using India's National AQI standard (CPCB) for the current value and PM2.5-based forecasting for future values.
 
 **Response 200 (current production shape):**
 ```json
@@ -97,12 +97,15 @@ Returns current AQI for a region, using India's National AQI standard (CPCB). Fo
   "category": "Satisfactory",
   "dominant_pollutant": "PM2.5",
   "timestamp": "2026-08-31T11:23:44Z",
-  "forecast": [],
-  "forecast_note": "Forecasting model not yet built — needs several weeks of accumulated historical data first. current_aqi above is real (live CPCB data)."
+  "forecast": [
+    { "timestamp": "2026-09-02T00:00:00Z", "predicted_aqi": 97, "lower_bound": 64, "upper_bound": 131 },
+    { "timestamp": "2026-09-03T00:00:00Z", "predicted_aqi": 104, "lower_bound": 67, "upper_bound": 138 }
+  ],
+  "forecast_note": "Prophet model trained on ~1 year of real historical PM2.5 (Open-Meteo Air Quality API). Forecast is PM2.5-based, not the full CPCB sub-index formula."
 }
 ```
 
-⚠️ **`forecast` is intentionally empty for now.** `current_aqi` is real, live CPCB data — but the forecast array will only be populated once a real forecasting model exists (needs historical data the ingestion pipeline hasn't accumulated yet, started Aug 31, 2026). Do not hardcode a fake forecast on the frontend to fill this gap — show "forecast coming soon" instead.
+Forecast is real (`ml/aqi_forecasting_training.ipynb`, Prophet, ~1 year of real historical PM2.5 from Open-Meteo's Air Quality API). If no model exists for a region, `forecast` is an empty array with an explanatory `forecast_note`.
 
 **AQI categories (India National AQI — CPCB):** `Good (0–50)` | `Satisfactory (51–100)` | `Moderate (101–200)` | `Poor (201–300)` | `Very Poor (301–400)` | `Severe (401–500)`
 

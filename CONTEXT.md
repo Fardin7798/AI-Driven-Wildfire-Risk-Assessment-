@@ -13,8 +13,8 @@
 
 - **Name:** AI-Driven Wildfire Risk Assessment, Air Quality Monitoring, and Community Preparedness Platform (India)
 - **Description:** A web dashboard that predicts forest fire risk, monitors real-time air quality, and gives Indian communities preparedness info (evacuation routes, safety tips) — built entirely on free public Indian government APIs, no hardware.
-- **Status:** Full stack functional end-to-end — real data pipeline + a real trained XGBoost model serving live risk predictions. Only the frontend dashboard is still missing.
-- **Last worked on:** Trained an XGBoost fire-risk model in Google Colab on real historical data — NASA FIRMS fire detections (180 days, India bbox, looped 5-day chunks) + Open-Meteo historical weather, with sampled negative (no-fire) points. Sanity-checked the model (humid/calm weather → 0.3% fire probability, hot/dry/windy → 68%) before integrating. Wired it into `ingestion.py`'s `compute_risk()`, replacing the rule-based-v1 formula. Live-verified on Render: Nainital risk=Low(0.006), Delhi risk=Extreme(0.89). Also set up the Colab MCP connector (`~/.claude.json`) for agent-driven notebook control in Claude Code, verified via a raw MCP protocol handshake test (server responds, exposes `open_colab_browser_connection`). **Known model limitation:** no land-cover feature yet, so hot+dry urban weather reads the same as hot+dry forest weather (Delhi's Extreme score is a symptom of this — worth documenting as a v2 improvement in the thesis). Next: build the React dashboard.
+- **Status:** Full stack functional end-to-end — real data pipeline + XGBoost fire-risk model + Prophet AQI forecasting, all serving live predictions. Only the frontend dashboard is still missing.
+- **Last worked on:** Trained a Prophet AQI forecasting model per region (`ml/aqi_forecasting_training.ipynb`) on ~1 year of real historical daily PM2.5 from Open-Meteo's Air Quality API (free, no key). Integrated into `/aqi/{region_id}` — `forecast` is now real 3-day predictions with confidence bounds instead of an empty array. Live-verified on Render: Delhi 97→104→104 (with bounds), Nainital 24→23→25. Handled a local-only version conflict (installing `mcp`/`prophet` globally bumped `starlette` past what pinned FastAPI needs — fixed by re-pinning locally; Render's isolated build was unaffected since it follows `requirements.txt`). **ML stack is now fully built**: XGBoost (fire risk) + Prophet (AQI forecast) both live. SHAP (explainability) remains an optional stretch goal, not required for MVP. Next: build the React dashboard.
 
 ---
 
@@ -108,7 +108,7 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 
 - [x] Data ingestion pipeline (weather, fire, AQI APIs) — live, hourly scheduler + manual `POST /admin/ingest` trigger, all 3 sources verified writing real rows to Supabase
 - [x] Fire risk ML model (training + validation) — XGBoost, real historical FIRMS+weather data, live on Render (`xgboost-v1`)
-- [ ] AQI forecasting model
+- [x] AQI forecasting model — Prophet, real historical PM2.5 (Open-Meteo Air Quality API), live on Render
 - [x] Backend API (FastAPI) — connected to real Supabase DB, live on Render
 - [ ] Frontend dashboard + map
 - [ ] Preparedness content + alerts
