@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import type { Region, Alert } from '../types'
 import { Hero, AlertBanner, RegionCard } from '../components/DashboardBits'
+import { RegionMap } from '../components/RegionMap'
 
 export default function Home() {
   const [regions, setRegions] = useState<Region[] | null>(null)
@@ -54,6 +55,12 @@ export default function Home() {
         {regions.map((r) => (
           <RegionCard key={r.region_id} region={r} />
         ))}
+      </div>
+      <h2 className="mb-4 mt-10 font-display text-xl font-semibold text-charcoal">
+        Map
+      </h2>
+      <div className="overflow-hidden rounded-xl border border-charcoal/10">
+        <RegionMap regions={regions} />
       </div>
     </div>
   )
