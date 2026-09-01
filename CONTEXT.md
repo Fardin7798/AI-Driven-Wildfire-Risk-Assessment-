@@ -13,8 +13,8 @@
 
 - **Name:** AI-Driven Wildfire Risk Assessment, Air Quality Monitoring, and Community Preparedness Platform (India)
 - **Description:** A web dashboard that predicts forest fire risk, monitors real-time air quality, and gives Indian communities preparedness info (evacuation routes, safety tips) — built entirely on free public Indian government APIs, no hardware.
-- **Status:** Full data pipeline live — real weather, fire, and AQI data flows from the 3 verified APIs into Supabase, and the API serves it. ML risk model not yet built (risk_level/risk_score are still placeholder-generated).
-- **Last worked on:** Built `backend/ingestion.py` (fetch_weather, fetch_fire_detections, fetch_aqi), wired into `main.py` via APScheduler (hourly) plus a manual `POST /admin/ingest` trigger. Hit and fixed 2 real bugs during live testing: (1) data.gov.in silently blocks the default python-requests User-Agent, causing every CPCB call to hang until timeout — fixed with a browser-like header; (2) NASA FIRMS returns `acq_time` unpadded (e.g. `"807"` not `"0807"`), which produced invalid timestamps and crashed inserts — fixed with `.zfill(4)`. Production-verified: `POST /admin/ingest` → `{"weather_rows":2,"fire_rows":99,"aqi_rows":58}`, and `/aqi/dl-delhi` now returns a real live PM2.5-derived AQI (56, "Satisfactory") instead of the old seed value (312). Next: train the ML fire-risk model on accumulated historical data.
+- **Status:** Full stack functional end-to-end — real data pipeline + a real trained XGBoost model serving live risk predictions. Only the frontend dashboard is still missing.
+- **Last worked on:** Trained an XGBoost fire-risk model in Google Colab on real historical data — NASA FIRMS fire detections (180 days, India bbox, looped 5-day chunks) + Open-Meteo historical weather, with sampled negative (no-fire) points. Sanity-checked the model (humid/calm weather → 0.3% fire probability, hot/dry/windy → 68%) before integrating. Wired it into `ingestion.py`'s `compute_risk()`, replacing the rule-based-v1 formula. Live-verified on Render: Nainital risk=Low(0.006), Delhi risk=Extreme(0.89). Also set up the Colab MCP connector (`~/.claude.json`) for agent-driven notebook control in Claude Code, verified via a raw MCP protocol handshake test (server responds, exposes `open_colab_browser_connection`). **Known model limitation:** no land-cover feature yet, so hot+dry urban weather reads the same as hot+dry forest weather (Delhi's Extreme score is a symptom of this — worth documenting as a v2 improvement in the thesis). Next: build the React dashboard.
 
 ---
 
@@ -107,7 +107,7 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 ## Features Built
 
 - [x] Data ingestion pipeline (weather, fire, AQI APIs) — live, hourly scheduler + manual `POST /admin/ingest` trigger, all 3 sources verified writing real rows to Supabase
-- [ ] Fire risk ML model (training + validation)
+- [x] Fire risk ML model (training + validation) — XGBoost, real historical FIRMS+weather data, live on Render (`xgboost-v1`)
 - [ ] AQI forecasting model
 - [x] Backend API (FastAPI) — connected to real Supabase DB, live on Render
 - [ ] Frontend dashboard + map
@@ -120,7 +120,7 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 ## Current WIP & Bugs
 
 **In progress:**
-- Full data pipeline is live (weather + fire + AQI flowing into Supabase hourly). Next: train the fire-risk ML model on accumulated historical data, then build the React dashboard.
+- Backend + ML model + data pipeline are all live and real. Next: build the React dashboard, then AQI forecasting model, then preparedness content/alerts.
 
 **Known bugs:**
 - None currently open. Resolved during setup: (1) Render's default Python 3.14 lacked prebuilt `pydantic-core` wheels — fixed by pinning `PYTHON_VERSION=3.12.3`. (2) Supabase's direct DB connection is IPv6-only on the free tier and Render has no IPv6 egress — fixed by using the Supavisor pooler. (3) data.gov.in silently blocks the default python-requests User-Agent — fixed with a browser-like header. (4) NASA FIRMS returns unpadded `acq_time` (e.g. `"807"` not `"0807"`) — fixed with `.zfill(4)`.
@@ -133,8 +133,8 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 2. ~~Deploy a minimal backend skeleton~~ ✅ **Done (Aug 31, 2026)** — FastAPI backend matching `docs/api-docs.md` deployed live on Render with seed data
 3. ~~Provision Supabase (Postgres+PostGIS) and connect it to the Render backend~~ ✅ **Done (Aug 31, 2026)** — schema created, seeded, connected via Supavisor pooler (fixed an IPv6/IPv4 connectivity bug in the process)
 4. ~~Build data ingestion scripts (weather, fire, AQI)~~ ✅ **Done (Aug 31, 2026)** — hourly scheduler + manual trigger live, all 3 sources verified writing real data to Supabase
-5. Train and validate the fire-risk ML model on historical data
-6. Build FastAPI endpoints to serve predictions + AQI data (upgrade from seed data)
+5. ~~Train and validate the fire-risk ML model on historical data~~ ✅ **Done (Sep 1, 2026)** — XGBoost trained in Colab on real historical FIRMS + Open-Meteo data (`ml/wildfire_risk_training.ipynb`), integrated into `ingestion.py`, live on Render (`model_version: "xgboost-v1"`). **Known limitation:** no land-cover feature yet, so hot+dry urban weather (e.g. Delhi) can read as fire-prone the same as hot+dry forest weather — v2 improvement, worth noting in the thesis.
+6. ~~Build FastAPI endpoints to serve predictions + AQI data~~ ✅ **Done** — all endpoints now serve real DB/model data, no more seed/hardcoded values
 7. Build the React dashboard, connect to the deployed API
 8. Add preparedness content and alert logic
 9. Testing, polish, documentation
