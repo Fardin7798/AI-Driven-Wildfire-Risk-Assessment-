@@ -13,8 +13,8 @@
 
 - **Name:** AI-Driven Wildfire Risk Assessment, Air Quality Monitoring, and Community Preparedness Platform (India)
 - **Description:** A web dashboard that predicts forest fire risk, monitors real-time air quality, and gives Indian communities preparedness info (evacuation routes, safety tips) — built entirely on free public Indian government APIs, no hardware.
-- **Status:** Full stack functional end-to-end — real data pipeline + XGBoost fire-risk model + Prophet AQI forecasting, all serving live predictions. Only the frontend dashboard is still missing.
-- **Last worked on:** Trained a Prophet AQI forecasting model per region (`ml/aqi_forecasting_training.ipynb`) on ~1 year of real historical daily PM2.5 from Open-Meteo's Air Quality API (free, no key). Integrated into `/aqi/{region_id}` — `forecast` is now real 3-day predictions with confidence bounds instead of an empty array. Live-verified on Render: Delhi 97→104→104 (with bounds), Nainital 24→23→25. Handled a local-only version conflict (installing `mcp`/`prophet` globally bumped `starlette` past what pinned FastAPI needs — fixed by re-pinning locally; Render's isolated build was unaffected since it follows `requirements.txt`). **ML stack is now fully built**: XGBoost (fire risk) + Prophet (AQI forecast) both live. SHAP (explainability) remains an optional stretch goal, not required for MVP. Next: build the React dashboard.
+- **Status:** Full stack live in production — backend, database, ML models (XGBoost + Prophet), and frontend dashboard, all real, all deployed. Preparedness content is basic (hardcoded tips); alerting logic is minimal (threshold-based, no notifications).
+- **Last worked on:** Built and deployed the React frontend (`frontend/`) — Vite + TS + Tailwind v4 + React Router + Recharts + MapLibre GL JS, deployed as a Render static site at https://wildfire-aqi-frontend.onrender.com. 3 routes (dashboard, region detail, preparedness), all wired to the live backend API. Used the shadcn-ui-mcp-server MCP tool to pull a real Card component instead of hand-rolling markup. Verified with Playwright screenshots at every step (not just build success) — caught and fixed 3 real bugs this way: (1) Hero risk number was a fake per-level lookup, not the real risk_score; (2) trend chart mixed a 0-1 scale (risk_score) and 0-500 scale (AQI) on one Y-axis, making one line invisible — split into dual Y-axis; (3) `maplibre-gl` has no default export in the installed version, causing a blank white page at runtime — fixed the import style. Also fixed a machine-wide `NODE_ENV=production` issue silently stripping devDependencies on every `npm install` (added `frontend/.npmrc` with `include=dev`). Production build confirmed working end-to-end against the live backend (matches local dev exactly).
 
 ---
 
@@ -24,7 +24,7 @@
 - **Backend:** Python, FastAPI, APScheduler
 - **Database:** PostgreSQL + PostGIS
 - **ML:** XGBoost (fire risk classification), Prophet (AQI forecasting), SHAP (explainability — stretch goal)
-- **Hosting:** Render (backend, live at https://wildfire-aqi-backend.onrender.com) + Supabase (Postgres+PostGIS, live — project `wildfire-aqi-db`, Mumbai region) — free tiers
+- **Hosting:** Render (backend, live at https://wildfire-aqi-backend.onrender.com; frontend static site, live at https://wildfire-aqi-frontend.onrender.com) + Supabase (Postgres+PostGIS, live — project `wildfire-aqi-db`, Mumbai region) — free tiers
 - **Key data APIs:** Forest Survey of India (FSI) Fire Alert System, NASA FIRMS (cross-check), IMD/Open-Meteo, CPCB (via data.gov.in API), SAFAR (IITM Pune), Bhuvan/Copernicus-Sentinel (optional)
 - **Dev tooling:** Claude Code, Graphify (codebase knowledge graph), Claude Task Master (PRD → tasks)
 
@@ -41,8 +41,9 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 │   ├── architecture.md
 │   ├── api-docs.md
 │   └── tech-stack.md
-├── backend/                  # (not yet created) FastAPI app, ingestion, ML models
-├── frontend/                 # (not yet created) React + Vite dashboard
+├── backend/                  # FastAPI app, ingestion, ML models — live at wildfire-aqi-backend.onrender.com
+├── ml/                       # Training notebooks (XGBoost fire risk, Prophet AQI forecast)
+├── frontend/                 # React + Vite dashboard — live at wildfire-aqi-frontend.onrender.com
 ├── .claude/                  # Claude Code config + Graphify skill
 └── CLAUDE.md                 # Claude Code persistent instructions
 ```
@@ -110,8 +111,8 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 - [x] Fire risk ML model (training + validation) — XGBoost, real historical FIRMS+weather data, live on Render (`xgboost-v1`)
 - [x] AQI forecasting model — Prophet, real historical PM2.5 (Open-Meteo Air Quality API), live on Render
 - [x] Backend API (FastAPI) — connected to real Supabase DB, live on Render
-- [ ] Frontend dashboard + map
-- [ ] Preparedness content + alerts
+- [x] Frontend dashboard + map — React + MapLibre, live on Render, real backend data
+- [x] Preparedness content + alerts — basic version live (hardcoded tips + evacuation links per region, threshold-based alerts); no notifications yet
 - [x] Project planning (PRD, architecture, API docs, tech stack)
 - [x] Graphify + Git/GitHub setup
 
@@ -120,10 +121,10 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 ## Current WIP & Bugs
 
 **In progress:**
-- Backend + ML model + data pipeline are all live and real. Next: build the React dashboard, then AQI forecasting model, then preparedness content/alerts.
+- Full stack is live end-to-end (backend, DB, ML, frontend). Remaining work is polish: better preparedness content, real alert notifications, thesis writeup, and testing. See Roadmap below.
 
 **Known bugs:**
-- None currently open. Resolved during setup: (1) Render's default Python 3.14 lacked prebuilt `pydantic-core` wheels — fixed by pinning `PYTHON_VERSION=3.12.3`. (2) Supabase's direct DB connection is IPv6-only on the free tier and Render has no IPv6 egress — fixed by using the Supavisor pooler. (3) data.gov.in silently blocks the default python-requests User-Agent — fixed with a browser-like header. (4) NASA FIRMS returns unpadded `acq_time` (e.g. `"807"` not `"0807"`) — fixed with `.zfill(4)`.
+- None currently open. Resolved during setup: (1) Render's default Python 3.14 lacked prebuilt `pydantic-core` wheels — fixed by pinning `PYTHON_VERSION=3.12.3`. (2) Supabase's direct DB connection is IPv6-only on the free tier and Render has no IPv6 egress — fixed by using the Supavisor pooler. (3) data.gov.in silently blocks the default python-requests User-Agent — fixed with a browser-like header. (4) NASA FIRMS returns unpadded `acq_time` (e.g. `"807"` not `"0807"`) — fixed with `.zfill(4)`. (5) Frontend: `maplibre-gl` has no default export in the installed version — fixed the import style. (6) Frontend: a machine-wide `NODE_ENV=production` was silently stripping devDependencies on every `npm install` — fixed with `frontend/.npmrc` (`include=dev`).
 
 ---
 
@@ -135,9 +136,9 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 4. ~~Build data ingestion scripts (weather, fire, AQI)~~ ✅ **Done (Aug 31, 2026)** — hourly scheduler + manual trigger live, all 3 sources verified writing real data to Supabase
 5. ~~Train and validate the fire-risk ML model on historical data~~ ✅ **Done (Sep 1, 2026)** — XGBoost trained in Colab on real historical FIRMS + Open-Meteo data (`ml/wildfire_risk_training.ipynb`), integrated into `ingestion.py`, live on Render (`model_version: "xgboost-v1"`). **Known limitation:** no land-cover feature yet, so hot+dry urban weather (e.g. Delhi) can read as fire-prone the same as hot+dry forest weather — v2 improvement, worth noting in the thesis.
 6. ~~Build FastAPI endpoints to serve predictions + AQI data~~ ✅ **Done** — all endpoints now serve real DB/model data, no more seed/hardcoded values
-7. Build the React dashboard, connect to the deployed API
-8. Add preparedness content and alert logic
-9. Testing, polish, documentation
+7. ~~Build the React dashboard, connect to the deployed API~~ ✅ **Done (Sep 1, 2026)** — Vite+React+TS dashboard live on Render (https://wildfire-aqi-frontend.onrender.com), 3 routes, MapLibre map, real backend data throughout
+8. ~~Add preparedness content and alert logic~~ ✅ **Basic version done** — hardcoded tips + evacuation links per region, threshold-based alerts. Could be expanded (more detailed tips, real notifications) but functional for MVP.
+9. Testing, polish, documentation — write up the thesis/report, add unit tests, polish edge cases (loading states, empty states already handled in the frontend; error boundary/retry logic could be more robust)
 
 ---
 
