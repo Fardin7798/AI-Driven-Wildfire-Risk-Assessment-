@@ -14,6 +14,7 @@ import os
 import requests
 import psycopg2
 import psycopg2.extras
+import joblib
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -21,6 +22,11 @@ load_dotenv()
 DATABASE_URL = os.environ.get("DATABASE_URL")
 NASA_FIRMS_MAP_KEY = os.environ.get("NASA_FIRMS_MAP_KEY")
 CPCB_API_KEY = os.environ.get("CPCB_DATA_GOV_IN_API_KEY")
+
+# Trained XGBoost model — see ml/wildfire_risk_training.ipynb for how it was
+# built (real historical FIRMS + Open-Meteo data, not synthetic).
+_MODEL_PATH = os.path.join(os.path.dirname(__file__), "fire_risk_model.pkl")
+_risk_model = joblib.load(_MODEL_PATH) if os.path.exists(_MODEL_PATH) else None
 
 # India bounding box (west, south, east, north) for the FIRMS area query
 INDIA_BBOX = "68,8,97,37"
@@ -170,11 +176,10 @@ def fetch_aqi(conn):
 
 
 # ---------------------------------------------------------------------------
-# 4. Fire risk score — rule-based v1 (real inputs, not ML yet)
+# 4. Fire risk score — real XGBoost model (ml/wildfire_risk_training.ipynb)
 #
-# Full ML training needs weeks of historical data we don't have yet.
-# This is an honest interim: a simplified fire-danger formula driven by
-# REAL weather + REAL nearby fire detections, not a hardcoded number.
+# Uses the trained model if fire_risk_model.pkl is present; falls back to
+# a simple rule-based formula only if the model file is missing.
 # ---------------------------------------------------------------------------
 
 def compute_risk(conn):
@@ -183,7 +188,7 @@ def compute_risk(conn):
     with conn.cursor() as cur:
         for r in regions:
             cur.execute(
-                """SELECT humidity, wind_speed, temp FROM raw_weather
+                """SELECT humidity, wind_speed, temp, rainfall FROM raw_weather
                    WHERE region_id = %s ORDER BY timestamp DESC LIMIT 1""",
                 (r["id"],),
             )
@@ -191,24 +196,32 @@ def compute_risk(conn):
             if not w:
                 continue
 
-            cur.execute(
-                """SELECT count(*) AS n FROM raw_fire_detections
-                   WHERE timestamp > now() - interval '24 hours'
-                     AND lat BETWEEN %s - 1 AND %s + 1
-                     AND lon BETWEEN %s - 1 AND %s + 1""",
-                (r["lat"], r["lat"], r["lon"], r["lon"]),
-            )
-            fire_count = cur.fetchone()["n"]
-
             humidity = float(w["humidity"] or 50)
             wind = float(w["wind_speed"] or 0)
             temp = float(w["temp"] or 25)
+            rainfall = float(w["rainfall"] or 0)
 
-            score = (1 - humidity / 100) * 0.45
-            score += min(wind / 40, 1) * 0.25
-            score += min(fire_count / 5, 1) * 0.20
-            score += (0.10 if temp > 35 else 0.0)
-            score = round(min(max(score, 0), 1), 2)
+            if _risk_model is not None:
+                model_version = "xgboost-v1"
+                # order must match training: temp, humidity, wind_speed, rainfall
+                score = float(_risk_model.predict_proba([[temp, humidity, wind, rainfall]])[0][1])
+            else:
+                # fallback if the model file is missing for some reason
+                cur.execute(
+                    """SELECT count(*) AS n FROM raw_fire_detections
+                       WHERE timestamp > now() - interval '24 hours'
+                         AND lat BETWEEN %s - 1 AND %s + 1
+                         AND lon BETWEEN %s - 1 AND %s + 1""",
+                    (r["lat"], r["lat"], r["lon"], r["lon"]),
+                )
+                fire_count = cur.fetchone()["n"]
+                model_version = "rule-based-v1"
+                score = (1 - humidity / 100) * 0.45
+                score += min(wind / 40, 1) * 0.25
+                score += min(fire_count / 5, 1) * 0.20
+                score += (0.10 if temp > 35 else 0.0)
+
+            score = round(min(max(score, 0), 1), 4)
 
             if score >= 0.75:
                 level = "Extreme"
@@ -222,7 +235,7 @@ def compute_risk(conn):
             cur.execute(
                 """INSERT INTO risk_scores (region_id, timestamp, risk_level, risk_score, model_version)
                    VALUES (%s, now(), %s, %s, %s)""",
-                (r["id"], level, score, "rule-based-v1"),
+                (r["id"], level, score, model_version),
             )
             cur.execute(
                 "UPDATE regions SET current_risk_level = %s WHERE id = %s",
