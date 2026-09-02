@@ -5,6 +5,7 @@ import type {
   Alert,
   TrendsResponse,
   Preparedness,
+  SearchResult,
 } from '../types'
 
 // In dev, Vite proxies /api -> the live Render backend (see vite.config.ts).
@@ -28,4 +29,5 @@ export const api = {
   trends: (id: string, days = 30) =>
     get<TrendsResponse>(`/trends/${id}?days=${days}`),
   preparedness: (id: string) => get<Preparedness>(`/preparedness/${id}`),
+  search: (city: string) => get<SearchResult>(`/search?city=${encodeURIComponent(city)}`),
 }

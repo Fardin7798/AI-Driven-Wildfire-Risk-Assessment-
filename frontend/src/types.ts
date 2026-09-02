@@ -68,3 +68,14 @@ export interface Preparedness {
   tips: string[]
   evacuation_resources: { title: string; url: string }[]
 }
+
+export interface SearchResult {
+  query: string
+  resolved_location: { name: string; state: string; lat: number; lon: number }
+  weather: { temp: number; humidity: number; wind_speed: number; rainfall: number }
+  risk_level: string | null
+  risk_score: number | null
+  model_version: string | null
+  aqi: { current_aqi: number; category: string; stations_used: number } | null
+  note: string
+}

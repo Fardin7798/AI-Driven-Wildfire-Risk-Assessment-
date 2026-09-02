@@ -20,6 +20,9 @@ export function Nav() {
         <NavLink to="/" end className={linkClass}>
           Dashboard
         </NavLink>
+        <NavLink to="/search" className={linkClass}>
+          Search a city
+        </NavLink>
         <NavLink to="/preparedness" className={linkClass}>
           Preparedness
         </NavLink>
