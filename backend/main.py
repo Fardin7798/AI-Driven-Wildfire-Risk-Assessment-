@@ -6,6 +6,7 @@ from typing import Literal
 import joblib
 import psycopg2
 import psycopg2.extras
+import requests
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
@@ -161,6 +162,116 @@ def list_regions():
 def get_region(region_id: str):
     region = get_region_or_404(region_id)
     return {**region, "geometry": "GeoJSON Polygon"}
+
+
+# ---------------------------------------------------------------------------
+# 1b. Search any city in India (live, on-demand — not a stored/tracked region)
+# ---------------------------------------------------------------------------
+
+
+def geocode_india(city: str) -> dict:
+    resp = requests.get(
+        "https://geocoding-api.open-meteo.com/v1/search",
+        params={"name": city, "count": 5, "country": "IN"},
+        timeout=15,
+    )
+    resp.raise_for_status()
+    results = resp.json().get("results", [])
+    if not results:
+        raise HTTPException(status_code=404, detail=f"No Indian city found matching '{city}'")
+    r = results[0]
+    return {
+        "name": r["name"],
+        "state": r.get("admin1", ""),
+        "lat": r["latitude"],
+        "lon": r["longitude"],
+    }
+
+
+def live_weather(lat: float, lon: float) -> dict:
+    resp = requests.get(
+        "https://api.open-meteo.com/v1/forecast",
+        params={
+            "latitude": lat,
+            "longitude": lon,
+            "current": "temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation",
+            "timezone": "Asia/Kolkata",
+        },
+        timeout=15,
+    )
+    resp.raise_for_status()
+    c = resp.json()["current"]
+    return {
+        "temp": c["temperature_2m"],
+        "humidity": c["relative_humidity_2m"],
+        "wind_speed": c["wind_speed_10m"],
+        "rainfall": c["precipitation"],
+    }
+
+
+def live_aqi_for_city(city: str) -> dict | None:
+    if not ingestion.CPCB_API_KEY:
+        return None
+    resp = requests.get(
+        "https://api.data.gov.in/resource/3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69",
+        params={
+            "api-key": ingestion.CPCB_API_KEY,
+            "format": "json",
+            "limit": 50,
+            "filters[city]": city,
+        },
+        headers=ingestion.BROWSER_HEADERS,
+        timeout=20,
+    )
+    resp.raise_for_status()
+    records = resp.json().get("records", [])
+    pm25_values = [
+        float(r["avg_value"])
+        for r in records
+        if r.get("pollutant_id") == "PM2.5" and r.get("avg_value") not in (None, "", "NA")
+    ]
+    if not pm25_values:
+        return None
+    avg = round(sum(pm25_values) / len(pm25_values))
+    return {"current_aqi": avg, "category": aqi_category(avg), "stations_used": len(pm25_values)}
+
+
+@app.get("/search")
+def search_city(city: str = Query(..., min_length=2)):
+    """Live, on-demand lookup for ANY city in India — not limited to the
+    pre-tracked regions in the `regions` table. Fire risk uses the same
+    trained model as tracked regions (it only needs weather, so it
+    genuinely generalizes anywhere). AQI uses a live CPCB city filter.
+    No historical trend or AQI forecast is available here — those only
+    exist for tracked regions (see /regions, /trends)."""
+    location = geocode_india(city)
+    weather = live_weather(location["lat"], location["lon"])
+
+    risk_level, risk_score, model_version = None, None, None
+    if ingestion._risk_model is not None:
+        score = float(
+            ingestion._risk_model.predict_proba(
+                [[weather["temp"], weather["humidity"], weather["wind_speed"], weather["rainfall"]]]
+            )[0][1]
+        )
+        risk_score = round(score, 4)
+        risk_level = (
+            "Extreme" if score >= 0.75 else "High" if score >= 0.5 else "Moderate" if score >= 0.25 else "Low"
+        )
+        model_version = "xgboost-v1"
+
+    aqi = live_aqi_for_city(location["name"])
+
+    return {
+        "query": city,
+        "resolved_location": location,
+        "weather": weather,
+        "risk_level": risk_level,
+        "risk_score": risk_score,
+        "model_version": model_version,
+        "aqi": aqi,
+        "note": "Live on-demand lookup — not a tracked region. No historical trend or AQI forecast available (those require a pre-trained per-region model). AQI is None if no CPCB station data was found for this city.",
+    }
 
 
 # ---------------------------------------------------------------------------
