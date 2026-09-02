@@ -119,14 +119,17 @@ issue was caught in minutes, not discovered later.
 
 ## Phase 6 — Real Database (Supabase, Not Local Docker)
 
-A design decision was made (and confirmed with the user) to use Supabase
-(hosted Postgres+PostGIS, free tier) instead of the originally-planned
-local Docker Compose setup — better for demoing a student project since
-it's already hosted and accessible from anywhere. Provisioned via the
-Supabase MCP connector: project created in the Mumbai region (closest to
-India, lowest latency), PostGIS extension enabled, the full schema from
-`architecture.md` created via SQL migrations, and 2 pilot regions
-(Nainital, Delhi) seeded.
+A design decision was made (and confirmed with the user, with tradeoffs
+presented — local Docker is more offline-friendly, Supabase is easier
+to demo remotely) to use Supabase (hosted Postgres+PostGIS, free tier)
+instead of the originally-planned local Docker Compose setup. Cost was
+explicitly verified (`$0/month` confirmed via the Supabase MCP's
+`get_cost`/`confirm_cost` flow) before provisioning, not assumed from
+"free tier" alone. Provisioned via the Supabase MCP connector: project
+created in the Mumbai region (closest to India, lowest latency),
+PostGIS extension enabled, the full schema from `architecture.md`
+created via SQL migrations, and 2 pilot regions (Nainital, Delhi)
+seeded.
 
 Connecting the backend to it surfaced a second real bug: Supabase's
 direct connection host is **IPv6-only** on the free tier, and Render has
@@ -305,6 +308,27 @@ dev-only proxy doesn't exist in a static production build). After
 deploy, a Playwright screenshot of the **actual live production URL**
 was taken and compared against local dev — confirming the deployed
 version genuinely matched, not just "should be the same."
+
+---
+
+## Phase 17 — Discovering a Generalization Gap (in progress)
+
+After the full stack was live, a real gap was identified: both the
+Prophet AQI forecast models and the `regions` table only covered 2
+pilot cities (Delhi, Nainital) — not genuinely "all of India" as the
+PRD intends. This wasn't caught earlier because testing had (correctly,
+per Phase 6-equivalent guidance) started with a small pilot set, but
+"done" was never re-checked against the full intended scope until the
+user explicitly asked whether any city in India could be searched.
+
+Key finding while investigating: the XGBoost fire-risk model itself
+**does** generalize (it takes only weather features, not
+location-specific ones), so it already works for any coordinates — the
+real gap is the AQI forecast (per-region-trained Prophet models) and
+the fixed 2-row `regions` table blocking arbitrary city search. A free
+geocoding API (Open-Meteo's, no key needed) and CPCB's existing
+city-level filter were verified as the path to a real fix (in
+progress as of this writing).
 
 ---
 
