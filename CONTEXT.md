@@ -40,6 +40,7 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 │   ├── PRD_Wildfire_AQI_Platform.md
 │   ├── architecture.md
 │   ├── api-docs.md
+│   ├── instructions.md
 │   └── tech-stack.md
 ├── backend/                  # FastAPI app, ingestion, ML models — live at wildfire-aqi-backend.onrender.com
 ├── ml/                       # Training notebooks (XGBoost fire risk, Prophet AQI forecast)
@@ -162,4 +163,4 @@ Full reasoning for each choice: see `docs/tech-stack.md`
 - **Author:** Fardin (Fardin7798)
 - **GitHub:** https://github.com/Fardin7798/AI-Driven-Wildfire-Risk-Assessment-
 - **Live URL:** Backend deployed — https://wildfire-aqi-backend.onrender.com (Render, free tier, Singapore region, auto-deploys on push to `main`)
-- **Other docs:** `docs/PRD_Wildfire_AQI_Platform.md`, `docs/architecture.md`, `docs/api-docs.md`, `docs/tech-stack.md`
+- **Other docs:** `docs/PRD_Wildfire_AQI_Platform.md`, `docs/architecture.md`, `docs/api-docs.md`, `docs/tech-stack.md`, `docs/instructions.md` (full build methodology/history)
