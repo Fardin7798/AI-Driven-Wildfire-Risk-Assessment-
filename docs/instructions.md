@@ -32,6 +32,33 @@ reusable methodology for future work on this repo (or similar projects).
 
 ---
 
+## The Per-Change Loop (followed for every real change in this project)
+
+This exact cycle repeated for almost every single change made on this
+project, not just at big milestones:
+
+1. Write the smallest piece of the change (one endpoint, one function,
+   one component).
+2. Test it directly — run it locally, curl it, or query the database
+   directly. Never moved on based on "the code looks right."
+3. `git add` + `git commit` with a message describing what changed,
+   what was tested, and any bug found+fixed in that specific commit
+   (see the many commit messages in this repo's history — each one
+   documents its own verification, not just "fixed stuff").
+4. `git push` to GitHub.
+5. Trigger a deploy (Render) — not batched with other changes.
+6. Verify the **actual live production URL** (curl or a Playwright
+   screenshot), not just "deploy status: live."
+7. If production verification found a problem (this happened several
+   times — see the Bug List below), that became the next change,
+   starting back at step 1, before moving on to new features.
+
+This is why the git history for this project has many small, focused
+commits with detailed messages instead of a few giant ones — each
+commit represents one verified, working change.
+
+---
+
 ## Phase 1 — Read Every Doc Before Writing Any Code
 
 Before touching code, all existing planning docs were read in full:
