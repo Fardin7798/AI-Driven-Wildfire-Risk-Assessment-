@@ -348,6 +348,7 @@ none were caught by code review alone:
 | 7 | Frontend blank white page | `maplibre-gl` has no default export in the installed version | `import * as maplibregl` instead of default import |
 | 8 | `npm install` silently breaks builds | Machine-wide `NODE_ENV=production` strips devDependencies | `frontend/.npmrc` with `include=dev` |
 | 9 | GitHub API key leaked risk | No `.gitignore` existed in the repo at all | Created one before any `.env` was added |
+| 10 | Direct URL / page refresh on any nested route (`/search`, `/region/:id`) returns "Not Found" in production | Render Static Site has no SPA fallback by default; a Netlify-style `_redirects` file was tried first and does NOT work on Render (verified via search before deploying it — Render needs a dashboard-configured rewrite rule or `render.yaml` routes, not `_redirects`) | Added a Rewrite rule in Render dashboard (Source `/*` → Destination `/index.html`); verified with direct navigation + hard refresh on `/search` and `/region/dl-delhi`, both now return real data instead of a 404 |
 
 ---
 
