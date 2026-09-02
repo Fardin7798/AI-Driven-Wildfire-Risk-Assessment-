@@ -54,6 +54,42 @@ Returns detailed info for a single region.
 
 ---
 
+### `GET /search?city={name}`
+✅ **Live, on-demand lookup for ANY city in India** — not limited to
+the pre-tracked regions above. Solves the "only Delhi/Nainital"
+limitation: geocodes the city (Open-Meteo, free), fetches live weather,
+runs the same trained fire-risk model (generalizes anywhere in India —
+it only needs weather, not location-specific training), and fetches
+live AQI via CPCB's city filter.
+
+**Query params:**
+| Param | Type | Description |
+|---|---|---|
+| city | string | Any Indian city name, e.g. `Jaipur`, `Mumbai` |
+
+**Response 200:**
+```json
+{
+  "query": "Jaipur",
+  "resolved_location": { "name": "Jaipur", "state": "Rajasthan", "lat": 26.9196, "lon": 75.7878 },
+  "weather": { "temp": 33.0, "humidity": 49, "wind_speed": 5.8, "rainfall": 0.1 },
+  "risk_level": "Extreme",
+  "risk_score": 0.9146,
+  "model_version": "xgboost-v1",
+  "aqi": { "current_aqi": 49, "category": "Good", "stations_used": 5 },
+  "note": "..."
+}
+```
+
+⚠️ `aqi` is `null` if no CPCB station covers that city (honest — not a
+fake number). **No `history`/`trend`/`forecast` here** — those require
+a pre-trained per-region Prophet model, which only exists for tracked
+regions (`/regions`, `/trends`).
+
+**Response 404:** No Indian city found matching the query.
+
+---
+
 ## 2. Forest Fire Risk
 
 ### `GET /risk/{region_id}`
