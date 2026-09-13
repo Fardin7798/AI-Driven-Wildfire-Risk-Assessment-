@@ -1,247 +1,170 @@
 # API Documentation — Wildfire Risk & AQI Monitoring Platform (India)
 
 **Base URL (local dev):** `http://localhost:8000`
-**Base URL (production):** `https://wildfire-aqi-backend.onrender.com` (deployed on Render, free tier — ⚠️ currently serving seed/mock data shaped exactly like the responses below; real data ingestion not yet wired in)
+**Interactive Swagger UI:** `http://localhost:8000/docs`
 **Format:** JSON
-**Auth:** None required for MVP (all endpoints public/read-only)
+**Auth:** None required (Public Real-Time Environmental Engine)
 
 ---
 
-## 1. Regions
+## 1. System Health
 
-### `GET /regions`
-Returns a list of all monitored regions (districts/cities) with their current status summary.
-
-**Response 200:**
-```json
-[
-  {
-    "region_id": "uk-nainital",
-    "name": "Nainital",
-    "state": "Uttarakhand",
-    "centroid": { "lat": 29.3803, "lon": 79.4636 },
-    "current_risk_level": "High",
-    "current_aqi": 112,
-    "last_updated": "2026-08-30T14:00:00Z"
-  }
-]
-```
-
----
-
-### `GET /regions/{region_id}`
-Returns detailed info for a single region.
-
-**Path params:**
-| Param | Type | Description |
-|---|---|---|
-| region_id | string | Unique region identifier (e.g., `uk-nainital`, `dl-delhi`) |
+### `GET /health`
+Verifies backend operational status, district database coverage, and live UTC timestamp.
 
 **Response 200:**
 ```json
 {
-  "region_id": "uk-nainital",
-  "name": "Nainital",
-  "state": "Uttarakhand",
-  "geometry": "GeoJSON Polygon",
-  "current_risk_level": "High",
-  "current_aqi": 112,
-  "last_updated": "2026-08-30T14:00:00Z"
+  "status": "healthy",
+  "service": "Wildfire Risk & Air Quality Engine (India)",
+  "version": "1.0.0",
+  "districts_loaded": 39,
+  "timestamp": "2026-09-13T08:16:20.544944+00:00"
 }
 ```
 
-**Response 404:** Region not found.
-
 ---
 
-### `GET /search?city={name}`
-✅ **Live, on-demand lookup for ANY city in India** — not limited to
-the pre-tracked regions above. Solves the "only Delhi/Nainital"
-limitation: geocodes the city (Open-Meteo, free), fetches live weather,
-runs the same trained fire-risk model (generalizes anywhere in India —
-it only needs weather, not location-specific training), and fetches
-live AQI via CPCB's city filter.
+## 2. Indian Districts & Search Hubs
 
-**Query params:**
-| Param | Type | Description |
-|---|---|---|
-| city | string | Any Indian city name, e.g. `Jaipur`, `Mumbai` |
+### `GET /api/v1/districts`
+Returns list of pre-bundled Indian districts and major eco-zones for instant autocomplete.
+
+**Query Parameters:**
+| Param | Type | Required | Description |
+|---|---|:---:|---|
+| `search` | string | No | Filter by district or state name (e.g. `Jalgaon`, `Maharashtra`) |
 
 **Response 200:**
 ```json
 {
-  "query": "Jaipur",
-  "resolved_location": { "name": "Jaipur", "state": "Rajasthan", "lat": 26.9196, "lon": 75.7878 },
-  "weather": { "temp": 33.0, "humidity": 49, "wind_speed": 5.8, "rainfall": 0.1 },
-  "risk_level": "Extreme",
-  "risk_score": 0.9146,
-  "model_version": "xgboost-v1",
-  "aqi": { "current_aqi": 49, "category": "Good", "stations_used": 5 },
-  "note": "..."
-}
-```
-
-⚠️ `aqi` is `null` if no CPCB station covers that city (honest — not a
-fake number). **No `history`/`trend`/`forecast` here** — those require
-a pre-trained per-region Prophet model, which only exists for tracked
-regions (`/regions`, `/trends`).
-
-**Response 404:** No Indian city found matching the query.
-
----
-
-## 2. Forest Fire Risk
-
-### `GET /risk/{region_id}`
-Returns current and recent risk score history for a region.
-
-⚠️ **`model_version: "rule-based-v1"` — not ML yet.** Real weather + real nearby-fire-detection inputs, run through a simplified fire-danger formula (humidity/wind/temp/fire-count weighted). Honest interim until enough historical data accumulates to train a real ML model (see roadmap in CONTEXT.md). `history` will be empty until the hourly ingestion job has run more than once for a region.
-
-**Query params:**
-| Param | Type | Default | Description |
-|---|---|---|---|
-| days | int | 7 | Number of past days of history to return |
-
-**Response 200 (current production shape):**
-```json
-{
-  "region_id": "uk-nainital",
-  "current": {
-    "risk_level": "Low",
-    "risk_score": 0.03,
-    "timestamp": "2026-08-31T20:44:12Z",
-    "model_version": "rule-based-v1"
-  },
-  "history": []
-}
-```
-
-**Risk levels:** `Low` | `Moderate` | `High` | `Extreme`
-
----
-
-## 3. Air Quality
-
-### `GET /aqi/{region_id}`
-Returns current AQI and a real Prophet-based forecast for a region, using India's National AQI standard (CPCB) for the current value and PM2.5-based forecasting for future values.
-
-**Response 200 (current production shape):**
-```json
-{
-  "region_id": "dl-delhi",
-  "current_aqi": 56,
-  "category": "Satisfactory",
-  "dominant_pollutant": "PM2.5",
-  "timestamp": "2026-08-31T11:23:44Z",
-  "forecast": [
-    { "timestamp": "2026-09-02T00:00:00Z", "predicted_aqi": 97, "lower_bound": 64, "upper_bound": 131 },
-    { "timestamp": "2026-09-03T00:00:00Z", "predicted_aqi": 104, "lower_bound": 67, "upper_bound": 138 }
-  ],
-  "forecast_note": "Prophet model trained on ~1 year of real historical PM2.5 (Open-Meteo Air Quality API). Forecast is PM2.5-based, not the full CPCB sub-index formula."
-}
-```
-
-Forecast is real (`ml/aqi_forecasting_training.ipynb`, Prophet, ~1 year of real historical PM2.5 from Open-Meteo's Air Quality API). If no model exists for a region, `forecast` is an empty array with an explanatory `forecast_note`.
-
-**AQI categories (India National AQI — CPCB):** `Good (0–50)` | `Satisfactory (51–100)` | `Moderate (101–200)` | `Poor (201–300)` | `Very Poor (301–400)` | `Severe (401–500)`
-
----
-
-## 4. Alerts
-
-### `GET /alerts`
-Returns all currently active alerts across regions (High/Extreme fire risk or Poor+/Severe AQI).
-
-**Response 200:**
-```json
-[
-  {
-    "region_id": "uk-nainital",
-    "alert_type": "forest_fire_risk",
-    "severity": "High",
-    "message": "High forest fire risk due to low humidity and high wind speed.",
-    "triggered_at": "2026-08-30T14:00:00Z"
-  },
-  {
-    "region_id": "dl-delhi",
-    "alert_type": "air_quality",
-    "severity": "Very Poor",
-    "message": "AQI has reached Very Poor levels, likely linked to stubble burning.",
-    "triggered_at": "2026-08-30T13:00:00Z"
-  }
-]
-```
-
----
-
-## 5. Trends
-
-### `GET /trends/{region_id}`
-Returns historical time-series data for charting (risk score + AQI combined).
-
-**Query params:**
-| Param | Type | Default | Description |
-|---|---|---|---|
-| days | int | 30 | Number of past days to return |
-| metric | string | "both" | `risk` \| `aqi` \| `both` |
-
-**Response 200:**
-```json
-{
-  "region_id": "uk-nainital",
-  "data": [
-    { "date": "2026-08-01", "risk_score": 0.35, "aqi": 45 },
-    { "date": "2026-08-02", "risk_score": 0.40, "aqi": 52 }
+  "total": 39,
+  "districts": [
+    {
+      "id": "mh-jalgaon",
+      "name": "Jalgaon / Bhusawal",
+      "state": "Maharashtra",
+      "lat": 21.045,
+      "lon": 75.7873,
+      "zone": "Deccan Plateau"
+    }
   ]
 }
 ```
 
 ---
 
-## 6. Preparedness
+## 3. Unified Environmental Risk Search
 
-### `GET /preparedness/{region_id}`
-Returns safety tips and evacuation resource links relevant to the region's current risk level.
+### `GET /api/v1/search`
+Primary production endpoint. Performs on-demand parallel fetch of live weather, calculates Canadian FWI wildfire danger, queries NASA FIRMS satellite active fire proximity, retrieves Copernicus CAMS 72-hour hourly AQI forecasts, and outputs dynamic community preparedness advisories.
+
+**Query Parameters:**
+| Param | Type | Required | Description |
+|---|---|:---:|---|
+| `query` | string | No | City or district name (e.g. `Bhusawal`, `Nainital`, `Delhi`, `Pune`) |
+| `lat` | float | No | Latitude coordinate override |
+| `lon` | float | No | Longitude coordinate override |
 
 **Response 200:**
 ```json
 {
-  "region_id": "uk-nainital",
-  "current_risk_level": "High",
-  "tips": [
-    "Keep an emergency go-bag ready.",
-    "Monitor official Forest Survey of India (FSI) and State Forest Department updates.",
-    "Avoid outdoor burning and report smoke/fire sightings to the nearest forest office."
-  ],
-  "evacuation_resources": [
-    { "title": "Forest Survey of India — Fire Alerts", "url": "https://fsiforestfire.gov.in/" },
-    { "title": "National Disaster Management Authority (NDMA)", "url": "https://ndma.gov.in/" }
+  "location": {
+    "name": "Jalgaon / Bhusawal",
+    "state": "Maharashtra",
+    "latitude": 21.045,
+    "longitude": 75.7873,
+    "eco_zone": "Deccan Plateau"
+  },
+  "weather": {
+    "temperature": 28.5,
+    "humidity": 81.0,
+    "wind_speed": 11.5,
+    "precipitation": 0.1,
+    "weather_code": 95,
+    "timestamp": "2026-09-13T13:45"
+  },
+  "wildfire_assessment": {
+    "fwi_score": 7.3,
+    "risk_level": "Moderate",
+    "color": "#eab308",
+    "badge": "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    "ffmc": 82.1,
+    "isi": 4.2,
+    "key_drivers": ["Stable meteorological conditions with adequate moisture content"],
+    "nearby_satellite_fires_50km": 0,
+    "closest_active_fire_km": null,
+    "active_hotspots": []
+  },
+  "air_quality": {
+    "cpcb_aqi": 13,
+    "category": "Good",
+    "color": "#22c55e",
+    "badge": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    "pollutants": {
+      "pm2_5": 7.9,
+      "pm10": 8.0,
+      "co": 132.0,
+      "no2": 5.2,
+      "so2": 10.3,
+      "o3": 88.0
+    },
+    "forecast_72h": [
+      {
+        "time": "2026-09-13T00:00",
+        "aqi": 24,
+        "pm2_5": 14.7,
+        "pm10": 16.2,
+        "wildfire_smoke_pm10": 0.0
+      }
+    ]
+  },
+  "community_preparedness": {
+    "status": "normal",
+    "advisories": [],
+    "recommended_actions": [
+      "Environmental baseline is stable. Maintain standard fire safety consciousness."
+    ],
+    "emergency_contacts": [
+      { "name": "National Emergency Number", "number": "112", "desc": "Unified emergency helpline" },
+      { "name": "Fire Service Emergency", "number": "101", "desc": "Immediate local fire response" },
+      { "name": "Disaster Management (NDMA)", "number": "1078", "desc": "National Disaster Management Helpline" }
+    ]
+  }
+}
+```
+
+---
+
+## 4. Active Satellite Fires (MapLibre Ready)
+
+### `GET /api/v1/fires/active`
+Returns NASA FIRMS VIIRS 375m active fire detections across India in standard GeoJSON format for direct consumption by MapLibre GL JS vector layers.
+
+**Query Parameters:**
+| Param | Type | Required | Description |
+|---|---|:---:|---|
+| `format` | string | No | `geojson` (default) or `list` |
+
+**Response 200 (GeoJSON):**
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [79.48, 29.42]
+      },
+      "properties": {
+        "brightness": 335.2,
+        "frp": 14.5,
+        "confidence": "high",
+        "acq_date": "Today",
+        "acq_time": "11:30"
+      }
+    }
   ]
 }
 ```
-
----
-
-## 7. Error Format (all endpoints)
-
-```json
-{
-  "error": "Region not found",
-  "status_code": 404
-}
-```
-
-| Status Code | Meaning |
-|---|---|
-| 200 | Success |
-| 404 | Resource not found |
-| 422 | Invalid query/path parameters |
-| 500 | Internal server error (e.g., data source temporarily unavailable) |
-
----
-
-## 8. Notes
-- All timestamps are in UTC (ISO 8601 format) internally; display in IST (UTC+5:30) on the frontend.
-- Data freshness depends on ingestion schedule (weather: ~15–60 min, fire: every few hours per FSI satellite pass, AQI: hourly).
-- CPCB AQI data requires a free data.gov.in API key — stored server-side, never exposed to the frontend.
-- No authentication required for MVP; add API keys/rate-limiting before any public deployment.

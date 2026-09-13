@@ -1,34 +1,26 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Fraunces", serif;
-  --font-body: "IBM Plex Sans", sans-serif;
-
-  --color-charcoal: #1B2E28;
-  --color-paper: #F5F1E8;
-  --color-fire: #C4622D;
-  --color-fire-dark: #9A4A20;
-  --color-sage: #4A7C6E;
-  --color-amber: #E8B341;
-  --color-severe: #8B2E1F;
-
-  /* shadcn/ui standard token names, mapped to our palette so fetched
-     components (Card, etc.) style correctly without a separate theme file */
-  --color-card: #FFFFFF80;
-  --color-card-foreground: var(--color-charcoal);
-  --color-muted-foreground: #1B2E2899;
-  --color-border: #1B2E281A;
+  --color-canvas: #09090b;
+  --color-panel: #121215;
+  --color-border-subtle: #27272a;
 }
 
 @layer base {
-  html {
-    font-family: var(--font-body);
-  }
-  h1, h2, h3, h4 {
-    font-family: var(--font-display);
-  }
   body {
-    background-color: var(--color-paper);
-    color: var(--color-charcoal);
+    background-color: #09090b;
+    color: #f4f4f5;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+}
+
+/* Custom glowing pulse for active satellite hotspots */
+@keyframes fire-pulse {
+  0% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.animate-fire {
+  animation: fire-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }

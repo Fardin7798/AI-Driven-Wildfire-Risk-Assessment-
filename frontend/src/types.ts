@@ -1,81 +1,124 @@
-export interface Region {
-  region_id: string
+export interface District {
+  id: string
   name: string
   state: string
-  centroid: { lat: number; lon: number }
-  current_risk_level: 'Low' | 'Moderate' | 'High' | 'Extreme'
-  current_aqi: number
-  last_updated: string
+  lat: number
+  lon: number
+  zone: string
 }
 
-export interface RiskPoint {
+export interface WeatherData {
+  temperature: number
+  humidity: number
+  wind_speed: number
+  precipitation: number
+  weather_code: number
   timestamp: string
-  risk_level: string
-  risk_score: number
 }
 
-export interface RiskResponse {
-  region_id: string
-  current: {
-    risk_level: string
-    risk_score: number
-    timestamp: string
-    model_version: string
+export interface Hotspot {
+  lat: number
+  lon: number
+  brightness: number
+  frp: number
+  confidence: string
+  acq_date: string
+  acq_time: string
+  daynight: string
+  distance_km?: number
+}
+
+export interface WildfireAssessment {
+  fwi_score: number
+  risk_level: 'Low' | 'Moderate' | 'High' | 'Very High' | 'Extreme'
+  color: string
+  badge: string
+  ffmc: number
+  isi: number
+  key_drivers: string[]
+  nearby_satellite_fires_50km: number
+  closest_active_fire_km: number | null
+  active_hotspots: Hotspot[]
+}
+
+export interface ForecastPoint {
+  time: string
+  aqi: number
+  pm2_5: number
+  pm10: number
+  wildfire_smoke_pm10: number
+}
+
+export interface AirQualityData {
+  cpcb_aqi: number
+  category: 'Good' | 'Satisfactory' | 'Moderate' | 'Poor' | 'Very Poor' | 'Severe'
+  color: string
+  badge: string
+  pollutants: {
+    pm2_5: number
+    pm10: number
+    co: number
+    no2: number
+    so2: number
+    o3: number
   }
-  history: RiskPoint[]
+  forecast_72h: ForecastPoint[]
 }
 
-export interface AqiForecastPoint {
-  timestamp: string
-  predicted_aqi: number
-  lower_bound: number
-  upper_bound: number
-}
-
-export interface AqiResponse {
-  region_id: string
-  current_aqi: number
-  category: string
-  dominant_pollutant: string
-  timestamp: string
-  forecast: AqiForecastPoint[]
-  forecast_note: string | null
-}
-
-export interface Alert {
-  region_id: string
-  alert_type: string
-  severity: string
+export interface AdvisoryItem {
+  type: string
+  title: string
   message: string
-  triggered_at: string
+  urgency: 'critical' | 'warning' | 'danger'
 }
 
-export interface TrendPoint {
-  date: string
-  risk_score?: number
-  aqi?: number
+export interface EmergencyContact {
+  name: string
+  number: string
+  desc: string
 }
 
-export interface TrendsResponse {
-  region_id: string
-  data: TrendPoint[]
-  note: string
+export interface CommunityPreparedness {
+  status: 'normal' | 'alert'
+  advisories: AdvisoryItem[]
+  recommended_actions: string[]
+  emergency_contacts: EmergencyContact[]
 }
 
-export interface Preparedness {
-  region_id: string
-  current_risk_level: string
-  tips: string[]
-  evacuation_resources: { title: string; url: string }[]
+export interface UnifiedSearchResponse {
+  location: {
+    name: string
+    state: string
+    latitude: number
+    longitude: number
+    eco_zone: string
+  }
+  weather: WeatherData
+  wildfire_assessment: WildfireAssessment
+  air_quality: AirQualityData
+  community_preparedness: CommunityPreparedness
+  metadata: {
+    standards: string[]
+    timestamp: string
+  }
 }
 
-export interface SearchResult {
-  query: string
-  resolved_location: { name: string; state: string; lat: number; lon: number }
-  weather: { temp: number; humidity: number; wind_speed: number; rainfall: number }
-  risk_level: string | null
-  risk_score: number | null
-  model_version: string | null
-  aqi: { current_aqi: number; category: string; stations_used: number } | null
-  note: string
+export interface GeoJSONFeature {
+  type: 'Feature'
+  geometry: {
+    type: 'Point'
+    coordinates: [number, number]
+  }
+  properties: {
+    brightness: number
+    frp: number
+    confidence: string
+    acq_date: string
+    acq_time: string
+  }
+}
+
+export interface GeoJSONFeatureCollection {
+  type: 'FeatureCollection'
+  features: GeoJSONFeature[]
 }

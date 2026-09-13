@@ -1,0 +1,314 @@
+[
+  {
+    "id": "mh-jalgaon",
+    "name": "Jalgaon / Bhusawal",
+    "state": "Maharashtra",
+    "lat": 21.045,
+    "lon": 75.7873,
+    "zone": "Deccan Plateau"
+  },
+  {
+    "id": "mh-pune",
+    "name": "Pune",
+    "state": "Maharashtra",
+    "lat": 18.5204,
+    "lon": 73.8567,
+    "zone": "Western Ghats Foothills"
+  },
+  {
+    "id": "mh-mumbai",
+    "name": "Mumbai",
+    "state": "Maharashtra",
+    "lat": 19.076,
+    "lon": 72.8777,
+    "zone": "Konkan Coastal"
+  },
+  {
+    "id": "mh-nagpur",
+    "name": "Nagpur",
+    "state": "Maharashtra",
+    "lat": 21.1458,
+    "lon": 79.0882,
+    "zone": "Central Forest Belt"
+  },
+  {
+    "id": "mh-nashik",
+    "name": "Nashik",
+    "state": "Maharashtra",
+    "lat": 19.9975,
+    "lon": 73.7898,
+    "zone": "Western Ghats"
+  },
+  {
+    "id": "uk-nainital",
+    "name": "Nainital",
+    "state": "Uttarakhand",
+    "lat": 29.3919,
+    "lon": 79.4542,
+    "zone": "Himalayan Forest"
+  },
+  {
+    "id": "uk-dehradun",
+    "name": "Dehradun",
+    "state": "Uttarakhand",
+    "lat": 30.3165,
+    "lon": 78.0322,
+    "zone": "Himalayan Foothills"
+  },
+  {
+    "id": "uk-almora",
+    "name": "Almora",
+    "state": "Uttarakhand",
+    "lat": 29.5971,
+    "lon": 79.6591,
+    "zone": "Himalayan Forest"
+  },
+  {
+    "id": "uk-chamoli",
+    "name": "Chamoli",
+    "state": "Uttarakhand",
+    "lat": 30.4048,
+    "lon": 79.3275,
+    "zone": "High Himalaya"
+  },
+  {
+    "id": "dl-delhi",
+    "name": "Delhi-NCR",
+    "state": "Delhi",
+    "lat": 28.6139,
+    "lon": 77.209,
+    "zone": "Indo-Gangetic Plain"
+  },
+  {
+    "id": "hp-shimla",
+    "name": "Shimla",
+    "state": "Himachal Pradesh",
+    "lat": 31.1048,
+    "lon": 77.1734,
+    "zone": "Himalayan Forest"
+  },
+  {
+    "id": "hp-kullu",
+    "name": "Kullu",
+    "state": "Himachal Pradesh",
+    "lat": 31.9579,
+    "lon": 77.1095,
+    "zone": "Himalayan Valley"
+  },
+  {
+    "id": "pb-ludhiana",
+    "name": "Ludhiana",
+    "state": "Punjab",
+    "lat": 30.901,
+    "lon": 75.8573,
+    "zone": "Agricultural Smog Belt"
+  },
+  {
+    "id": "pb-amritsar",
+    "name": "Amritsar",
+    "state": "Punjab",
+    "lat": 31.634,
+    "lon": 74.8723,
+    "zone": "Agricultural Smog Belt"
+  },
+  {
+    "id": "up-lucknow",
+    "name": "Lucknow",
+    "state": "Uttar Pradesh",
+    "lat": 26.8467,
+    "lon": 80.9462,
+    "zone": "Indo-Gangetic Plain"
+  },
+  {
+    "id": "up-kanpur",
+    "name": "Kanpur",
+    "state": "Uttar Pradesh",
+    "lat": 26.4499,
+    "lon": 80.3319,
+    "zone": "Indo-Gangetic Plain"
+  },
+  {
+    "id": "up-varanasi",
+    "name": "Varanasi",
+    "state": "Uttar Pradesh",
+    "lat": 25.3176,
+    "lon": 82.9739,
+    "zone": "Indo-Gangetic Plain"
+  },
+  {
+    "id": "up-noida",
+    "name": "Noida / Greater Noida",
+    "state": "Uttar Pradesh",
+    "lat": 28.5355,
+    "lon": 77.391,
+    "zone": "Indo-Gangetic Plain"
+  },
+  {
+    "id": "mp-bhopal",
+    "name": "Bhopal",
+    "state": "Madhya Pradesh",
+    "lat": 23.2599,
+    "lon": 77.4126,
+    "zone": "Central Deciduous"
+  },
+  {
+    "id": "mp-indore",
+    "name": "Indore",
+    "state": "Madhya Pradesh",
+    "lat": 22.7196,
+    "lon": 75.8577,
+    "zone": "Malwa Plateau"
+  },
+  {
+    "id": "mp-balaghat",
+    "name": "Balaghat",
+    "state": "Madhya Pradesh",
+    "lat": 21.808,
+    "lon": 80.184,
+    "zone": "Central Dense Forest"
+  },
+  {
+    "id": "od-mayurbhanj",
+    "name": "Mayurbhanj (Similipal)",
+    "state": "Odisha",
+    "lat": 21.9287,
+    "lon": 86.7456,
+    "zone": "Eastern Ghats Biosphere"
+  },
+  {
+    "id": "od-bhubaneswar",
+    "name": "Bhubaneswar",
+    "state": "Odisha",
+    "lat": 20.2961,
+    "lon": 85.8245,
+    "zone": "Coastal Plains"
+  },
+  {
+    "id": "ka-bengaluru",
+    "name": "Bengaluru",
+    "state": "Karnataka",
+    "lat": 12.9716,
+    "lon": 77.5946,
+    "zone": "Deccan Plateau"
+  },
+  {
+    "id": "ka-shivamogga",
+    "name": "Shivamogga",
+    "state": "Karnataka",
+    "lat": 13.9299,
+    "lon": 75.5681,
+    "zone": "Western Ghats Rainforest"
+  },
+  {
+    "id": "tn-chennai",
+    "name": "Chennai",
+    "state": "Tamil Nadu",
+    "lat": 13.0827,
+    "lon": 80.2707,
+    "zone": "Coromandel Coastal"
+  },
+  {
+    "id": "tn-nilgiris",
+    "name": "Nilgiris (Ooty)",
+    "state": "Tamil Nadu",
+    "lat": 11.4102,
+    "lon": 76.695,
+    "zone": "Western Ghats Montane"
+  },
+  {
+    "id": "tg-hyderabad",
+    "name": "Hyderabad",
+    "state": "Telangana",
+    "lat": 17.385,
+    "lon": 78.4867,
+    "zone": "Deccan Plateau"
+  },
+  {
+    "id": "gj-ahmedabad",
+    "name": "Ahmedabad",
+    "state": "Gujarat",
+    "lat": 23.0225,
+    "lon": 72.5714,
+    "zone": "Semi-Arid Basin"
+  },
+  {
+    "id": "gj-gir-somnath",
+    "name": "Gir Somnath",
+    "state": "Gujarat",
+    "lat": 20.9042,
+    "lon": 70.3667,
+    "zone": "Dry Deciduous Forest"
+  },
+  {
+    "id": "rj-jaipur",
+    "name": "Jaipur",
+    "state": "Rajasthan",
+    "lat": 26.9124,
+    "lon": 75.7873,
+    "zone": "Aravalli Range"
+  },
+  {
+    "id": "rj-udaipur",
+    "name": "Udaipur",
+    "state": "Rajasthan",
+    "lat": 24.5854,
+    "lon": 73.7125,
+    "zone": "Aravalli Forest"
+  },
+  {
+    "id": "wb-kolkata",
+    "name": "Kolkata",
+    "state": "West Bengal",
+    "lat": 22.5726,
+    "lon": 88.3639,
+    "zone": "Deltaic Plain"
+  },
+  {
+    "id": "wb-darjeeling",
+    "name": "Darjeeling",
+    "state": "West Bengal",
+    "lat": 27.041,
+    "lon": 88.2663,
+    "zone": "Eastern Himalayan Forest"
+  },
+  {
+    "id": "as-guwahati",
+    "name": "Guwahati",
+    "state": "Assam",
+    "lat": 26.1445,
+    "lon": 91.7362,
+    "zone": "Brahmaputra Valley"
+  },
+  {
+    "id": "jk-srinagar",
+    "name": "Srinagar",
+    "state": "Jammu & Kashmir",
+    "lat": 34.0837,
+    "lon": 74.7973,
+    "zone": "Kashmir Valley"
+  },
+  {
+    "id": "jh-ranchi",
+    "name": "Ranchi",
+    "state": "Jharkhand",
+    "lat": 23.3441,
+    "lon": 85.3096,
+    "zone": "Chota Nagpur Plateau"
+  },
+  {
+    "id": "cg-raipur",
+    "name": "Raipur",
+    "state": "Chhattisgarh",
+    "lat": 21.2514,
+    "lon": 81.6296,
+    "zone": "Central Plains"
+  },
+  {
+    "id": "cg-bastar",
+    "name": "Bastar",
+    "state": "Chhattisgarh",
+    "lat": 19.0743,
+    "lon": 81.9578,
+    "zone": "Dense Tribal Forest"
+  }
+]

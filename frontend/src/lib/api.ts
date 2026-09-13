@@ -1,33 +1,32 @@
 import type {
-  Region,
-  RiskResponse,
-  AqiResponse,
-  Alert,
-  TrendsResponse,
-  Preparedness,
-  SearchResult,
+  District,
+  UnifiedSearchResponse,
+  GeoJSONFeatureCollection,
 } from '../types'
 
-// In dev, Vite proxies /api -> the live Render backend (see vite.config.ts).
-// In production build, set VITE_API_BASE to the backend URL directly.
-const BASE = import.meta.env.VITE_API_BASE ?? '/api'
+const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`)
   if (!res.ok) {
-    throw new Error(`API error ${res.status} on ${path}`)
+    throw new Error(`API error ${res.status}: ${res.statusText}`)
   }
   return res.json()
 }
 
 export const api = {
-  regions: () => get<Region[]>('/regions'),
-  region: (id: string) => get<Region & { geometry: string }>(`/regions/${id}`),
-  risk: (id: string) => get<RiskResponse>(`/risk/${id}`),
-  aqi: (id: string) => get<AqiResponse>(`/aqi/${id}`),
-  alerts: () => get<Alert[]>('/alerts'),
-  trends: (id: string, days = 30) =>
-    get<TrendsResponse>(`/trends/${id}?days=${days}`),
-  preparedness: (id: string) => get<Preparedness>(`/preparedness/${id}`),
-  search: (city: string) => get<SearchResult>(`/search?city=${encodeURIComponent(city)}`),
+  getDistricts: (search?: string) =>
+    get<{ total: number; districts: District[] }>(
+      search ? `/api/v1/districts?search=${encodeURIComponent(search)}` : '/api/v1/districts'
+    ),
+  search: (query?: string, lat?: number, lon?: number) => {
+    const params = new URLSearchParams()
+    if (query) params.append('query', query)
+    if (lat !== undefined) params.append('lat', String(lat))
+    if (lon !== undefined) params.append('lon', String(lon))
+    return get<UnifiedSearchResponse>(`/api/v1/search?${params.toString()}`)
+  },
+  getActiveFires: () =>
+    get<GeoJSONFeatureCollection>('/api/v1/fires/active?format=geojson'),
+  getHealth: () => get<{ status: string; service: string }>('/health'),
 }

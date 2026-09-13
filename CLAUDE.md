@@ -1,9 +1,27 @@
-## graphify
+# Project Context & Coding Guidelines
 
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+## Project: WildfireRisk & CleanAir India
+AI-Driven Wildfire Risk Assessment, Air Quality Monitoring, and Community Preparedness Platform (India).
 
-Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+### Key Architectural Invariants
+1. **Zero Colab / Zero Heavy ML Models**: The platform does NOT use offline Prophet or XGBoost `.pkl` files. It relies on:
+   - **Canadian Forest Fire Weather Index (FWI)** pure math formulation (`backend/services/fwi_engine.py`).
+   - **Copernicus Atmosphere Monitoring Service (CAMS)** via Open-Meteo Air Quality API (`backend/services/aqi_service.py`).
+   - **NASA FIRMS VIIRS 375m** active fire detection + Haversine geodesic proximity (`backend/services/firms_service.py`).
+2. **On-Demand Caching**: In-memory 15-minute `cachetools.TTLCache` replaces complex background database cron schedulers.
+3. **Frontend**: React 19 + TypeScript + Vite + MapLibre GL JS (WebGL vector map) + Tailwind CSS v4 + Recharts.
+
+### Fast Development & Test Commands
+```bash
+# Backend verification
+cd backend && source .venv/bin/activate && python -c "from fastapi.testclient import TestClient; from main import app; c = TestClient(app); assert c.get('/health').status_code == 200"
+
+# Backend dev server
+cd backend && source .venv/bin/activate && uvicorn main:app --reload --port 8000
+
+# Frontend build & typecheck
+cd frontend && npm run build
+
+# One-click launch
+./run_dev.sh
+```

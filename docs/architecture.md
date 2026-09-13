@@ -1,142 +1,140 @@
-# Architecture — Wildfire Risk & AQI Monitoring Platform (India)
+# System Architecture Specification
 
-## 1. High-Level Architecture Diagram (text form)
+## AI-Driven Wildfire Risk Assessment & Air Quality Monitoring Platform (India)
 
-```
-┌───────────────────────────────────────────────────────────────────┐
-│                        EXTERNAL DATA SOURCES                       │
-│  FSI Fire Alerts │ IMD/Open-Meteo │ CPCB (data.gov.in) │ SAFAR    │
-│      (fire)          (weather)         (AQI)          (forecast) │
-└───────────────────────────────┬─────────────────────────────────────┘
-                                 │  (scheduled API calls)
-                                 ▼
-                  ┌───────────────────────────────┐
-                  │   INGESTION SERVICE (Python)   │
-                  │   APScheduler jobs, per-source │
-                  │   fetch → validate → normalize │
-                  └───────────────┬─────────────────┘
-                                 │
-                                 ▼
-                  ┌───────────────────────────────┐
-                  │   DATABASE (PostgreSQL+PostGIS) │
-                  │   raw_weather, raw_fire,        │
-                  │   raw_aqi, regions (geo)         │
-                  └───────────────┬─────────────────┘
-                                 │
-                 ┌───────────────┼────────────────┐
-                 ▼                                ▼
-      ┌───────────────────┐            ┌───────────────────────┐
-      │  ML LAYER          │            │  ML LAYER              │
-      │  Fire Risk Model   │            │  AQI Forecast Model    │
-      │  (XGBoost)         │            │  (Prophet)              │
-      └─────────┬──────────┘            └───────────┬─────────────┘
-                 │                                    │
-                 ▼                                    ▼
-                 └───────────────┬────────────────────┘
-                                 ▼
-                  ┌───────────────────────────────┐
-                  │   BACKEND API (FastAPI)         │
-                  │   /risk, /aqi, /alerts,         │
-                  │   /regions, /trends              │
-                  └───────────────┬─────────────────┘
-                                 │  (REST/JSON)
-                                 ▼
-                  ┌───────────────────────────────┐
-                  │   FRONTEND (React + TS)         │
-                  │   MapLibre GL map, Recharts,    │
-                  │   Alert banners, Prep content   │
-                  └───────────────────────────────┘
-                                 │
-                                 ▼
-                            End User (Browser)
+---
+
+## 1. System Topology & Component Boundaries
+
+The platform operates as a decoupled client-server architecture consisting of an asynchronous Python backend microservice and a client-side vector-rendered single page application (SPA).
+
+```mermaid
+graph TD
+    subgraph External Data Layer
+        A1["NASA FIRMS API (VIIRS 375m)"]
+        A2["Open-Meteo Weather API"]
+        A3["Open-Meteo CAMS Air Quality API"]
+    end
+
+    subgraph Backend Microservice (FastAPI on Python 3.12)
+        B1["FastAPI Ingestion & Routing Engine"]
+        B2["In-Memory 15-min TTL Cache (cachetools)"]
+        B3["Canadian FWI Scientific Engine"]
+        B4["Geodesic Haversine Proximity Engine"]
+        B5["CPCB NAQI Sub-Index Calculator"]
+        B6["Dynamic Community Preparedness Engine"]
+        B7[("Pre-bundled Indian Districts GeoJSON")]
+    end
+
+    subgraph Frontend Single Page Application (React 19 + Vite)
+        C1["MapLibre GL JS (WebGL 60fps Vector Map)"]
+        C2["Bento Grid Real-Time Dashboard"]
+        C3["Recharts 72-Hour Atmospheric Trend Charts"]
+        C4["Preparedness & Emergency Helpline Panel"]
+    end
+
+    A1 & A2 & A3 -->|Async Parallel Fetch| B1
+    B1 <--> B2
+    B1 --> B3 & B4 & B5 & B6
+    B7 --> B1
+    B1 -->|REST / JSON API| C1 & C2 & C3 & C4
 ```
 
 ---
 
-## 2. Component Breakdown
+## 2. Data Architecture & Flow Sequences
 
-### 2.1 Ingestion Service
-- **Responsibility:** Periodically pull data from external Indian government APIs, clean/normalize it, and write to the database.
-- **Tech:** Python, `requests`, `APScheduler`
-- **Jobs:**
-  - `fetch_weather()` — every 15–60 min (IMD dataset if available on data.gov.in, else Open-Meteo)
-  - `fetch_fire_detections()` — every few hours (FSI Fire Alert System, cross-checked with NASA FIRMS)
-  - `fetch_aqi()` — hourly (CPCB via data.gov.in API, SAFAR for Delhi-NCR forecast)
-  - `fetch_historical_fire_data()` — daily/on-demand (FSI historical fire records, if accessible)
-- **Failure handling:** Log failed fetches; retry with backoff; keep last-known-good value if a source is temporarily down.
-- **Note:** FSI's public site (fsiforestfire.gov.in) may not expose a clean REST API — verify early whether a data.gov.in dataset exists, or whether a lightweight scraper is needed for fire point data.
+### Search Execution & Correlation Sequence
 
-### 2.2 Database Layer
-- **Tech:** PostgreSQL + PostGIS (for geospatial queries — e.g., "which district does this fire detection fall in").
-- **Core tables:**
-  - `regions` (id, name — district/city, state, geometry/polygon, centroid)
-  - `raw_weather` (region_id, timestamp, temp, humidity, wind_speed, rainfall)
-  - `raw_fire_detections` (lat, lon, confidence, frp, timestamp, source, state, district)
-  - `raw_aqi` (station_id, region_id, timestamp, pollutant_id, pollutant_avg, aqi_value)
-  - `risk_scores` (region_id, timestamp, risk_level, model_version)
-  - `aqi_forecast` (region_id, timestamp, predicted_aqi, confidence_interval)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Frontend as React SPA (MapLibre + Bento)
+    participant API as FastAPI Backend (/api/v1/search)
+    participant Cache as In-Memory TTL Cache
+    participant Weather as Open-Meteo API
+    participant AQI as Copernicus CAMS API
+    participant NASA as NASA FIRMS VIIRS
 
-### 2.3 ML Layer
-- **Fire Risk Model**
-  - Input features: temperature, humidity, wind speed, rainfall (7-day), historical fire frequency (FSI), NDVI (Bhuvan/Sentinel, optional)
-  - Model: XGBoost classifier → outputs Low/Moderate/High/Extreme
-  - Retraining: periodic (e.g., weekly) as new historical data accumulates, especially ahead of fire season (Feb–June in most Indian states)
-- **AQI Forecast Model**
-  - Input: historical AQI time series per city/station (CPCB), cross-referenced with SAFAR forecasts for validation
-  - Model: Prophet (or similar time-series model) → 24–48h forecast
-  - Note: Should account for seasonal spikes (Oct–Nov stubble burning in Punjab/Haryana affecting Delhi-NCR)
-- **Explainability (optional/stretch):** SHAP values to show top contributing features per prediction
-
-### 2.4 Backend API
-- **Tech:** FastAPI
-- **Key endpoints:**
-  | Endpoint | Description |
-  |---|---|
-  | `GET /regions` | List all monitored districts/cities with current status |
-  | `GET /risk/{region_id}` | Current + historical fire risk score for a region |
-  | `GET /aqi/{region_id}` | Current + forecasted AQI for a region (India National AQI scale) |
-  | `GET /alerts` | Active high-risk/poor-AQI alerts |
-  | `GET /trends/{region_id}` | Historical time-series data for charts |
-  | `GET /preparedness/{region_id}` | Safety tips + evacuation info links |
-
-### 2.5 Frontend Dashboard
-- **Tech:** React + TypeScript + Vite
-- **Key views:**
-  - **Map view** — MapLibre GL, showing fire hotspots, district risk colors, CPCB AQI stations
-  - **Region detail panel** — current risk/AQI + trend charts (Recharts)
-  - **Alerts banner** — shown when a district enters High/Extreme fire risk or Poor+/Severe AQI
-  - **Preparedness page** — static/curated safety content + evacuation links
-
----
-
-## 3. Data Flow Summary
-
-1. Ingestion service pulls data from external Indian government APIs on a schedule.
-2. Raw data is normalized and stored in PostgreSQL, tagged by district/region (via PostGIS spatial join).
-3. ML models run on the latest data to produce risk scores and AQI forecasts, stored in dedicated tables.
-4. FastAPI backend serves this processed data via REST endpoints.
-5. React frontend fetches from the API and renders the map, charts, and alerts.
-6. Alerts are triggered in the frontend (or backend, if push notifications are added later) when thresholds are crossed.
-
----
-
-## 4. Deployment Architecture (MVP)
-
-```
-Docker Compose
- ├── postgres (PostGIS-enabled)
- ├── backend (FastAPI + ingestion scheduler)
- └── frontend (React, served via Vite/nginx)
+    User->>Frontend: Enters "Bhusawal" or selects from dropdown
+    Frontend->>API: GET /api/v1/search?query=Bhusawal
+    API->>Cache: Check "weather_21.05_75.79" & "aqi_21.05_75.79"
+    alt Cache Hit (< 15 mins)
+        Cache-->>API: Return cached payload
+    else Cache Miss
+        par Parallel Async Calls
+            API->>Weather: Fetch live temp, humidity, wind, rainfall
+            API->>AQI: Fetch PM2.5, PM10, gases, 72h forecast
+            API->>NASA: Fetch active fires CSV within India BBox
+        end
+        Weather-->>API: Live meteorological parameters
+        AQI-->>API: CAMS atmospheric composition
+        NASA-->>API: Active hotspot coordinates
+        API->>API: Compute Canadian FWI score & fire danger tier
+        API->>API: Calculate nearest active fire distance (Haversine)
+        API->>API: Calculate CPCB National AQI sub-indices
+        API->>API: Generate dynamic preparedness advisories
+        API->>Cache: Store unified payload (TTL: 15 min)
+    end
+    API-->>Frontend: Unified JSON response (200 OK)
+    Frontend->>Frontend: Render Bento metrics, MapLibre markers & Recharts trends
 ```
 
-- Single-machine deployment is sufficient for MVP/demo — no distributed infrastructure needed.
-- No physical hardware or sensors required — all data comes from external Indian government APIs.
+---
+
+## 3. Mathematical & Algorithmic Pipelines
+
+### 3.1 Canadian Forest Fire Weather Index (FWI) Engine
+Operates strictly on four meteorological inputs:
+1. **Fine Fuel Moisture Code (FFMC)**: Represents surface litter moisture content.
+   $$m = \text{Equilibrium Moisture Content based on } T, RH, W, P$$
+   $$FFMC = \frac{59.5 \times (250 - m)}{147.2 + m}$$
+2. **Initial Spread Index (ISI)**: Incorporates wind velocity $W$ to model forward rate of fire spread:
+   $$ISI = 0.208 \times e^{0.05039 \times W} \times f(FFMC)$$
+3. **Build Up Index (BUI)**: Combines deeper duff and drought codes.
+4. **Fire Weather Index (FWI)**: Final composite indicator of fire intensity:
+   $$FWI = f(ISI, BUI)$$
+
+### 3.2 Indian National AQI (NAQI) Calculation
+For each pollutant $C$ (PM2.5, PM10), calculates the linear sub-index:
+$$I = I_{low} + \frac{I_{high} - I_{low}}{C_{high} - C_{low}} \times (C - C_{low})$$
+$$AQI = \max(I_{PM2.5}, I_{PM10})$$
 
 ---
 
-## 5. Scalability & Future Considerations
-- Move ingestion scheduler to a proper job queue (e.g., Celery + Redis) if scaling to many districts/states.
-- Add caching layer (Redis) for frequently accessed endpoints (e.g., `/regions`, `/alerts`).
-- Add authentication if the platform later supports personalized alerts (e.g., email/SMS per user location).
-- Consider a managed cloud database if moving beyond local/demo deployment.
-- Consider state-wise pilot rollout (e.g., start with Uttarakhand for fire risk + Delhi-NCR for AQI) before expanding pan-India, given CPCB station density varies significantly by region.
+## 4. State Management & Caching Topology
+
+1. **Client-Side State**: React 19 local state + URL search parameters (`?query=Bhusawal`) allowing direct bookmarking and shareable links.
+2. **Server-Side In-Memory Caching**: `cachetools.TTLCache` (maxsize=100, TTL=900s).
+   - Guarantees repeated district queries return in **< 2ms** without external API round-trips.
+   - Shields free-tier API quotas from exhaustion.
+3. **Pre-bundled Centroids**: 39+ high-density Indian districts packaged in static JSON (`data/indian_districts.json`) eliminate database round-trips for location lookups.
+
+---
+
+## 5. Security, Secrets & Access Boundaries
+
+1. **Environment Variables**: Managed via root `.env` and loaded defensively:
+   - `NASA_FIRMS_MAP_KEY`
+   - `PORT`
+2. **CORS Boundary**: Enabled for all origins (`*`) during local development and restricted to the static site origin in production.
+3. **Zero-Secret Client Contract**: No private tokens or cloud credentials ever enter the client-side JavaScript bundle.
+
+---
+
+## 6. Invariant Enforcement & Failure Recovery
+
+| Potential Failure Mode | Root Cause | Automated Architectural Defense |
+|---|---|---|
+| **NASA FIRMS Timeout / 503** | Upstream NASA server maintenance. | Fallback to cached active fire list; graceful degradation to FWI weather assessment. |
+| **Open-Meteo AQI Null Values** | Future forecast steps have null smoke values. | Defensive sanitization (`float(val) if val is not None else 0.0`) prevents parsing crashes. |
+| **Server Sleep / Idle Spin-down** | Free hosting provider idle sleep. | On-demand architecture; no background cron workers required. Immediate wake on first request. |
+| **Missing / Unknown District** | User enters obscure town name. | Fallback geocoding via Open-Meteo search API; defaults to nearest district centroid if unmatched. |
+
+---
+
+## 7. Deployment & Infrastructure Topology
+
+- **Backend**: Containerized FastAPI service deployable to Render, Railway, or Fly.io with Docker or direct Python 3.12 runtime.
+- **Frontend**: Static single-page application built with Vite (`dist/`), deployable to Vercel, Cloudflare Pages, or Netlify with universal SPA fallback rewrite (`/* -> /index.html`).
