@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom"
 import { LayoutDashboard, Zap, ShieldAlert, Activity } from "lucide-react"
+import { DOCS_URL } from "../lib/api"
 
 export function Nav() {
   const linkClass = ({ isActive }: { isActive: boolean }) =>
@@ -36,7 +37,7 @@ export function Nav() {
           <span>Unified Bento</span>
         </NavLink>
         <a
-          href="http://localhost:8000/docs"
+          href={DOCS_URL}
           target="_blank"
           rel="noreferrer"
           className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-zinc-400 hover:bg-zinc-900/80 hover:text-zinc-200 border border-transparent transition-all"

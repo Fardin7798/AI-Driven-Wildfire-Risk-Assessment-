@@ -5,10 +5,13 @@ import type {
   TelemetryLog,
 } from '../types'
 
-const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
+export const API_BASE =
+  import.meta.env.VITE_API_BASE || (import.meta.env.DEV ? 'http://localhost:8000' : '')
+
+export const DOCS_URL = `${API_BASE || 'http://localhost:8000'}/docs`
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`)
+  const res = await fetch(`${API_BASE}${path}`)
   if (!res.ok) {
     throw new Error(`API error ${res.status}: ${res.statusText}`)
   }
@@ -35,6 +38,7 @@ export const api = {
     get<{
       status: string
       service: string
+      districts_loaded: number
       database?: {
         status: string
         provider: string

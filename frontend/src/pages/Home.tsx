@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   Clock
 } from 'lucide-react'
-import { api } from '../lib/api'
+import { api, DOCS_URL } from '../lib/api'
 import type {
   UnifiedSearchResponse,
   GeoJSONFeatureCollection,
@@ -47,6 +47,16 @@ export default function Home() {
   const [data, setData] = useState<UnifiedSearchResponse | null>(null)
   const [fires, setFires] = useState<GeoJSONFeatureCollection | undefined>(undefined)
   const [telemetryLogs, setTelemetryLogs] = useState<TelemetryLog[]>([])
+  const [healthData, setHealthData] = useState<{
+    status?: string
+    districts_loaded?: number
+    database?: {
+      status: string
+      provider: string
+      project_ref: string
+      regions_in_db: number
+    }
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -65,6 +75,10 @@ export default function Home() {
 
     api.getActiveFires()
       .then((geo) => setFires(geo))
+      .catch(() => {})
+
+    api.getHealth()
+      .then(setHealthData)
       .catch(() => {})
 
     fetchTelemetry()
@@ -105,6 +119,8 @@ export default function Home() {
   }
 
   const currentState = error ? 'error' : loading ? 'loading' : !data ? 'empty' : 'populated'
+  const projectRef = healthData?.database?.project_ref || 'Active'
+  const regionCount = healthData?.database?.regions_in_db ?? healthData?.districts_loaded ?? districts.length ?? 39
 
   return (
     <div className="min-h-screen bg-[#090A0C] text-zinc-100 font-sans antialiased selection:bg-cyan-500 selection:text-black">
@@ -187,11 +203,11 @@ export default function Home() {
           <div className="flex items-center gap-4 font-mono text-[10px] text-zinc-500">
             <span className="flex items-center gap-1.5">
               <Database className="h-3 w-3 text-cyan-400" />
-              SUPABASE POSTGIS: 39 DISTRICTS
+              SUPABASE POSTGIS: {regionCount} DISTRICTS
             </span>
             <span className="hidden sm:inline text-zinc-600">|</span>
             <a
-              href="http://127.0.0.1:8000/docs"
+              href={DOCS_URL}
               target="_blank"
               rel="noreferrer"
               className="hidden sm:flex items-center gap-1 text-zinc-400 hover:text-cyan-400 transition-colors"
@@ -327,11 +343,13 @@ export default function Home() {
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] pb-3 text-xs text-zinc-400">
                     <div className="flex items-center gap-2">
                       <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                      <span className="font-mono text-emerald-400 font-bold">CONNECTED</span>
+                      <span className="font-mono text-emerald-400 font-bold">
+                        {healthData?.database?.status === 'connected' ? 'CONNECTED' : 'STANDBY'}
+                      </span>
                       <span className="text-zinc-500">•</span>
-                      <span>Project: <code className="text-cyan-400 font-mono">laasumeyzxskujxrxpcx</code> (ap-south-1)</span>
+                      <span>Project: <code className="text-cyan-400 font-mono">{projectRef}</code></span>
                       <span className="text-zinc-500">•</span>
-                      <span>39 Seeded PostGIS Districts</span>
+                      <span>{regionCount} Seeded PostGIS Districts</span>
                     </div>
                     <span className="font-mono text-[11px] text-zinc-500">Table: telemetry_logs</span>
                   </div>

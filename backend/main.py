@@ -1,11 +1,10 @@
 import os
 import sys
 
-# Ensure backend directory is in sys.path
 _current_dir = os.path.dirname(os.path.abspath(__file__))
 if _current_dir not in sys.path:
     sys.path.insert(0, _current_dir)
-import os
+
 import json
 import asyncio
 from datetime import datetime, timezone
@@ -114,11 +113,19 @@ async def search_city_or_district(
                 pass
 
     if target_lat is None or target_lon is None:
-        target_name = "Jalgaon / Bhusawal"
-        target_state = "Maharashtra"
-        target_lat = 21.0450
-        target_lon = 75.7873
-        target_zone = "Deccan Plateau"
+        if DISTRICTS_DB:
+            default_dist = DISTRICTS_DB[0]
+            target_name = default_dist["name"]
+            target_state = default_dist["state"]
+            target_lat = default_dist["lat"]
+            target_lon = default_dist["lon"]
+            target_zone = default_dist.get("zone", "Indian Plateau")
+        else:
+            target_name = "Default Region"
+            target_state = "India"
+            target_lat = 20.5937
+            target_lon = 78.9629
+            target_zone = "National Plateau"
 
     weather = await fetch_live_weather(target_lat, target_lon)
     aqi_data = await fetch_live_and_forecast_aqi(target_lat, target_lon)
@@ -143,7 +150,6 @@ async def search_city_or_district(
         closest_fire_km=closest_km
     )
 
-    # Log telemetry asynchronously to Supabase database in background
     asyncio.create_task(
         log_telemetry(
             district_name=target_name,
@@ -200,11 +206,25 @@ async def get_recent_telemetry(limit: int = Query(10, ge=1, le=50)):
 
 @app.get("/api/v1/preparedness")
 def get_preparedness(risk_level: str = "Moderate", aqi: int = 120):
+    category = "Moderate"
+    if aqi <= 50:
+        category = "Good"
+    elif aqi <= 100:
+        category = "Satisfactory"
+    elif aqi <= 200:
+        category = "Moderate"
+    elif aqi <= 300:
+        category = "Poor"
+    elif aqi <= 400:
+        category = "Very Poor"
+    else:
+        category = "Severe"
+
     return generate_preparedness_advisory(
         risk_level=risk_level,
         fwi_score=15.0,
         aqi_val=aqi,
-        aqi_category="Moderate",
+        aqi_category=category,
         nearby_fires_count=0
     )
 

@@ -10,12 +10,21 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.0
+      - key: WILDFIRE_SUPABASE_URL
+        sync: false
+      - key: WILDFIRE_SUPABASE_KEY
+        sync: false
+      - key: NASA_FIRMS_MAP_KEY
+        sync: false
 
   - type: static
     name: wildfire-aqi-frontend
     rootDir: frontend
     buildCommand: npm install && npm run build
     publishDir: dist
+    envVars:
+      - key: VITE_API_BASE
+        value: https://wildfire-aqi-backend.onrender.com
     routes:
       - type: rewrite
         source: /*

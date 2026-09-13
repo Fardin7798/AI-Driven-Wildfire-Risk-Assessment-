@@ -4,20 +4,37 @@ from typing import Dict, Any, List, Optional
 import httpx
 from dotenv import load_dotenv
 
-load_dotenv()
+# Ensure local .env files take precedence over stale global shell variables
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_backend_dir = os.path.dirname(_current_dir)
+_root_dir = os.path.dirname(_backend_dir)
+
+load_dotenv(os.path.join(_root_dir, ".env"), override=True)
+load_dotenv(os.path.join(_backend_dir, ".env"), override=True)
 
 logger = logging.getLogger("supabase_service")
 
-# Use project-specific environment variables with verified fallbacks
-SUPABASE_URL = os.getenv("WILDFIRE_SUPABASE_URL") or "https://laasumeyzxskujxrxpcx.supabase.co"
-SUPABASE_KEY = os.getenv("WILDFIRE_SUPABASE_KEY") or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhYXN1bWV5enhza3VqeHJ4cGN4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODE2OTk1MywiZXhwIjoyMTAzNzQ1OTUzfQ.ZdJSihMRSzirbNdy3p4esKmgqtH045Tu6W_vFl7zIS8"
+# Dynamically resolve Supabase configuration from environment variables
+SUPABASE_URL = os.getenv("WILDFIRE_SUPABASE_URL") or os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("WILDFIRE_SUPABASE_KEY") or os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-HEADERS = {
-    "apikey": SUPABASE_KEY,
-    "Authorization": f"Bearer {SUPABASE_KEY}",
-    "Content-Type": "application/json",
-    "Prefer": "return=minimal"
-}
+def get_project_ref() -> str:
+    if SUPABASE_URL:
+        try:
+            return SUPABASE_URL.split("//")[1].split(".")[0]
+        except Exception:
+            pass
+    return "unconfigured"
+
+def get_headers() -> Dict[str, str]:
+    if not SUPABASE_KEY:
+        return {}
+    return {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal"
+    }
 
 async def log_telemetry(
     district_name: str,
@@ -36,6 +53,10 @@ async def log_telemetry(
     wind_speed: float,
     district_id: Optional[str] = None
 ) -> bool:
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        logger.debug("Supabase not configured; skipping telemetry persistence")
+        return False
+
     payload = {
         "district_id": district_id,
         "district_name": district_name,
@@ -58,7 +79,7 @@ async def log_telemetry(
         async with httpx.AsyncClient(timeout=4.0) as client:
             resp = await client.post(
                 f"{SUPABASE_URL}/rest/v1/telemetry_logs",
-                headers=HEADERS,
+                headers=get_headers(),
                 json=payload
             )
             return resp.status_code in (200, 201)
@@ -67,6 +88,9 @@ async def log_telemetry(
         return False
 
 async def get_recent_telemetry_logs(limit: int = 10) -> List[Dict[str, Any]]:
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return []
+
     try:
         headers = {
             "apikey": SUPABASE_KEY,
@@ -84,6 +108,15 @@ async def get_recent_telemetry_logs(limit: int = 10) -> List[Dict[str, Any]]:
     return []
 
 async def check_supabase_health() -> Dict[str, Any]:
+    project_ref = get_project_ref()
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return {
+            "status": "unconfigured",
+            "provider": "Supabase PostgreSQL",
+            "project_ref": project_ref,
+            "regions_in_db": 0
+        }
+
     try:
         headers = {
             "apikey": SUPABASE_KEY,
@@ -99,9 +132,9 @@ async def check_supabase_health() -> Dict[str, Any]:
                 return {
                     "status": "connected",
                     "provider": "Supabase PostgreSQL + PostGIS",
-                    "project_ref": "laasumeyzxskujxrxpcx",
+                    "project_ref": project_ref,
                     "regions_in_db": len(rows)
                 }
     except Exception as e:
         logger.warning("Supabase health check failed: %s", e)
-    return {"status": "degraded", "provider": "Supabase PostgreSQL", "project_ref": "laasumeyzxskujxrxpcx"}
+    return {"status": "degraded", "provider": "Supabase PostgreSQL", "project_ref": project_ref}

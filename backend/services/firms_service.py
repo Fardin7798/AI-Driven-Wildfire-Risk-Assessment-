@@ -2,13 +2,22 @@ import os
 import math
 import csv
 import io
+import logging
 import httpx
 from typing import List, Dict, Any, Optional
 from cachetools import TTLCache
 
+logger = logging.getLogger("firms_service")
 cache = TTLCache(maxsize=10, ttl=900)
 
-INDIA_BBOX = "68,8,97,37"
+# Geodetic bounding box for the Republic of India
+INDIA_MIN_LAT = 8.0
+INDIA_MAX_LAT = 37.0
+INDIA_MIN_LON = 68.0
+INDIA_MAX_LON = 97.0
+INDIA_BBOX = f"{int(INDIA_MIN_LON)},{int(INDIA_MIN_LAT)},{int(INDIA_MAX_LON)},{int(INDIA_MAX_LAT)}"
+
+PUBLIC_VIIRS_SOUTH_ASIA_URL = "https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/SUOMI_VIIRS_C2_South_Asia_24h.csv"
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     R = 6371.0
@@ -19,13 +28,14 @@ def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return R * c
 
 async def fetch_active_fires(map_key: Optional[str] = None) -> List[Dict[str, Any]]:
-    key = map_key or os.environ.get("NASA_FIRMS_MAP_KEY")
     cache_key = "nasa_firms_india_fires"
     if cache_key in cache:
         return cache[cache_key]
 
+    key = map_key or os.environ.get("NASA_FIRMS_MAP_KEY")
     fires: List[Dict[str, Any]] = []
 
+    # 1. Primary path: Authenticated NASA FIRMS Area API if map_key provided
     if key:
         url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{key}/VIIRS_SNPP_NRT/{INDIA_BBOX}/1"
         try:
@@ -47,17 +57,35 @@ async def fetch_active_fires(map_key: Optional[str] = None) -> List[Dict[str, An
                             })
                         except (ValueError, KeyError):
                             continue
-        except Exception:
-            fires = []
+        except Exception as e:
+            logger.warning("NASA FIRMS key-based query failed: %s", e)
 
+    # 2. Secondary path: Live public NASA Suomi-NPP VIIRS South Asia feed (100% real active fires, no key required)
     if not fires:
-        fires = [
-            {"lat": 29.42, "lon": 79.48, "brightness": 335.2, "frp": 14.5, "confidence": "high", "acq_date": "Today", "acq_time": "11:30", "daynight": "D"},
-            {"lat": 29.35, "lon": 79.52, "brightness": 328.0, "frp": 9.2, "confidence": "nominal", "acq_date": "Today", "acq_time": "11:30", "daynight": "D"},
-            {"lat": 21.85, "lon": 80.22, "brightness": 341.0, "frp": 22.1, "confidence": "high", "acq_date": "Today", "acq_time": "12:15", "daynight": "D"},
-            {"lat": 21.95, "lon": 86.80, "brightness": 322.4, "frp": 8.0, "confidence": "nominal", "acq_date": "Today", "acq_time": "10:45", "daynight": "D"},
-            {"lat": 30.85, "lon": 75.80, "brightness": 315.0, "frp": 5.4, "confidence": "low", "acq_date": "Today", "acq_time": "13:00", "daynight": "D"}
-        ]
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.get(PUBLIC_VIIRS_SOUTH_ASIA_URL)
+                if resp.status_code == 200 and "latitude" in resp.text:
+                    reader = csv.DictReader(io.StringIO(resp.text))
+                    for row in reader:
+                        try:
+                            lat = float(row["latitude"])
+                            lon = float(row["longitude"])
+                            if INDIA_MIN_LAT <= lat <= INDIA_MAX_LAT and INDIA_MIN_LON <= lon <= INDIA_MAX_LON:
+                                fires.append({
+                                    "lat": lat,
+                                    "lon": lon,
+                                    "brightness": float(row.get("bright_ti4", 300.0)),
+                                    "frp": float(row.get("frp", 0.0)),
+                                    "confidence": row.get("confidence", "nominal"),
+                                    "acq_date": row.get("acq_date", ""),
+                                    "acq_time": row.get("acq_time", ""),
+                                    "daynight": row.get("daynight", "D")
+                                })
+                        except (ValueError, KeyError):
+                            continue
+        except Exception as e:
+            logger.warning("NASA FIRMS public feed stream failed: %s", e)
 
     cache[cache_key] = fires
     return fires
