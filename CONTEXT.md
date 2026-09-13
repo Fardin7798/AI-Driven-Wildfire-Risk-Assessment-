@@ -26,7 +26,7 @@
 - **Stack**: React 19 + TypeScript + Vite 8 + MapLibre GL JS + Tailwind CSS v4 + Framer Motion + Lucide React + Recharts.
 - **Optimization**:
   - `vite.config.ts`: Custom Rollup manual chunking splitting monolithic bundle (1.72 MB -> 254 kB main bundle, 85% reduction), grouping `vendor-map`, `vendor-charts`, `vendor-motion`, and `vendor-icons`.
-  - `src/components/RegionMap.tsx`: High-performance Retina 2x Carto Dark Matter raster tiles with WebGL vector overlays (NASA fires + 50km radius buffer ring), zero font glyph dependencies, ResizeObserver to prevent container height collapse.
+  - `src/components/RegionMap.tsx`: ESRI ArcGIS World Dark Gray Dual-Layer (Base + High-Contrast Reference labels on top) with WebGL vector overlays (NASA fires + 50km radius buffer ring), zero font glyph dependencies, ResizeObserver to prevent container height collapse.
   - `src/components/BentoCards.tsx`: High-density Bento Grid cards (Canadian FWI RiskGauge conic gradient, Live Weather 4-metric bar, CPCB NAQI 6-pollutant grid, Recharts 72h CAMS Forecast, NDMA Preparedness & Emergency Directory).
   - `src/pages/Home.tsx`: Main dashboard with dynamic health badge, live Supabase telemetry audit panel, instant district search, native datalist autocomplete for 39 districts, and quick-focus chips.
   - `src/components/Nav.tsx`: Clean dark navigation bar with dynamic `DOCS_URL` and live telemetry status.

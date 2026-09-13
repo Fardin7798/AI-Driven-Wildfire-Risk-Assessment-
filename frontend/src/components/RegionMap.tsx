@@ -8,29 +8,32 @@ interface Props {
   activeFires?: GeoJSONFeatureCollection
 }
 
-// Lightweight embedded style with zero external JSON font/glyph dependencies
-const EMBEDDED_DARK_STYLE: any = {
+const ESRI_DARK_GRAY_STYLE: any = {
   version: 8,
   sources: {
-    'carto-dark': {
+    'esri-dark-base': {
       type: 'raster',
       tiles: [
-        'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
       ],
       tileSize: 256,
-      attribution: '© OpenStreetMap contributors, © CARTO'
+      attribution: 'Esri, DeLorme, NAVTEQ, TomTom'
+    },
+    'esri-dark-reference': {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}'
+      ],
+      tileSize: 256
     }
   },
   layers: [
     {
-      id: 'carto-dark-layer',
+      id: 'esri-dark-base-layer',
       type: 'raster',
-      source: 'carto-dark',
+      source: 'esri-dark-base',
       minzoom: 0,
-      maxzoom: 20
+      maxzoom: 16
     }
   ]
 }
@@ -45,13 +48,10 @@ function createGeoJSONCircle(center: [number, number], radiusInKm: number, point
   const distanceX = km / (111.32 * Math.cos((coords.latitude * Math.PI) / 180))
   const distanceY = km / 110.574
 
-  let theta: number
-  let x: number
-  let y: number
   for (let i = 0; i < points; i++) {
-    theta = (i / points) * (2 * Math.PI)
-    x = distanceX * Math.cos(theta)
-    y = distanceY * Math.sin(theta)
+    const theta = (i / points) * (2 * Math.PI)
+    const x = distanceX * Math.cos(theta)
+    const y = distanceY * Math.sin(theta)
     ret.push([coords.longitude + x, coords.latitude + y])
   }
   ret.push(ret[0])
@@ -78,7 +78,7 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: EMBEDDED_DARK_STYLE,
+      style: ESRI_DARK_GRAY_STYLE,
       center: initialCenter as [number, number],
       zoom: initialZoom,
       attributionControl: false
@@ -86,7 +86,6 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
-    // ResizeObserver ensures canvas updates automatically after Framer Motion layout settles
     const resizeObserver = new ResizeObserver(() => {
       map.resize()
     })
@@ -95,7 +94,6 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
     map.on('load', () => {
       mapRef.current = map
 
-      // 1. Proximity radius buffer layer
       const circleData = selectedLocation
         ? createGeoJSONCircle([selectedLocation.lon, selectedLocation.lat], 50)
         : { type: 'Feature', geometry: { type: 'Polygon', coordinates: [] }, properties: {} }
@@ -111,7 +109,7 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
         source: 'proximity-buffer',
         paint: {
           'fill-color': '#06b6d4',
-          'fill-opacity': 0.08
+          'fill-opacity': 0.12
         }
       })
 
@@ -123,11 +121,10 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
           'line-color': '#06b6d4',
           'line-width': 1.5,
           'line-dasharray': [2, 2],
-          'line-opacity': 0.6
+          'line-opacity': 0.7
         }
       })
 
-      // 2. NASA FIRMS Active Fires Layer (guaranteed source creation with fallback)
       map.addSource('nasa-fires', {
         type: 'geojson',
         data: (activeFires && activeFires.features) ? activeFires as any : { type: 'FeatureCollection', features: [] }
@@ -140,7 +137,7 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
         paint: {
           'circle-radius': 14,
           'circle-color': '#f97316',
-          'circle-opacity': 0.3,
+          'circle-opacity': 0.35,
           'circle-blur': 0.8
         }
       })
@@ -150,11 +147,20 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
         type: 'circle',
         source: 'nasa-fires',
         paint: {
-          'circle-radius': 5,
+          'circle-radius': 5.5,
           'circle-color': '#ef4444',
           'circle-stroke-width': 1.5,
           'circle-stroke-color': '#ffffff'
         }
+      })
+
+      // Reference labels layer positioned on top of buffers for maximum text legibility
+      map.addLayer({
+        id: 'esri-dark-reference-layer',
+        type: 'raster',
+        source: 'esri-dark-reference',
+        minzoom: 0,
+        maxzoom: 16
       })
 
       map.on('click', 'fires-heat', (e) => {
@@ -191,7 +197,6 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
     }
   }, [])
 
-  // Dynamically update active fires GeoJSON source
   useEffect(() => {
     if (!mapRef.current) return
     const source = mapRef.current.getSource('nasa-fires') as maplibregl.GeoJSONSource
@@ -200,7 +205,6 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
     }
   }, [activeFires])
 
-  // Fly to selected location, update proximity circle & pin
   useEffect(() => {
     if (!mapRef.current || !selectedLocation) return
 
@@ -239,7 +243,6 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
     <div className="relative h-full w-full overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
       <div ref={containerRef} className="absolute inset-0 h-full w-full" />
       
-      {/* Legend Widget Overlay */}
       <div className="absolute bottom-3 left-3 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-zinc-800/90 bg-zinc-900/80 px-3.5 py-2 text-[11px] text-zinc-300 backdrop-blur-md">
         <span className="flex items-center gap-1.5 font-medium">
           <span className="relative flex h-2 w-2">
