@@ -54,16 +54,17 @@ export function Panel({
 
 // 1. Canadian FWI Risk Gauge
 export function RiskGauge({ risk }: { risk: WildfireAssessment }) {
-  const percent = Math.min(Math.round((risk.fwi_score / 50) * 100), 100)
-  const conicColor = risk.fwi_score >= 32 ? '#9333ea' : risk.fwi_score >= 21 ? '#ef4444' : risk.fwi_score >= 12 ? '#f97316' : risk.fwi_score >= 5 ? '#eab308' : '#10b981'
+  const fwi = risk?.fwi_score ?? 0
+  const percent = Math.min(Math.round((fwi / 50) * 100), 100)
+  const conicColor = fwi >= 32 ? '#9333ea' : fwi >= 21 ? '#ef4444' : fwi >= 12 ? '#f97316' : fwi >= 5 ? '#eab308' : '#10b981'
 
   return (
     <Panel
       title="Canadian FWI Danger Rating"
       eyebrow="Composite Wildfire Potential // Physics Engine"
       action={
-        <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider border ${risk.badge}`}>
-          {risk.risk_level}
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider border ${risk?.badge || 'bg-zinc-800 text-zinc-300'}`}>
+          {risk?.risk_level || 'Unknown'}
         </span>
       }
       className="flex h-full flex-col justify-between"
@@ -78,7 +79,7 @@ export function RiskGauge({ risk }: { risk: WildfireAssessment }) {
           <div className="grid h-36 w-36 place-items-center rounded-full bg-[#111214]">
             <div className="text-center">
               <div className="tabular-nums font-mono text-5xl font-black text-white">
-                {risk.fwi_score}
+                {fwi}
               </div>
               <div className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-400">
                 FWI Index
@@ -102,7 +103,7 @@ export function RiskGauge({ risk }: { risk: WildfireAssessment }) {
             <span className="text-[10px] uppercase font-mono">FFMC Moisture</span>
             <Activity className="h-3 w-3 text-cyan-400" />
           </div>
-          <p className="mt-1 tabular-nums font-mono text-lg font-bold text-zinc-100">{risk.ffmc}</p>
+          <p className="mt-1 tabular-nums font-mono text-lg font-bold text-zinc-100">{risk?.ffmc ?? 0}</p>
           <p className="text-[9px] text-zinc-500">Fine litter dry state</p>
         </div>
         <div className="rounded-xl border border-white/[0.06] bg-black/20 p-2.5">
@@ -110,13 +111,13 @@ export function RiskGauge({ risk }: { risk: WildfireAssessment }) {
             <span className="text-[10px] uppercase font-mono">ISI Velocity</span>
             <Compass className="h-3 w-3 text-orange-400" />
           </div>
-          <p className="mt-1 tabular-nums font-mono text-lg font-bold text-zinc-100">{risk.isi}</p>
+          <p className="mt-1 tabular-nums font-mono text-lg font-bold text-zinc-100">{risk?.isi ?? 0}</p>
           <p className="text-[9px] text-zinc-500">Spread rate index</p>
         </div>
       </div>
 
       {/* Proximity warning */}
-      {risk.closest_active_fire_km !== null && (
+      {risk?.closest_active_fire_km !== null && risk?.closest_active_fire_km !== undefined && (
         <div className="mt-3 flex items-center justify-between rounded-xl border border-orange-500/20 bg-orange-950/20 px-3 py-2 text-xs">
           <span className="flex items-center gap-1.5 text-orange-300">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -133,11 +134,16 @@ export function RiskGauge({ risk }: { risk: WildfireAssessment }) {
 
 // 2. Weather Telemetry Bar
 export function WeatherBar({ weather }: { weather: WeatherData }) {
+  const temp = weather?.temperature ?? 0
+  const hum = weather?.humidity ?? 0
+  const wind = weather?.wind_speed ?? 0
+  const rain = weather?.precipitation ?? 0
+
   const values = [
-    ['Surface Temp', weather.temperature.toString(), '°C', Flame, weather.temperature > 35 ? 'text-orange-400' : 'text-emerald-400', Math.min((weather.temperature / 50) * 100, 100)],
-    ['Relative Humidity', weather.humidity.toString(), '%', Droplets, weather.humidity < 25 ? 'text-orange-400' : 'text-cyan-400', weather.humidity],
-    ['Wind Velocity', weather.wind_speed.toString(), 'km/h', Wind, weather.wind_speed > 25 ? 'text-orange-400' : 'text-emerald-400', Math.min((weather.wind_speed / 50) * 100, 100)],
-    ['24h Precipitation', weather.precipitation.toString(), 'mm', CloudRain, 'text-blue-400', Math.min(weather.precipitation * 10, 100)]
+    ['Surface Temp', temp.toString(), '°C', Flame, temp > 35 ? 'text-orange-400' : 'text-emerald-400', Math.min((temp / 50) * 100, 100)],
+    ['Relative Humidity', hum.toString(), '%', Droplets, hum < 25 ? 'text-orange-400' : 'text-cyan-400', hum],
+    ['Wind Velocity', wind.toString(), 'km/h', Wind, wind > 25 ? 'text-orange-400' : 'text-emerald-400', Math.min((wind / 50) * 100, 100)],
+    ['24h Precipitation', rain.toString(), 'mm', CloudRain, 'text-blue-400', Math.min(rain * 10, 100)]
   ] as const
 
   return (
@@ -166,15 +172,17 @@ export function WeatherBar({ weather }: { weather: WeatherData }) {
 
 // 3. Air Quality Card
 export function AirQuality({ aqi }: { aqi: AirQualityData }) {
-  const aqiPercentage = Math.min(Math.round((aqi.cpcb_aqi / 500) * 100), 100)
+  const aqiVal = aqi?.cpcb_aqi ?? 0
+  const aqiPercentage = Math.min(Math.round((aqiVal / 500) * 100), 100)
+  const p = aqi?.pollutants || { pm2_5: 0, pm10: 0, o3: 0, no2: 0, so2: 0, co: 0 }
 
   const pollutantsList = [
-    ['PM2.5', aqi.pollutants.pm2_5, 'µg/m³', Math.min((aqi.pollutants.pm2_5 / 120) * 100, 100)],
-    ['PM10', aqi.pollutants.pm10, 'µg/m³', Math.min((aqi.pollutants.pm10 / 200) * 100, 100)],
-    ['Ozone (O3)', aqi.pollutants.o3, 'µg/m³', Math.min((aqi.pollutants.o3 / 100) * 100, 100)],
-    ['NO2', aqi.pollutants.no2, 'µg/m³', Math.min((aqi.pollutants.no2 / 80) * 100, 100)],
-    ['SO2', aqi.pollutants.so2, 'µg/m³', Math.min((aqi.pollutants.so2 / 80) * 100, 100)],
-    ['CO', aqi.pollutants.co, 'µg/m³', Math.min((aqi.pollutants.co / 2000) * 100, 100)]
+    ['PM2.5', p.pm2_5, 'µg/m³', Math.min((p.pm2_5 / 120) * 100, 100)],
+    ['PM10', p.pm10, 'µg/m³', Math.min((p.pm10 / 200) * 100, 100)],
+    ['Ozone (O3)', p.o3, 'µg/m³', Math.min((p.o3 / 100) * 100, 100)],
+    ['NO2', p.no2, 'µg/m³', Math.min((p.no2 / 80) * 100, 100)],
+    ['SO2', p.so2, 'µg/m³', Math.min((p.so2 / 80) * 100, 100)],
+    ['CO', p.co, 'µg/m³', Math.min((p.co / 2000) * 100, 100)]
   ] as const
 
   return (
@@ -182,21 +190,21 @@ export function AirQuality({ aqi }: { aqi: AirQualityData }) {
       title="CPCB National AQI"
       eyebrow="Atmospheric Telemetry // Copernicus CAMS"
       action={
-        <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider border ${aqi.badge}`}>
-          {aqi.category}
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider border ${aqi?.badge || 'bg-zinc-800 text-zinc-300'}`}>
+          {aqi?.category || 'Unknown'}
         </span>
       }
       className="flex h-full flex-col justify-between"
     >
       <div>
         <div className="flex items-end gap-4">
-          <div className="tabular-nums font-mono text-5xl font-black text-white" style={{ color: aqi.color }}>
-            {aqi.cpcb_aqi}
+          <div className="tabular-nums font-mono text-5xl font-black text-white" style={{ color: aqi?.color || '#38bdf8' }}>
+            {aqiVal}
           </div>
           <div className="mb-1 text-xs text-zinc-500">
             CPCB NAQI Index
             <br />
-            <span className="font-semibold text-zinc-300">{aqi.category} Tier</span>
+            <span className="font-semibold text-zinc-300">{aqi?.category || 'Moderate'} Tier</span>
           </div>
         </div>
 
@@ -212,7 +220,7 @@ export function AirQuality({ aqi }: { aqi: AirQualityData }) {
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${aqiPercentage}%`,
-                backgroundColor: aqi.color
+                backgroundColor: aqi?.color || '#38bdf8'
               }}
             />
           </div>
@@ -244,11 +252,12 @@ export function AirQuality({ aqi }: { aqi: AirQualityData }) {
 }
 
 // 4. Forecast Chart Card
-export function ForecastChart({ forecast }: { forecast: AirQualityData['forecast_72h'] }) {
-  const data = forecast.slice(0, 48).map((pt) => ({
-    time: pt.time.split('T')[1] || pt.time,
-    aqi: pt.aqi,
-    smoke: pt.wildfire_smoke_pm10
+export function ForecastChart({ forecast }: { forecast?: AirQualityData['forecast_72h'] }) {
+  const safeList = forecast || []
+  const data = safeList.slice(0, 48).map((pt) => ({
+    time: pt?.time ? (pt.time.split('T')[1] || pt.time) : '--:--',
+    aqi: pt?.aqi ?? 0,
+    smoke: pt?.wildfire_smoke_pm10 ?? 0
   }))
 
   return (
@@ -303,6 +312,7 @@ export function ForecastChart({ forecast }: { forecast: AirQualityData['forecast
 
 // 5. Emergency Speed-Dials & Community Directives
 export function EmergencyCards({ prep }: { prep: CommunityPreparedness }) {
+  const actions = prep?.recommended_actions || []
   const calls = [
     ['NDMA', '1078', 'Disaster helpline', 'bg-amber-400'],
     ['FIRE', '101', 'Fire response', 'bg-orange-500'],
@@ -317,12 +327,12 @@ export function EmergencyCards({ prep }: { prep: CommunityPreparedness }) {
       action={
         <span
           className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider border ${
-            prep.status === 'alert'
+            prep?.status === 'alert'
               ? 'bg-red-500/10 text-red-400 border-red-500/20'
               : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
           }`}
         >
-          {prep.status === 'alert' ? 'Elevated Alert Active' : 'Normal Vigilance'}
+          {prep?.status === 'alert' ? 'Elevated Alert Active' : 'Normal Vigilance'}
         </span>
       }
     >
@@ -333,7 +343,7 @@ export function EmergencyCards({ prep }: { prep: CommunityPreparedness }) {
             Target Health & Safety Protocols
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
-            {prep.recommended_actions.map((act, i) => (
+            {actions.map((act, i) => (
               <div key={i} className="flex items-start gap-2.5 rounded-xl border border-white/[0.06] bg-black/20 p-2.5 text-xs text-zinc-200">
                 <ShieldCheck className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
                 <span>{act}</span>

@@ -1,6 +1,5 @@
 import { NavLink } from "react-router-dom"
 import { LayoutDashboard, Zap, ShieldAlert, Activity } from "lucide-react"
-import { DOCS_URL } from "../lib/api"
 
 export function Nav() {
   const linkClass = ({ isActive }: { isActive: boolean }) =>
@@ -36,15 +35,10 @@ export function Nav() {
           <LayoutDashboard className="h-4 w-4" />
           <span>Unified Bento</span>
         </NavLink>
-        <a
-          href={DOCS_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-zinc-400 hover:bg-zinc-900/80 hover:text-zinc-200 border border-transparent transition-all"
-        >
+        <NavLink to="/docs" className={linkClass}>
           <Zap className="h-4 w-4 text-amber-400" />
-          <span>Swagger /docs</span>
-        </a>
+          <span>Interactive Docs</span>
+        </NavLink>
       </div>
 
       {/* Telemetry Status Indicator */}

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Search,
   AlertCircle,
@@ -10,9 +11,10 @@ import {
   Database,
   ExternalLink,
   CheckCircle2,
-  Clock
+  Clock,
+  X,
 } from 'lucide-react'
-import { api, DOCS_URL } from '../lib/api'
+import { api } from '../lib/api'
 import type {
   UnifiedSearchResponse,
   GeoJSONFeatureCollection,
@@ -48,8 +50,9 @@ export default function Home() {
   const [fires, setFires] = useState<GeoJSONFeatureCollection | undefined>(undefined)
   const [telemetryLogs, setTelemetryLogs] = useState<TelemetryLog[]>([])
   const [healthData, setHealthData] = useState<{
-    status?: string
-    districts_loaded?: number
+    status: string
+    service: string
+    districts_loaded: number
     database?: {
       status: string
       provider: string
@@ -59,6 +62,8 @@ export default function Home() {
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isWakingUp, setIsWakingUp] = useState(false)
+  const wakeupTimerRef = useRef<any>(null)
 
   const fetchTelemetry = () => {
     api.getRecentTelemetry(6)
@@ -82,6 +87,15 @@ export default function Home() {
       .catch(() => {})
 
     fetchTelemetry()
+
+    // 25-second telemetry auto-poll interval
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchTelemetry()
+      }
+    }, 25000)
+
+    return () => clearInterval(interval)
   }, [])
 
   const executeSearch = async (targetQuery: string) => {
@@ -91,12 +105,24 @@ export default function Home() {
     }
     setLoading(true)
     setError(null)
+    setIsWakingUp(false)
+
+    // Render free-tier spin-up detector (> 4.5s)
+    wakeupTimerRef.current = setTimeout(() => {
+      setIsWakingUp(true)
+    }, 4500)
+
     try {
       const res = await api.search(targetQuery)
+      clearTimeout(wakeupTimerRef.current)
+      setIsWakingUp(false)
       setData(res)
       setTimeout(fetchTelemetry, 1800)
     } catch (err: any) {
-      setError(err?.message || 'Failed to fetch environmental telemetry from backend')
+      clearTimeout(wakeupTimerRef.current)
+      setIsWakingUp(false)
+      const msg = err?.message || 'Failed to fetch environmental telemetry from backend'
+      setError(msg)
     } finally {
       setLoading(false)
     }
@@ -119,7 +145,6 @@ export default function Home() {
   }
 
   const currentState = error ? 'error' : loading ? 'loading' : !data ? 'empty' : 'populated'
-  const projectRef = healthData?.database?.project_ref || 'Active'
   const regionCount = healthData?.database?.regions_in_db ?? healthData?.districts_loaded ?? districts.length ?? 39
 
   return (
@@ -132,30 +157,43 @@ export default function Home() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold tracking-wider text-cyan-400">AERORISK</span>
-                <span className="rounded bg-white/[0.06] px-1.5 py-0.2 font-mono text-[9px] text-zinc-400">v1.0</span>
-                <span className="flex items-center gap-1 rounded border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] text-emerald-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  SUPABASE POSTGRES
+                <h1 className="text-sm font-bold tracking-tight text-white sm:text-base">
+                  AERORISK INDIA
+                </h1>
+                <span className="rounded-full bg-cyan-400/10 px-2 py-0.5 text-[9px] font-mono font-semibold text-cyan-400 border border-cyan-400/20">
+                  NATIONAL CONSOLE
                 </span>
               </div>
-              <h1 className="text-base font-bold text-white tracking-tight">
-                National Wildfire Risk & AQI Engine
-              </h1>
+              <p className="text-[11px] text-zinc-400">
+                AI-Driven Wildfire Risk, Satellite Hotspots & Copernicus Air Quality
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <form onSubmit={handleSubmit} className="relative flex-1 sm:w-80">
+          <div className="flex items-center gap-2">
+            <form onSubmit={handleSubmit} className="relative w-full sm:w-80">
               <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
               <input
                 type="text"
                 list="district-options"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setQuery('')
+                }}
                 placeholder="Search district, state, city..."
-                className="h-9 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] pl-9 pr-4 text-xs text-white placeholder-zinc-500 outline-none transition-all focus:border-cyan-400 focus:bg-white/[0.06] focus:ring-2 focus:ring-cyan-400/20"
+                className="h-9 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] pl-9 pr-8 text-xs text-white placeholder-zinc-500 outline-none transition-all focus:border-cyan-400 focus:bg-white/[0.06] focus:ring-2 focus:ring-cyan-400/20"
               />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white p-0.5 cursor-pointer"
+                  title="Clear search (Esc)"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
               <datalist id="district-options">
                 {districts.map((d) => (
                   <option key={d.id} value={d.name}>
@@ -206,17 +244,28 @@ export default function Home() {
               SUPABASE POSTGIS: {regionCount} DISTRICTS
             </span>
             <span className="hidden sm:inline text-zinc-600">|</span>
-            <a
-              href={DOCS_URL}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              to="/docs"
               className="hidden sm:flex items-center gap-1 text-zinc-400 hover:text-cyan-400 transition-colors"
             >
               <span>API DOCS</span>
               <ExternalLink className="h-2.5 w-2.5" />
-            </a>
+            </Link>
           </div>
         </FadeUp>
+
+        {/* Cold Start Spin-Up Friendly Alert */}
+        {isWakingUp && loading && (
+          <FadeUp delay={0.1} className="rounded-2xl border border-cyan-500/30 bg-cyan-950/30 p-4 text-xs text-cyan-200 flex items-center justify-between shadow-xl shadow-cyan-950/20">
+            <div className="flex items-center gap-3">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent shrink-0" />
+              <div>
+                <p className="font-bold text-cyan-300">Connecting to Cloud Telemetry Cluster</p>
+                <p className="text-cyan-400/80 text-[11px]">Backend is waking up from idle power-save mode (Render free tier). Syncing satellite streams, please wait ~15 seconds...</p>
+              </div>
+            </div>
+          </FadeUp>
+        )}
 
         {error && (
           <FadeUp delay={0.1} className="rounded-2xl border border-red-500/30 bg-red-950/20 p-4 text-xs text-red-200 flex items-center justify-between shadow-xl shadow-red-950/30">
@@ -264,35 +313,42 @@ export default function Home() {
                 onClick={() => handleChipClick('Jalgaon / Bhusawal')}
                 className="mt-5 rounded-xl bg-cyan-400 px-5 py-2.5 text-xs font-bold text-black hover:bg-cyan-300 transition-all cursor-pointer"
               >
-                Scan Bhusawal (Maharashtra)
+                Focus Jalgaon / Bhusawal
               </button>
             </div>
           </Panel>
         )}
 
         {data && (
-          <div className="space-y-4">
-            <FadeUp delay={0.08} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-[#111214] px-4 py-3 text-xs text-zinc-400 shadow-xl backdrop-blur-md">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <MapPin className="h-4 w-4 text-cyan-400" />
-                <span className="font-bold text-white text-sm">{data.location.name}</span>
-                <span className="text-zinc-400 font-medium">({data.location.state})</span>
-                <span className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-cyan-300">
-                  {data.location.eco_zone}
-                </span>
-                <span className="rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 font-mono text-[10px] text-zinc-400">
-                  ZONE: {data.location.eco_zone}
-                </span>
+          <div className="space-y-5">
+            <FadeUp delay={0.1} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-white/[0.08] bg-[#111214] px-5 py-3 shadow-lg">
+              <div className="flex items-center gap-3">
+                <MapPin className="h-5 w-5 text-cyan-400" />
+                <div>
+                  <h2 className="text-base font-bold text-white tracking-tight">
+                    {data.location.name}
+                    <span className="ml-2 font-normal text-zinc-400 text-xs">
+                      {data.location.state}
+                    </span>
+                  </h2>
+                  <p className="font-mono text-[10px] text-zinc-500">
+                    Eco-Zone: <span className="text-zinc-300">{data.location.eco_zone}</span> • Lat: {data.location.latitude.toFixed(4)}°, Lon: {data.location.longitude.toFixed(4)}°
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-4 font-mono text-[11px] text-zinc-400">
-                <span>LAT {data.location.latitude.toFixed(4)}° N</span>
-                <span>LON {data.location.longitude.toFixed(4)}° E</span>
-                <span className="text-cyan-400 font-bold">SYNC: {new Date(data.metadata.timestamp).toLocaleTimeString()}</span>
+
+              <div className="flex items-center gap-3 text-xs font-mono">
+                <span className="rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-1 text-zinc-400">
+                  Van Wagner FWI: <span className="font-bold text-white">{data.wildfire_assessment.fwi_score}</span>
+                </span>
+                <span className="rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-1 text-zinc-400">
+                  CPCB AQI: <span className="font-bold text-white">{data.air_quality.cpcb_aqi}</span>
+                </span>
               </div>
             </FadeUp>
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              <FadeUp delay={0.1} className="h-[440px] lg:col-span-7">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+              <FadeUp delay={0.15} className="h-[440px] lg:col-span-7">
                 <RegionMap
                   selectedLocation={{
                     lat: data.location.latitude,
@@ -302,61 +358,57 @@ export default function Home() {
                   activeFires={fires}
                 />
               </FadeUp>
-              <FadeUp delay={0.12} className="lg:col-span-5">
+
+              <FadeUp delay={0.2} className="h-auto lg:col-span-5">
                 <RiskGauge risk={data.wildfire_assessment} />
               </FadeUp>
             </div>
 
-            <FadeUp delay={0.14}>
+            <FadeUp delay={0.25}>
               <WeatherBar weather={data.weather} />
             </FadeUp>
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              <FadeUp delay={0.16} className="lg:col-span-5">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+              <FadeUp delay={0.3} className="lg:col-span-5">
                 <AirQuality aqi={data.air_quality} />
               </FadeUp>
-              <FadeUp delay={0.18} className="lg:col-span-7">
+              <FadeUp delay={0.35} className="lg:col-span-7">
                 <ForecastChart forecast={data.air_quality.forecast_72h} />
               </FadeUp>
             </div>
 
-            <FadeUp delay={0.2}>
+            <FadeUp delay={0.4}>
               <EmergencyCards prep={data.community_preparedness} />
             </FadeUp>
 
-            {/* Supabase Persistent Telemetry Audit Trail */}
-            <FadeUp delay={0.22}>
+            <FadeUp delay={0.45}>
               <Panel
                 title="Supabase PostgreSQL Audit Trail"
-                eyebrow="Real-Time Data Persistence"
+                eyebrow="PostGIS Persistent Query Stream"
                 action={
-                  <button
-                    onClick={fetchTelemetry}
-                    className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-zinc-400 hover:text-cyan-300 hover:border-cyan-500/30 transition-all cursor-pointer"
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                    <span>Refresh Logs</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-400">
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                      </span>
+                      Auto-Sync Active
+                    </span>
+                    <button
+                      onClick={fetchTelemetry}
+                      className="flex items-center gap-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] font-mono text-zinc-400 hover:text-white transition cursor-pointer"
+                      title="Refresh query audit log from Supabase"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                      <span>Sync</span>
+                    </button>
+                  </div>
                 }
               >
-                <div className="space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] pb-3 text-xs text-zinc-400">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                      <span className="font-mono text-emerald-400 font-bold">
-                        {healthData?.database?.status === 'connected' ? 'CONNECTED' : 'STANDBY'}
-                      </span>
-                      <span className="text-zinc-500">•</span>
-                      <span>Project: <code className="text-cyan-400 font-mono">{projectRef}</code></span>
-                      <span className="text-zinc-500">•</span>
-                      <span>{regionCount} Seeded PostGIS Districts</span>
-                    </div>
-                    <span className="font-mono text-[11px] text-zinc-500">Table: telemetry_logs</span>
-                  </div>
-
+                <div className="mt-1">
                   {telemetryLogs.length === 0 ? (
-                    <div className="py-6 text-center text-xs text-zinc-500">
-                      No recent telemetry logs retrieved yet. Execute a district scan to trigger Supabase persistence.
+                    <div className="flex items-center justify-center p-8 text-center text-xs text-zinc-500 font-mono">
+                      No persistent telemetry audit records retrieved yet.
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
