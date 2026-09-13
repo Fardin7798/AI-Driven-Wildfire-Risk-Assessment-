@@ -6,9 +6,10 @@ import type {
 } from '../types'
 
 export const API_BASE =
-  import.meta.env.VITE_API_BASE || (import.meta.env.DEV ? 'http://localhost:8000' : '')
+  import.meta.env.VITE_API_BASE ||
+  (import.meta.env.DEV ? 'http://localhost:8000' : 'https://wildfire-aqi-backend.onrender.com')
 
-export const DOCS_URL = `${API_BASE || 'http://localhost:8000'}/docs`
+export const DOCS_URL = `${API_BASE}/docs`
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`)
