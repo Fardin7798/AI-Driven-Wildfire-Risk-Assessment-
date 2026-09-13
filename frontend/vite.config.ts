@@ -13,6 +13,19 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['maplibre-gl'],
   },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes('maplibre-gl')) return 'vendor-map'
+          if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts'
+          if (id.includes('framer-motion') || id.includes('motion-dom')) return 'vendor-motion'
+          if (id.includes('lucide-react')) return 'vendor-icons'
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       '/api': {

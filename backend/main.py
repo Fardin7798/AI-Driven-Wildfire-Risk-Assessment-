@@ -5,12 +5,15 @@ _current_dir = os.path.dirname(os.path.abspath(__file__))
 if _current_dir not in sys.path:
     sys.path.insert(0, _current_dir)
 
+import re
 import json
 import asyncio
+import urllib.parse
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -37,12 +40,50 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": True,
+            "message": "An internal error occurred while streaming environmental telemetry.",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    )
+
 DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "indian_districts.json")
 try:
     with open(DATA_PATH, "r") as f:
         DISTRICTS_DB: List[Dict[str, Any]] = json.load(f)
 except Exception:
     DISTRICTS_DB = []
+
+def find_best_district_match(query_str: str) -> Optional[Dict[str, Any]]:
+    clean = re.sub(r'[^a-zA-Z0-9\s]', ' ', query_str).lower().strip()
+    if not clean:
+        return None
+
+    # Priority 1: Exact match on district name or ID
+    for d in DISTRICTS_DB:
+        if clean == d["name"].lower() or clean == d["id"].lower():
+            return d
+
+    # Priority 2: Prefix match on name or any constituent word token
+    for d in DISTRICTS_DB:
+        d_name = d["name"].lower()
+        if d_name.startswith(clean):
+            return d
+        tokens = d_name.replace('/', ' ').split()
+        if any(t.startswith(clean) for t in tokens):
+            return d
+
+    # Priority 3: Substring match (3+ characters to eliminate single-letter false matches)
+    if len(clean) >= 3:
+        for d in DISTRICTS_DB:
+            if clean in d["name"].lower() or clean in d.get("state", "").lower():
+                return d
+
+    return None
 
 @app.get("/health")
 async def health_check():
@@ -64,6 +105,7 @@ def list_districts(search: Optional[str] = None):
     filtered = [d for d in DISTRICTS_DB if q in d["name"].lower() or q in d["state"].lower()]
     return {"total": len(filtered), "districts": filtered}
 
+@app.get("/api/v1/fires")
 @app.get("/api/v1/fires/active")
 async def get_active_satellite_fires(format: str = Query("geojson", enum=["geojson", "list"])):
     fires = await fetch_active_fires()
@@ -73,9 +115,9 @@ async def get_active_satellite_fires(format: str = Query("geojson", enum=["geojs
 
 @app.get("/api/v1/search")
 async def search_city_or_district(
-    query: Optional[str] = Query(None, description="City or district name (e.g. Bhusawal, Nainital, Delhi, Pune)"),
-    lat: Optional[float] = Query(None, description="Latitude (optional override)"),
-    lon: Optional[float] = Query(None, description="Longitude (optional override)")
+    query: Optional[str] = Query(None, description="City or district name (e.g. Bhusawal, Nainital, Delhi, Pune, Leh)"),
+    lat: Optional[float] = Query(None, ge=-90.0, le=90.0, description="Latitude in decimal degrees (-90 to 90)"),
+    lon: Optional[float] = Query(None, ge=-180.0, le=180.0, description="Longitude in decimal degrees (-180 to 180)")
 ):
     target_name = "Custom Coordinates"
     target_state = "India"
@@ -85,11 +127,7 @@ async def search_city_or_district(
     matched = None
 
     if query:
-        q_clean = query.lower().strip()
-        for d in DISTRICTS_DB:
-            if q_clean in d["name"].lower() or q_clean in d["id"].lower() or d["name"].lower() in q_clean:
-                matched = d
-                break
+        matched = find_best_district_match(query)
         if matched:
             target_name = matched["name"]
             target_state = matched["state"]
@@ -98,17 +136,21 @@ async def search_city_or_district(
             target_zone = matched.get("zone", "Indian Plateau")
         elif lat is None or lon is None:
             import httpx
-            geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={query}&count=1&language=en&format=json"
+            clean_term = re.sub(r'[/()]', ' ', query).strip()
+            encoded_term = urllib.parse.quote(clean_term)
+            geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={encoded_term}&count=10&language=en&format=json"
             try:
                 async with httpx.AsyncClient(timeout=8.0) as client:
                     resp = await client.get(geo_url)
                     if resp.status_code == 200 and resp.json().get("results"):
-                        top = resp.json()["results"][0]
-                        target_name = top["name"]
-                        target_state = top.get("admin1", "India")
-                        target_lat = top["latitude"]
-                        target_lon = top["longitude"]
-                        target_zone = "Geocoded Region"
+                        candidates = resp.json()["results"]
+                        # Prioritize Indian geographic matches
+                        selected = next((c for c in candidates if c.get("country_code") == "IN"), candidates[0])
+                        target_name = selected["name"]
+                        target_state = selected.get("admin1", "India")
+                        target_lat = selected["latitude"]
+                        target_lon = selected["longitude"]
+                        target_zone = f"{selected.get('admin1', 'Indian')} Eco-Region"
             except Exception:
                 pass
 
