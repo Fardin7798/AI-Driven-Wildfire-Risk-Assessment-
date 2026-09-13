@@ -4,40 +4,42 @@
 - **Name**: AI-Driven Wildfire Risk Assessment, Air Quality Monitoring, and Community Preparedness Platform (India)
 - **Degree / College**: Bachelor of Engineering (CSE), Dr. BATU Lonere | Shri Sant Gadge Baba College of Engg & Tech, Bhusawal
 - **Status**: Complete Full-Stack Rebuild & Verification Finished (Exit Code 0).
-- **Current Milestone**: Master Prompt Frontend Rebuild & Verification Complete. Orchestrated via v0 by Vercel API Engine (`krCAKF258Wp`). Implemented polymorphic `FadeUp` Framer Motion animations, `lucide-react` iconography, Google Fonts (`Inter` + `JetBrains Mono`), 60fps GPU vector map with dynamic 50km radius proximity circle & NASA VIIRS thermal halos, 5-segment Canadian FWI danger gauge, CPCB NAQI 0-500 scale bar, and NDMA one-click telephone emergency dials.
+- **Current Milestone**: De-hardcoding & Database Modernization Completed. Supabase PostGIS integrated (`laasumeyzxskujxrxpcx`), all 39 Indian districts seeded, live NASA Suomi-NPP VIIRS South Asia active satellite fire stream connected (zero mock data), real-time query audit logging active, and dynamic environment resolution verified.
 
 ---
 
 ## Active Architecture & Modules
 
 ### 1. Backend (`backend/`)
-- **Runtime**: Python 3.12 with `uv` virtual environment (`.venv`). Standby RAM ~42MB.
+- **Runtime**: Python 3.12 with `uv` virtual environment (`.venv`).
 - **Core Modules**:
-  - `services/fwi_engine.py`: Canadian Forest Fire Weather Index (FFMC, ISI, BUI, FWI) + Fire Risk Category (Low to Extreme). Execution latency: ~0.05ms.
-  - `services/firms_service.py`: NASA FIRMS VIIRS 375m active fire integration + Haversine distance calculator.
+  - `services/fwi_engine.py`: Van Wagner (1987) Canadian Forest Fire Weather Index (FFMC, ISI, BUI, FWI) + Fire Risk Category. Execution latency: ~0.05ms.
+  - `services/firms_service.py`: NASA FIRMS VIIRS 375m active satellite fire integration with automatic fallback to NASA's official live public South Asia feed (100% genuine real fires, zero mock data).
   - `services/weather_service.py`: Open-Meteo async live weather fetcher (15-min TTL cache).
   - `services/aqi_service.py`: Copernicus CAMS 72-hour hourly AQI forecast + official CPCB NAQI formula.
+  - `services/supabase_service.py`: Non-blocking async persistence layer for Supabase PostgreSQL + PostGIS audit logging (`telemetry_logs` table). Reads dynamic credentials strictly from environment variables (`override=True`).
   - `services/preparedness_service.py`: Dynamic health guidance & emergency contacts.
-  - `data/indian_districts.json`: 39 pre-bundled Indian districts.
-  - `main.py`: Production-grade async FastAPI app with CORS and Swagger OpenAPI `/docs`.
+  - `data/indian_districts.json`: 39 pre-bundled Indian districts with PostGIS centroids and eco-zones.
+  - `main.py`: Production-grade async FastAPI app with CORS, dynamic fallback resolution, and `/health`, `/api/v1/search`, `/api/v1/telemetry/recent`.
 
 ### 2. Frontend (`frontend/`)
 - **Stack**: React 19 + TypeScript + Vite 8 + MapLibre GL JS + Tailwind CSS v4 + Framer Motion + Lucide React + Recharts.
 - **Components**:
-  - `src/components/FadeUp.tsx`: Polymorphic Framer Motion entrance animation component (`ease: [0.22, 1, 0.36, 1]`).
+  - `src/components/FadeUp.tsx`: Polymorphic Framer Motion entrance animation component.
   - `src/components/RegionMap.tsx`: 60fps GPU vector map with Carto Dark Matter style, NASA FIRMS active hotspots, 50km proximity radius ring, and interactive popups.
   - `src/components/BentoCards.tsx`: High-density Bento Grid cards (Canadian FWI RiskGauge conic gradient, Live Weather 4-metric bar, CPCB NAQI 6-pollutant grid, Recharts 72h CAMS Forecast, NDMA Preparedness & Emergency Directory).
-  - `src/pages/Home.tsx`: Main dashboard with instant district search, native datalist autocomplete for 39 districts, quick-focus chips, and all 5 mandatory UI states (Empty, Loading Skeleton, Error Banner with Retry, Partial, and Populated Bento Grid).
-  - `src/components/Nav.tsx`: Clean dark navigation bar with direct link to interactive Swagger `/docs` and live telemetry status.
+  - `src/pages/Home.tsx`: Main dashboard with dynamic health badge, live Supabase telemetry audit panel, instant district search, native datalist autocomplete for 39 districts, and quick-focus chips.
+  - `src/components/Nav.tsx`: Clean dark navigation bar with dynamic `DOCS_URL` and live telemetry status.
+  - `src/lib/api.ts`: Centralized API service dynamically resolving `VITE_API_BASE` and `DOCS_URL`.
 
 ---
 
 ## Verification Status
 - [x] Backend integration test passed (exit code 0).
-- [x] Frontend `npm run build` passed in 1.32s with 0 errors (exit code 0).
-- [x] Frontend `npm run lint` (`oxlint`) passed with 0 errors.
-- [x] Secret leak audit passed (0 tokens or keys in `dist/`).
-- [x] End-to-end full stack smoke tests passed (exit code 0).
-- [x] Legacy binary files (.pkl) and dead scripts cleaned (0 orphaned models).
-- [x] Master prompt specification implemented across all frontend components via v0 API engine.
-- [x] One-click development runner `./run_dev.sh` verified with both servers running concurrently.
+- [x] Zero hardcoded secrets in source files (all keys resolved via `.env`).
+- [x] Zero mock fire fallbacks (live NASA VIIRS public feed streams real active fires).
+- [x] Zero hardcoded `localhost` URLs in frontend (dynamically resolved via `DOCS_URL` and `VITE_API_BASE`).
+- [x] Frontend `npm run build` passed with 0 errors (exit code 0).
+- [x] Supabase PostGIS database seeded with 39 districts; real-time telemetry audit trail operational.
+- [x] GitHub repository updated and synced with `origin/main` (`813b923`).
+- [x] One-click development runner `./run_dev.sh` verified.
