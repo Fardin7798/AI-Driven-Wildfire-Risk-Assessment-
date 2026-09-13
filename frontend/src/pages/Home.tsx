@@ -89,6 +89,29 @@ export default function Home() {
 
     fetchTelemetry()
 
+    // Dynamic autocomplete expansion across all Indian locations
+  }, [])
+
+  useEffect(() => {
+    if (query.trim().length >= 2) {
+      const timer = setTimeout(() => {
+        api.getDistricts(query.trim())
+          .then((res) => {
+            if (res.districts && res.districts.length > 0) {
+              setDistricts((prev) => {
+                const map = new Map(prev.map(d => [d.name.toLowerCase(), d]))
+                res.districts.forEach(d => map.set(d.name.toLowerCase(), d))
+                return Array.from(map.values())
+              })
+            }
+          })
+          .catch(() => {})
+      }, 250)
+      return () => clearTimeout(timer)
+    }
+  }, [query])
+
+  useEffect(() => {
     // 25-second telemetry auto-poll interval
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
@@ -118,6 +141,21 @@ export default function Home() {
       clearTimeout(wakeupTimerRef.current)
       setIsWakingUp(false)
       setData(res)
+      if (res?.location?.name) {
+        setDistricts((prev) => {
+          if (!prev.some(d => d.name.toLowerCase() === res.location.name.toLowerCase())) {
+            return [{
+              id: 'loc-' + Date.now(),
+              name: res.location.name,
+              state: res.location.state,
+              lat: res.location.latitude,
+              lon: res.location.longitude,
+              zone: res.location.eco_zone
+            }, ...prev]
+          }
+          return prev
+        })
+      }
       setTimeout(fetchTelemetry, 1800)
     } catch (err: any) {
       clearTimeout(wakeupTimerRef.current)
@@ -182,7 +220,7 @@ export default function Home() {
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') setQuery('')
                 }}
-                placeholder="Search district, state, city..."
+                placeholder="Search any Indian city, district, or town..."
                 className="h-9 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] pl-9 pr-8 text-xs text-white placeholder-zinc-500 outline-none transition-all focus:border-cyan-400 focus:bg-white/[0.06] focus:ring-2 focus:ring-cyan-400/20"
               />
               {query && (

@@ -58,29 +58,33 @@ try:
 except Exception:
     DISTRICTS_DB = []
 
+def normalize_str(s: str) -> str:
+    return re.sub(r'[^a-zA-Z0-9]', '', s).lower()
+
 def find_best_district_match(query_str: str) -> Optional[Dict[str, Any]]:
-    clean = re.sub(r'[^a-zA-Z0-9\s]', ' ', query_str).lower().strip()
-    if not clean:
+    norm_query = normalize_str(query_str)
+    if not norm_query:
         return None
 
-    # Priority 1: Exact match on district name or ID
+    # Priority 1: Exact alphanumeric match on name or ID
     for d in DISTRICTS_DB:
-        if clean == d["name"].lower() or clean == d["id"].lower():
+        if norm_query == normalize_str(d["name"]) or norm_query == normalize_str(d["id"]):
             return d
 
-    # Priority 2: Prefix match on name or any constituent word token
+    # Priority 2: Prefix match or token prefix
+    clean = re.sub(r'[^a-zA-Z0-9\s]', ' ', query_str).lower().strip()
     for d in DISTRICTS_DB:
-        d_name = d["name"].lower()
-        if d_name.startswith(clean):
+        d_clean = re.sub(r'[^a-zA-Z0-9\s]', ' ', d["name"]).lower().strip()
+        if d_clean.startswith(clean) or normalize_str(d["name"]).startswith(norm_query):
             return d
-        tokens = d_name.replace('/', ' ').split()
-        if any(t.startswith(clean) for t in tokens):
+        tokens = d_clean.split()
+        if any(t.startswith(clean) or clean.startswith(t) for t in tokens if len(t) >= 3):
             return d
 
-    # Priority 3: Substring match (3+ characters to eliminate single-letter false matches)
-    if len(clean) >= 3:
+    # Priority 3: Substring match
+    if len(norm_query) >= 3:
         for d in DISTRICTS_DB:
-            if clean in d["name"].lower() or clean in d.get("state", "").lower():
+            if norm_query in normalize_str(d["name"]) or norm_query in normalize_str(d.get("state", "")):
                 return d
 
     return None
@@ -98,12 +102,38 @@ async def health_check():
     }
 
 @app.get("/api/v1/districts")
-def list_districts(search: Optional[str] = None):
+async def list_districts(search: Optional[str] = None):
     if not search:
         return {"total": len(DISTRICTS_DB), "districts": DISTRICTS_DB}
     q = search.lower().strip()
     filtered = [d for d in DISTRICTS_DB if q in d["name"].lower() or q in d["state"].lower()]
-    return {"total": len(filtered), "districts": filtered}
+    if filtered:
+        return {"total": len(filtered), "districts": filtered}
+
+    import httpx, unicodedata, urllib.parse
+    geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(q)}&count=6&language=en&format=json"
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(geo_url)
+            if resp.status_code == 200 and resp.json().get("results"):
+                geo_results = []
+                for r in resp.json()["results"]:
+                    if r.get("country_code") == "IN":
+                        clean_name = unicodedata.normalize('NFKD', r["name"]).encode('ASCII', 'ignore').decode('utf-8') or r["name"]
+                        geo_results.append({
+                            "id": f"geo-{r['id']}",
+                            "name": clean_name,
+                            "state": r.get("admin1", "India"),
+                            "lat": r["latitude"],
+                            "lon": r["longitude"],
+                            "zone": f"{r.get('admin1', 'Indian')} Eco-Region"
+                        })
+                if geo_results:
+                    return {"total": len(geo_results), "districts": geo_results}
+    except Exception:
+        pass
+
+    return {"total": 0, "districts": []}
 
 @app.get("/api/v1/fires")
 @app.get("/api/v1/fires/active")
@@ -146,7 +176,10 @@ async def search_city_or_district(
                         candidates = resp.json()["results"]
                         # Prioritize Indian geographic matches
                         selected = next((c for c in candidates if c.get("country_code") == "IN"), candidates[0])
-                        target_name = selected["name"]
+                        import unicodedata
+                        raw_name = selected["name"]
+                        clean_name = unicodedata.normalize('NFKD', raw_name).encode('ASCII', 'ignore').decode('utf-8') or raw_name
+                        target_name = clean_name
                         target_state = selected.get("admin1", "India")
                         target_lat = selected["latitude"]
                         target_lon = selected["longitude"]

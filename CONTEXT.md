@@ -53,3 +53,10 @@
   - Added layman hazard interpretations for Canadian FWI sub-indices (FFMC fuel dryness & ISI spread rate).
   - Designed and integrated academic thesis & scientific methodology footer across Home and Docs.
   - Hardened Supabase telemetry persistence with 8s timeout and baseline telemetry snapshot fallback.
+- [x] Multi-Tier Resilient Weather Engine & Dynamic City Search:
+  - Eliminated static weather fallback freeze (32.5°C & 17.5 FWI across all Indian cities).
+  - Upgraded Open-Meteo with custom academic User-Agent header and added resilient Tier 2 wttr.in live atmospheric fallback (unrestricted on cloud egress IPs).
+  - Enabled dynamic district & city search autocomplete across any Indian city/town with Open-Meteo geocoding.
+  - Normalized unicode diacritics for clean city names (e.g., Burhānpur -> Burhanpur).
+  - Fixed hyphen matching in find_best_district_match (Delhi-NCR -> Delhi-NCR).
+  - Verified live execution across Burhanpur, Jalgaon, Delhi, Shimla, Pune, and Jaipur (all distinct live temperatures and FWI danger levels).
