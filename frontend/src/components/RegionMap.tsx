@@ -8,30 +8,30 @@ interface Props {
   activeFires?: GeoJSONFeatureCollection
 }
 
-const ESRI_DARK_GRAY_STYLE: any = {
+const ESRI_LIGHT_GRAY_STYLE: any = {
   version: 8,
   sources: {
-    'esri-dark-base': {
+    'esri-light-base': {
       type: 'raster',
       tiles: [
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}'
       ],
       tileSize: 256,
       attribution: 'Esri, DeLorme, NAVTEQ, TomTom'
     },
-    'esri-dark-reference': {
+    'esri-light-reference': {
       type: 'raster',
       tiles: [
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}'
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}'
       ],
       tileSize: 256
     }
   },
   layers: [
     {
-      id: 'esri-dark-base-layer',
+      id: 'esri-light-base-layer',
       type: 'raster',
-      source: 'esri-dark-base',
+      source: 'esri-light-base',
       minzoom: 0,
       maxzoom: 16
     }
@@ -78,7 +78,7 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: ESRI_DARK_GRAY_STYLE,
+      style: ESRI_LIGHT_GRAY_STYLE,
       center: initialCenter as [number, number],
       zoom: initialZoom,
       attributionControl: false
@@ -108,8 +108,8 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
         type: 'fill',
         source: 'proximity-buffer',
         paint: {
-          'fill-color': '#06b6d4',
-          'fill-opacity': 0.12
+          'fill-color': '#0284c7',
+          'fill-opacity': 0.08
         }
       })
 
@@ -118,10 +118,10 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
         type: 'line',
         source: 'proximity-buffer',
         paint: {
-          'line-color': '#06b6d4',
+          'line-color': '#0284c7',
           'line-width': 1.5,
           'line-dasharray': [2, 2],
-          'line-opacity': 0.7
+          'line-opacity': 0.8
         }
       })
 
@@ -137,7 +137,7 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
         paint: {
           'circle-radius': 14,
           'circle-color': '#f97316',
-          'circle-opacity': 0.35,
+          'circle-opacity': 0.25,
           'circle-blur': 0.8
         }
       })
@@ -154,11 +154,11 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
         }
       })
 
-      // Reference labels layer positioned on top of buffers for maximum text legibility
+      // Reference labels layer positioned on top of buffers
       map.addLayer({
-        id: 'esri-dark-reference-layer',
+        id: 'esri-light-reference-layer',
         type: 'raster',
-        source: 'esri-dark-reference',
+        source: 'esri-light-reference',
         minzoom: 0,
         maxzoom: 16
       })
@@ -172,18 +172,18 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
         const heatLevel = Number(celsius) > 55 ? 'Intense Thermal Anomaly' : Number(celsius) > 40 ? 'Active Surface Fire' : 'Elevated Heat Signature'
         const cert = props.confidence === 'high' ? 'High Satellite Certainty' : props.confidence === 'nominal' ? 'Verified Anomaly' : 'Preliminary'
 
-        new maplibregl.Popup({ offset: 12, className: 'custom-dark-popup' })
+        new maplibregl.Popup({ offset: 12, className: 'custom-light-popup' })
           .setLngLat(coords)
           .setHTML(`
-            <div style="background:#141518; color:#f4f4f5; padding:10px 12px; border-radius:10px; border:1px solid #27272a; font-family:sans-serif; font-size:11px; min-width:180px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.5);">
+            <div style="background:#ffffff; color:#0f172a; padding:10px 12px; border-radius:10px; border:1px solid #e2e8f0; font-family:sans-serif; font-size:11px; min-width:180px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);">
               <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
                 <span style="font-size:13px;">🔥</span>
                 <strong style="color:#ef4444; font-size:12px;">NASA VIIRS Hotspot</strong>
               </div>
-              <p style="margin:2px 0; color:#cbd5e1;">Radiant Heat: <strong style="color:#38bdf8;">${celsius}°C</strong> <span style="color:#71717a; font-size:10px;">(${kelvin.toFixed(1)} K)</span></p>
-              <p style="margin:2px 0; font-size:10px; color:#f59e0b; font-weight:600;">${heatLevel}</p>
-              <p style="margin:2px 0; color:#a1a1aa; font-size:10px;">Confidence: <span style="color:#4ade80;">${cert}</span></p>
-              <p style="color:#71717a; font-size:9px; margin-top:5px; border-top:1px solid #27272a; padding-top:4px;">Orbit: ${props.acq_date ?? 'Recent'} ${props.acq_time ?? ''} UTC</p>
+              <p style="margin:2px 0; color:#334155;">Radiant Heat: <strong style="color:#0284c7;">${celsius}°C</strong> <span style="color:#64748b; font-size:10px;">(${kelvin.toFixed(1)} K)</span></p>
+              <p style="margin:2px 0; font-size:10px; color:#d97706; font-weight:600;">${heatLevel}</p>
+              <p style="margin:2px 0; color:#475569; font-size:10px;">Confidence: <span style="color:#059669; font-weight:600;">${cert}</span></p>
+              <p style="color:#94a3b8; font-size:9px; margin-top:5px; border-top:1px solid #e2e8f0; padding-top:4px;">Orbit: ${props.acq_date ?? 'Recent'} ${props.acq_time ?? ''} UTC</p>
             </div>
           `)
           .addTo(map)
@@ -238,8 +238,8 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
     const pinEl = document.createElement('div')
     pinEl.className = 'relative flex items-center justify-center'
     pinEl.innerHTML = `
-      <div class="absolute h-9 w-9 rounded-full bg-cyan-400/20 animate-ping"></div>
-      <div class="h-4 w-4 rounded-full border-2 border-white bg-cyan-400 shadow-md shadow-cyan-400"></div>
+      <div class="absolute h-9 w-9 rounded-full bg-sky-500/20 animate-ping"></div>
+      <div class="h-4 w-4 rounded-full border-2 border-white bg-sky-600 shadow-md shadow-sky-600/30"></div>
     `
 
     markerRef.current = new maplibregl.Marker({ element: pinEl })
@@ -249,28 +249,8 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
   }, [selectedLocation])
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
-      <div ref={containerRef} className="absolute inset-0 h-full w-full" />
-      
-      <div className="absolute bottom-3 left-3 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-zinc-800/90 bg-zinc-900/80 px-3.5 py-2 text-[11px] text-zinc-300 backdrop-blur-md">
-        <span className="flex items-center gap-1.5 font-medium">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
-          </span>
-          Active Fire (VIIRS 375m)
-        </span>
-        <span className="h-3 w-[1px] bg-zinc-700"></span>
-        <span className="flex items-center gap-1.5 font-medium">
-          <span className="h-2 w-2 rounded-full bg-cyan-400"></span>
-          District Centroid
-        </span>
-        <span className="h-3 w-[1px] bg-zinc-700"></span>
-        <span className="flex items-center gap-1.5 font-mono text-[10px] text-zinc-400">
-          <span className="h-2 w-2 rounded-full border border-cyan-400 border-dashed"></span>
-          50km Perimeter
-        </span>
-      </div>
+    <div className="relative h-full w-full min-h-[300px]">
+      <div ref={containerRef} className="absolute inset-0 h-full w-full rounded-xl overflow-hidden" />
     </div>
   )
 }

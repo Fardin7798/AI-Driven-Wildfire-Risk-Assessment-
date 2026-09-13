@@ -1,36 +1,36 @@
 @import "tailwindcss";
 
 @theme {
-  --color-canvas: #09090b;
-  --color-panel: #121215;
-  --color-border-subtle: #27272a;
+  --color-canvas: #f8fafc;
+  --color-panel: #ffffff;
+  --color-border-subtle: #e2e8f0;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
 @layer base {
   body {
-    background-color: #09090b;
-    color: #f4f4f5;
+    background-color: #f8fafc;
+    color: #0f172a;
     font-family: var(--font-sans);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* Custom dark scrollbar */
+/* Custom clean light scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: #f8fafc;
 }
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: #94a3b8;
 }
 
 /* MapLibre container guarantees */

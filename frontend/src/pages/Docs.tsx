@@ -112,33 +112,33 @@ export default function Docs() {
   }
 
   return (
-    <div className="min-h-screen bg-[#090A0C] text-zinc-100 font-sans antialiased p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
         {/* Top Header Bar */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800/80 pb-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-5">
           <div className="flex items-center gap-3">
             <Link
               to="/"
-              className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:border-cyan-500/50 hover:text-white transition-all cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700 transition-all cursor-pointer shadow-xs"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span>Back to Defense Console</span>
             </Link>
-            <div className="h-4 w-[1px] bg-zinc-800" />
-            <h1 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-              <Zap className="h-4 w-4 text-cyan-400" />
+            <div className="h-4 w-[1px] bg-slate-200" />
+            <h1 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <Zap className="h-4 w-4 text-sky-600" />
               Interactive API Specification
             </h1>
           </div>
 
           {/* View Mode Switcher */}
-          <div className="flex items-center rounded-xl border border-zinc-800 bg-zinc-900/80 p-1 text-xs">
+          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-100 p-1 text-xs">
             <button
               onClick={() => setActiveTab('explorer')}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium transition-all cursor-pointer ${
                 activeTab === 'explorer'
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-white text-sky-800 border border-slate-200 shadow-xs font-semibold'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Code2 className="h-3.5 w-3.5" />
@@ -148,8 +148,8 @@ export default function Docs() {
               onClick={() => setActiveTab('swagger')}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium transition-all cursor-pointer ${
                 activeTab === 'swagger'
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-white text-sky-800 border border-slate-200 shadow-xs font-semibold'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Server className="h-3.5 w-3.5" />
@@ -182,18 +182,18 @@ export default function Docs() {
                     <span className="font-mono text-[11px] font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 rounded px-1.5 py-0.5">
                       {ep.method}
                     </span>
-                    <span className="font-mono text-[11px] text-zinc-300 font-semibold">{ep.path}</span>
+                    <span className="font-mono text-[11px] text-slate-800 font-semibold">{ep.path}</span>
                   </div>
-                  <p className="text-xs text-zinc-400 font-medium truncate mt-1">{ep.title}</p>
+                  <p className="text-xs text-slate-500 font-medium truncate mt-1">{ep.title}</p>
                 </button>
               ))}
 
-              <div className="mt-6 rounded-xl border border-zinc-800/60 bg-zinc-900/30 p-4 text-xs space-y-2">
-                <p className="font-semibold text-zinc-300 flex items-center gap-1.5">
-                  <Terminal className="h-3.5 w-3.5 text-cyan-400" />
+              <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 text-xs space-y-2 shadow-xs">
+                <p className="font-semibold text-slate-800 flex items-center gap-1.5">
+                  <Terminal className="h-3.5 w-3.5 text-sky-600" />
                   Base API URL
                 </p>
-                <div className="font-mono text-[11px] text-zinc-400 bg-black/40 p-2 rounded-lg border border-zinc-800/80 break-all select-all">
+                <div className="font-mono text-[11px] text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-200 break-all select-all">
                   {API_BASE}
                 </div>
               </div>
@@ -201,22 +201,22 @@ export default function Docs() {
 
             {/* Endpoint Inspector & Live Runner */}
             <div className="lg:col-span-8 space-y-5">
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-5 shadow-xl shadow-black/20">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800/80 pb-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="rounded bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 font-mono text-xs font-bold text-emerald-400">
                         {currentEndpoint.method}
                       </span>
-                      <span className="font-mono text-sm font-bold text-white">{currentEndpoint.path}</span>
+                      <span className="font-mono text-sm font-bold text-slate-900">{currentEndpoint.path}</span>
                     </div>
-                    <h2 className="text-base font-semibold text-zinc-200">{currentEndpoint.title}</h2>
+                    <h2 className="text-base font-semibold text-slate-800">{currentEndpoint.title}</h2>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
                       onClick={copyCurl}
-                      className="flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800/60 px-3 py-2 text-xs font-medium text-zinc-300 hover:text-white transition-all cursor-pointer"
+                      className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-all cursor-pointer"
                     >
                       {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                       <span>{copied ? 'Copied' : 'Copy cURL'}</span>
@@ -224,7 +224,7 @@ export default function Docs() {
                     <button
                       onClick={handleTest}
                       disabled={loading}
-                      className="flex items-center gap-1.5 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-black hover:bg-cyan-300 transition-all cursor-pointer shadow-lg shadow-cyan-400/20 disabled:opacity-50"
+                      className="flex items-center gap-1.5 rounded-xl bg-sky-600 px-4 py-2 text-xs font-bold text-white hover:bg-sky-500 transition-all cursor-pointer shadow-sm shadow-sky-600/20 disabled:opacity-50"
                     >
                       <Play className="h-3.5 w-3.5 fill-black" />
                       <span>{loading ? 'Executing...' : 'Test Live'}</span>
@@ -232,15 +232,15 @@ export default function Docs() {
                   </div>
                 </div>
 
-                <p className="text-xs text-zinc-300 leading-relaxed">{currentEndpoint.description}</p>
+                <p className="text-xs text-slate-600 leading-relaxed">{currentEndpoint.description}</p>
 
                 {/* Query Parameters */}
                 {currentEndpoint.params && currentEndpoint.params.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-zinc-500">Query Parameters</p>
-                    <div className="overflow-x-auto rounded-xl border border-zinc-800/80 bg-black/30">
+                    <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-600 font-semibold">Query Parameters</p>
+                    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50/50">
                       <table className="w-full text-left text-xs">
-                        <thead className="border-b border-zinc-800 bg-zinc-900/60 font-mono text-[10px] text-zinc-400 uppercase">
+                        <thead className="border-b border-slate-200 bg-slate-100 font-mono text-[10px] text-slate-600 uppercase">
                           <tr>
                             <th className="p-2.5">Parameter</th>
                             <th className="p-2.5">Type</th>
@@ -249,14 +249,14 @@ export default function Docs() {
                             <th className="p-2.5">Description</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-zinc-800/60 font-mono text-[11px] text-zinc-300">
+                        <tbody className="divide-y divide-slate-200 font-mono text-[11px] text-slate-700">
                           {currentEndpoint.params.map((p) => (
                             <tr key={p.name} className="hover:bg-white/[0.02]">
-                              <td className="p-2.5 font-bold text-cyan-400">{p.name}</td>
-                              <td className="p-2.5 text-zinc-400">{p.type}</td>
-                              <td className="p-2.5">{p.required ? <span className="text-rose-400 font-bold">Yes</span> : <span className="text-zinc-500">No</span>}</td>
-                              <td className="p-2.5 text-zinc-400">{p.default ?? '—'}</td>
-                              <td className="p-2.5 font-sans text-xs text-zinc-300">{p.desc}</td>
+                              <td className="p-2.5 font-bold text-sky-700 font-bold">{p.name}</td>
+                              <td className="p-2.5 text-slate-500">{p.type}</td>
+                              <td className="p-2.5">{p.required ? <span className="text-rose-600 font-bold">Yes</span> : <span className="text-slate-400">No</span>}</td>
+                              <td className="p-2.5 text-slate-500">{p.default ?? '—'}</td>
+                              <td className="p-2.5 font-sans text-xs text-slate-600">{p.desc}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -268,7 +268,7 @@ export default function Docs() {
                 {/* Live Response Panel */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-zinc-500">Live JSON Response</p>
+                    <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-600 font-semibold">Live JSON Response</p>
                     {latency !== null && (
                       <span className="rounded bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-400">
                         HTTP 200 OK // {latency}ms
@@ -295,24 +295,24 @@ export default function Docs() {
 
         {/* Tab 2: Embedded Swagger UI Iframe */}
         {activeTab === 'swagger' && (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-4 shadow-xl shadow-black/20">
-            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
-                <h3 className="text-sm font-semibold text-white">Full OpenAPI / Swagger UI</h3>
-                <p className="text-xs text-zinc-400">Embedded directly from FastAPI backend engine</p>
+                <h3 className="text-sm font-semibold text-slate-900">Full OpenAPI / Swagger UI</h3>
+                <p className="text-xs text-slate-500">Embedded directly from FastAPI backend engine</p>
               </div>
               <a
                 href={DOCS_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-500 transition-colors font-medium"
               >
                 <span>Open in Full Browser Window</span>
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>
 
-            <div className="h-[750px] w-full overflow-hidden rounded-xl border border-zinc-800 bg-white">
+            <div className="h-[750px] w-full overflow-hidden rounded-xl border border-slate-200 bg-white">
               <iframe
                 src={DOCS_URL}
                 title="FastAPI Swagger Documentation"
