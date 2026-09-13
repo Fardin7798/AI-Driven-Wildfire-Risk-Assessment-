@@ -47,3 +47,9 @@
 - [x] Supabase PostGIS database seeded with 39 districts; real-time telemetry audit trail operational.
 - [x] GitHub repository updated and synced with `origin/main`.
 - [x] One-click development runner `./run_dev.sh` verified.
+- [x] Production Polish & Institutional Integrity Overhaul:
+  - Eliminated raw database schema leaks, internal project hashes, and developer prompts from UI.
+  - Converted NASA VIIRS satellite popup from raw Kelvin to Celsius with heat classification.
+  - Added layman hazard interpretations for Canadian FWI sub-indices (FFMC fuel dryness & ISI spread rate).
+  - Designed and integrated academic thesis & scientific methodology footer across Home and Docs.
+  - Hardened Supabase telemetry persistence with 8s timeout and baseline telemetry snapshot fallback.

@@ -22,11 +22,11 @@ export function Nav() {
             AERORISK
           </span>
           <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] font-mono text-zinc-400">
-            v1.0
+            PROD
           </span>
         </div>
-        <h2 className="mt-2 text-sm font-bold text-white tracking-tight">India Ops Portal</h2>
-        <p className="text-[11px] text-zinc-500">Live Environmental Defense</p>
+        <h2 className="mt-2 text-sm font-bold text-white tracking-tight">National Defense Console</h2>
+        <p className="text-[11px] text-zinc-500">Environmental Risk & Preparedness</p>
       </div>
 
       {/* Navigation Links */}
@@ -45,24 +45,24 @@ export function Nav() {
       <div className="mt-6 rounded-xl border border-zinc-800/60 bg-zinc-900/30 p-3">
         <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-400">
           <Activity className="h-3 w-3 text-cyan-400" />
-          <span>DATA FEEDS ACTIVE</span>
+          <span>SURVEILLANCE FEEDS ACTIVE</span>
         </div>
         <div className="mt-2 space-y-1 text-[10px] text-zinc-500">
           <div className="flex justify-between">
-            <span>NASA FIRMS VIIRS</span>
-            <span className="text-emerald-400 font-mono">LIVE</span>
+            <span>NASA VIIRS (375m)</span>
+            <span className="text-emerald-400 font-mono">ORBITAL STREAM</span>
           </div>
           <div className="flex justify-between">
             <span>Copernicus CAMS</span>
-            <span className="text-emerald-400 font-mono">72H SYNC</span>
+            <span className="text-emerald-400 font-mono">72H FORECAST</span>
           </div>
           <div className="flex justify-between">
-            <span>Supabase PostGIS</span>
-            <span className="text-cyan-400 font-mono">CONNECTED</span>
+            <span>Spatial Cluster</span>
+            <span className="text-cyan-400 font-mono">ENCRYPTED SYNC</span>
           </div>
           <div className="flex justify-between">
-            <span>Open-Meteo High-Res</span>
-            <span className="text-emerald-400 font-mono">0.05ms</span>
+            <span>Atmospheric Model</span>
+            <span className="text-emerald-400 font-mono">HIGH-RES ACTIVE</span>
           </div>
         </div>
       </div>

@@ -12,6 +12,7 @@ import {
   Server
 } from 'lucide-react'
 import { API_BASE, DOCS_URL, api } from '../lib/api'
+import { Footer } from '../components/Footer'
 
 interface Endpoint {
   method: 'GET'
@@ -321,6 +322,7 @@ export default function Docs() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

@@ -96,23 +96,27 @@ export function RiskGauge({ risk }: { risk: WildfireAssessment }) {
         </div>
       </div>
 
-      {/* Scientific Sub-indices */}
+      {/* Scientific Sub-indices with plain-language hazard interpretations */}
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div className="rounded-xl border border-white/[0.06] bg-black/20 p-2.5">
           <div className="flex items-center justify-between text-zinc-400 text-xs">
-            <span className="text-[10px] uppercase font-mono">FFMC Moisture</span>
+            <span className="text-[10px] uppercase font-mono">FFMC Fuel Dryness</span>
             <Activity className="h-3 w-3 text-cyan-400" />
           </div>
           <p className="mt-1 tabular-nums font-mono text-lg font-bold text-zinc-100">{risk?.ffmc ?? 0}</p>
-          <p className="text-[9px] text-zinc-500">Fine litter dry state</p>
+          <p className="text-[9px] text-zinc-400 font-medium">
+            {(risk?.ffmc ?? 0) >= 88 ? 'Combustible dry litter' : (risk?.ffmc ?? 0) >= 80 ? 'Moderate dry fuels' : 'Moist surface fuels'}
+          </p>
         </div>
         <div className="rounded-xl border border-white/[0.06] bg-black/20 p-2.5">
           <div className="flex items-center justify-between text-zinc-400 text-xs">
-            <span className="text-[10px] uppercase font-mono">ISI Velocity</span>
+            <span className="text-[10px] uppercase font-mono">ISI Spread Velocity</span>
             <Compass className="h-3 w-3 text-orange-400" />
           </div>
           <p className="mt-1 tabular-nums font-mono text-lg font-bold text-zinc-100">{risk?.isi ?? 0}</p>
-          <p className="text-[9px] text-zinc-500">Spread rate index</p>
+          <p className="text-[9px] text-zinc-400 font-medium">
+            {(risk?.isi ?? 0) >= 10 ? 'Rapid wind spread' : (risk?.isi ?? 0) >= 5 ? 'Moderate spread potential' : 'Slow ground propagation'}
+          </p>
         </div>
       </div>
 

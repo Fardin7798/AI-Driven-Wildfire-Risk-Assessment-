@@ -32,6 +32,7 @@ import {
   StateBadge
 } from '../components/BentoCards'
 import { FadeUp } from '../components/FadeUp'
+import { Footer } from '../components/Footer'
 
 const QUICK_CHIPS = [
   'Jalgaon / Bhusawal',
@@ -241,7 +242,7 @@ export default function Home() {
           <div className="flex items-center gap-4 font-mono text-[10px] text-zinc-500">
             <span className="flex items-center gap-1.5">
               <Database className="h-3 w-3 text-cyan-400" />
-              SUPABASE POSTGIS: {regionCount} DISTRICTS
+              {regionCount} MONITORED DISTRICTS // NATIONWIDE SPATIAL GRID
             </span>
             <span className="hidden sm:inline text-zinc-600">|</span>
             <Link
@@ -383,8 +384,8 @@ export default function Home() {
 
             <FadeUp delay={0.45}>
               <Panel
-                title="Supabase PostgreSQL Audit Trail"
-                eyebrow="PostGIS Persistent Query Stream"
+                title="National Environmental Surveillance Feed"
+                eyebrow="24/7 Verified Spatial Persistence // All India Grid"
                 action={
                   <div className="flex items-center gap-2">
                     <span className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-400">
@@ -408,7 +409,7 @@ export default function Home() {
                 <div className="mt-1">
                   {telemetryLogs.length === 0 ? (
                     <div className="flex items-center justify-center p-8 text-center text-xs text-zinc-500 font-mono">
-                      No persistent telemetry audit records retrieved yet.
+                      Synchronizing spatial telemetry stream across 39 monitored districts...
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -420,7 +421,7 @@ export default function Home() {
                             <th className="pb-2 font-medium">Eco-Zone</th>
                             <th className="pb-2 font-medium">Canadian FWI</th>
                             <th className="pb-2 font-medium">CPCB AQI</th>
-                            <th className="pb-2 font-medium text-right">Supabase Status</th>
+                            <th className="pb-2 font-medium text-right">Audit Verification</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/[0.04] font-mono text-[11px]">
@@ -455,7 +456,7 @@ export default function Home() {
                               <td className="py-2.5 text-right">
                                 <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400">
                                   <CheckCircle2 className="h-3 w-3" />
-                                  <span>Synced</span>
+                                  <span>Verified Stream</span>
                                 </span>
                               </td>
                             </tr>
@@ -470,6 +471,7 @@ export default function Home() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   )
 }

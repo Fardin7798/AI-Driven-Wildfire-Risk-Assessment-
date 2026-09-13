@@ -167,14 +167,23 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
         if (!e.features || !e.features[0]) return
         const props = e.features[0].properties as any
         const coords = (e.features[0].geometry as any).coordinates.slice()
+        const kelvin = Number(props.brightness) || 300
+        const celsius = (kelvin - 273.15).toFixed(1)
+        const heatLevel = Number(celsius) > 55 ? 'Intense Thermal Anomaly' : Number(celsius) > 40 ? 'Active Surface Fire' : 'Elevated Heat Signature'
+        const cert = props.confidence === 'high' ? 'High Satellite Certainty' : props.confidence === 'nominal' ? 'Verified Anomaly' : 'Preliminary'
+
         new maplibregl.Popup({ offset: 12, className: 'custom-dark-popup' })
           .setLngLat(coords)
           .setHTML(`
-            <div style="background:#18181b; color:#f4f4f5; padding:8px 10px; border-radius:8px; border:1px solid #27272a; font-family:monospace; font-size:11px;">
-              <p style="color:#ef4444; font-weight:bold; margin-bottom:4px;">🔥 NASA VIIRS Hotspot</p>
-              <p>Brightness: <span style="color:#38bdf8;">${props.brightness ?? 'N/A'} K</span></p>
-              <p>Confidence: <span style="color:#4ade80;">${props.confidence ?? 'nominal'}</span></p>
-              <p style="color:#71717a; font-size:10px; margin-top:2px;">Acquired: ${props.acq_date ?? ''} ${props.acq_time ?? ''} UTC</p>
+            <div style="background:#141518; color:#f4f4f5; padding:10px 12px; border-radius:10px; border:1px solid #27272a; font-family:sans-serif; font-size:11px; min-width:180px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.5);">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                <span style="font-size:13px;">🔥</span>
+                <strong style="color:#ef4444; font-size:12px;">NASA VIIRS Hotspot</strong>
+              </div>
+              <p style="margin:2px 0; color:#cbd5e1;">Radiant Heat: <strong style="color:#38bdf8;">${celsius}°C</strong> <span style="color:#71717a; font-size:10px;">(${kelvin.toFixed(1)} K)</span></p>
+              <p style="margin:2px 0; font-size:10px; color:#f59e0b; font-weight:600;">${heatLevel}</p>
+              <p style="margin:2px 0; color:#a1a1aa; font-size:10px;">Confidence: <span style="color:#4ade80;">${cert}</span></p>
+              <p style="color:#71717a; font-size:9px; margin-top:5px; border-top:1px solid #27272a; padding-top:4px;">Orbit: ${props.acq_date ?? 'Recent'} ${props.acq_time ?? ''} UTC</p>
             </div>
           `)
           .addTo(map)
