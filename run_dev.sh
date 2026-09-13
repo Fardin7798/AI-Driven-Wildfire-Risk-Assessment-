@@ -28,10 +28,11 @@ trap cleanup SIGINT SIGTERM EXIT
 # 1. Start Backend Microservice
 echo "Starting Backend Microservice on http://localhost:8000..."
 cd "$BACKEND_DIR"
-if [ -d ".venv" ]; then
-  source .venv/bin/activate
+if [ -x "$BACKEND_DIR/.venv/bin/uvicorn" ]; then
+  "$BACKEND_DIR/.venv/bin/uvicorn" main:app --reload --port 8000 &
+else
+  uvicorn main:app --reload --port 8000 &
 fi
-uvicorn main:app --reload --port 8000 &
 BACKEND_PID=$!
 
 # Wait briefly for backend port to be bound

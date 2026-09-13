@@ -10,12 +10,14 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  optimizeDeps: {
+    exclude: ['maplibre-gl'],
+  },
   server: {
     proxy: {
       '/api': {
-        target: 'https://wildfire-aqi-backend.onrender.com',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
   },
