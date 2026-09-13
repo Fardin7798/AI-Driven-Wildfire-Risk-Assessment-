@@ -92,17 +92,17 @@ export default function Home() {
   const currentState = error ? 'error' : loading ? 'loading' : !data ? 'empty' : 'populated'
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
       <header className="sticky top-0 z-30 border-b border-white/[0.08] bg-[#0c0d0f]/90 px-4 py-3.5 backdrop-blur-xl sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-[1500px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black shadow-lg shadow-emerald-500/20">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 text-black shadow-lg shadow-cyan-500/20">
               <Flame className="h-5 w-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-base font-black tracking-wider text-white">AERORISK</span>
-                <span className="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-emerald-400">
+                <span className="rounded border border-cyan-500/30 bg-cyan-500/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-cyan-400">
                   INDIA / OPS
                 </span>
               </div>
@@ -121,7 +121,7 @@ export default function Home() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search Indian district (e.g. Nainital, Shimla)..."
-                className="h-9 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] pl-9 pr-4 text-xs text-white placeholder-zinc-500 outline-none transition-all focus:border-emerald-400/50 focus:bg-white/[0.06] focus:ring-1 focus:ring-emerald-400/50"
+                className="h-9 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] pl-9 pr-4 text-xs text-white placeholder-zinc-500 outline-none transition-all focus:border-cyan-400/50 focus:bg-white/[0.06] focus:ring-1 focus:ring-cyan-400/50"
               />
               <datalist id="districts-list">
                 {districts.map((d) => (
@@ -134,7 +134,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => executeSearch(query)}
-              className="h-9 rounded-xl bg-emerald-400 px-4 text-xs font-bold text-black transition-all hover:bg-emerald-300 active:scale-95 shadow-md shadow-emerald-400/20 cursor-pointer"
+              className="h-9 rounded-xl bg-cyan-400 px-4 text-xs font-bold text-black transition-all hover:bg-cyan-300 active:scale-95 shadow-md shadow-cyan-400/20 cursor-pointer"
             >
               Scan
             </button>
@@ -149,7 +149,7 @@ export default function Home() {
         <FadeUp delay={0.05} className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             <span className="mr-1 flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-zinc-500">
-              <Sparkles className="h-3 w-3 text-emerald-400" />
+              <Sparkles className="h-3 w-3 text-cyan-400" />
               FOCUS TARGETS:
             </span>
             {QUICK_CHIPS.map((chip) => (
@@ -158,7 +158,7 @@ export default function Home() {
                 onClick={() => handleChipClick(chip)}
                 className={`rounded-lg border px-2.5 py-1 font-mono text-[10px] transition-all cursor-pointer ${
                   query === chip
-                    ? 'border-emerald-400/50 bg-emerald-400/10 text-emerald-300 font-bold shadow-sm shadow-emerald-400/20'
+                    ? 'border-cyan-400/50 bg-cyan-400/10 text-cyan-300 font-bold shadow-sm shadow-cyan-400/20'
                     : 'border-white/[0.08] bg-white/[0.02] text-zinc-400 hover:border-white/20 hover:text-zinc-200'
                 }`}
               >
@@ -169,7 +169,7 @@ export default function Home() {
 
           <div className="flex items-center gap-4 font-mono text-[10px] text-zinc-500">
             <span className="flex items-center gap-1.5">
-              <Database className="h-3 w-3 text-emerald-400" />
+              <Database className="h-3 w-3 text-cyan-400" />
               FIRMS LATENCY: 0.05ms FWI
             </span>
             <span className="hidden sm:inline text-zinc-600">|</span>
@@ -177,7 +177,7 @@ export default function Home() {
               href="http://127.0.0.1:8000/docs"
               target="_blank"
               rel="noreferrer"
-              className="hidden sm:flex items-center gap-1 text-zinc-400 hover:text-emerald-400 transition-colors"
+              className="hidden sm:flex items-center gap-1 text-zinc-400 hover:text-cyan-400 transition-colors"
             >
               <span>API DOCS</span>
               <ExternalLink className="h-2.5 w-2.5" />
@@ -229,7 +229,7 @@ export default function Home() {
               </p>
               <button
                 onClick={() => handleChipClick('Jalgaon / Bhusawal')}
-                className="mt-5 rounded-xl bg-emerald-400 px-5 py-2.5 text-xs font-bold text-black hover:bg-emerald-300 transition-all cursor-pointer"
+                className="mt-5 rounded-xl bg-cyan-400 px-5 py-2.5 text-xs font-bold text-black hover:bg-cyan-300 transition-all cursor-pointer"
               >
                 Scan Bhusawal (Maharashtra)
               </button>
@@ -241,10 +241,10 @@ export default function Home() {
           <div className="space-y-4">
             <FadeUp delay={0.08} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-[#111214] px-4 py-3 text-xs text-zinc-400 shadow-xl backdrop-blur-md">
               <div className="flex flex-wrap items-center gap-2.5">
-                <MapPin className="h-4 w-4 text-emerald-400" />
+                <MapPin className="h-4 w-4 text-cyan-400" />
                 <span className="font-bold text-white text-sm">{data.location.name}</span>
                 <span className="text-zinc-400 font-medium">({data.location.state})</span>
-                <span className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-400">
+                <span className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-cyan-300">
                   {data.location.eco_zone}
                 </span>
                 <span className="rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 font-mono text-[10px] text-zinc-400">
@@ -254,7 +254,7 @@ export default function Home() {
               <div className="flex items-center gap-4 font-mono text-[11px] text-zinc-400">
                 <span>LAT {data.location.latitude.toFixed(4)}° N</span>
                 <span>LON {data.location.longitude.toFixed(4)}° E</span>
-                <span className="text-emerald-400">SYNC: {new Date(data.metadata.timestamp).toLocaleTimeString()}</span>
+                <span className="text-cyan-400 font-bold">SYNC: {new Date(data.metadata.timestamp).toLocaleTimeString()}</span>
               </div>
             </FadeUp>
 
