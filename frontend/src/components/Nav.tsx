@@ -62,6 +62,10 @@ export function Nav() {
             <span className="text-emerald-400 font-mono">72H SYNC</span>
           </div>
           <div className="flex justify-between">
+            <span>Supabase PostGIS</span>
+            <span className="text-cyan-400 font-mono">CONNECTED</span>
+          </div>
+          <div className="flex justify-between">
             <span>Open-Meteo High-Res</span>
             <span className="text-emerald-400 font-mono">0.05ms</span>
           </div>

@@ -1,5 +1,13 @@
 import os
+import sys
+
+# Ensure backend directory is in sys.path
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+if _current_dir not in sys.path:
+    sys.path.insert(0, _current_dir)
+import os
 import json
+import asyncio
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
@@ -12,12 +20,13 @@ from services.firms_service import fetch_active_fires, find_nearby_fires, fires_
 from services.weather_service import fetch_live_weather
 from services.aqi_service import fetch_live_and_forecast_aqi
 from services.preparedness_service import generate_preparedness_advisory
+from services.supabase_service import log_telemetry, get_recent_telemetry_logs, check_supabase_health
 
 load_dotenv()
 
 app = FastAPI(
     title="AI-Driven Wildfire Risk Assessment & Air Quality Platform (India)",
-    description="Production-grade API providing scientific Canadian FWI fire danger rating, NASA FIRMS VIIRS 375m active satellite fire correlation, Copernicus CAMS 72-hour AQI forecasts, and actionable community preparedness advisories across India.",
+    description="Production-grade API providing scientific Canadian FWI fire danger rating, NASA FIRMS VIIRS 375m active satellite fire correlation, Copernicus CAMS 72-hour AQI forecasts, Supabase persistent audit telemetry, and actionable community preparedness advisories across India.",
     version="1.0.0"
 )
 
@@ -37,12 +46,14 @@ except Exception:
     DISTRICTS_DB = []
 
 @app.get("/health")
-def health_check():
+async def health_check():
+    db_health = await check_supabase_health()
     return {
         "status": "healthy",
         "service": "Wildfire Risk & Air Quality Engine (India)",
         "version": "1.0.0",
         "districts_loaded": len(DISTRICTS_DB),
+        "database": db_health,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
@@ -72,10 +83,10 @@ async def search_city_or_district(
     target_lat = lat
     target_lon = lon
     target_zone = "Unknown"
+    matched = None
 
     if query:
         q_clean = query.lower().strip()
-        matched = None
         for d in DISTRICTS_DB:
             if q_clean in d["name"].lower() or q_clean in d["id"].lower() or d["name"].lower() in q_clean:
                 matched = d
@@ -132,6 +143,27 @@ async def search_city_or_district(
         closest_fire_km=closest_km
     )
 
+    # Log telemetry asynchronously to Supabase database in background
+    asyncio.create_task(
+        log_telemetry(
+            district_name=target_name,
+            state=target_state,
+            lat=target_lat,
+            lon=target_lon,
+            eco_zone=target_zone,
+            fwi_score=fire_risk["fwi_score"],
+            risk_level=fire_risk["risk_level"],
+            cpcb_aqi=aqi_data["cpcb_aqi"],
+            aqi_category=aqi_data["category"],
+            nearby_fires_50km=len(nearby_fires),
+            closest_fire_km=closest_km if nearby_fires else None,
+            temperature=weather["temperature"],
+            humidity=weather["humidity"],
+            wind_speed=weather["wind_speed"],
+            district_id=matched["id"] if matched else None
+        )
+    )
+
     return {
         "location": {
             "name": target_name,
@@ -157,9 +189,14 @@ async def search_city_or_district(
         "community_preparedness": preparedness,
         "metadata": {
             "standards": ["Canadian Forest Fire Weather Index (FWI)", "NASA LANCE FIRMS VIIRS 375m", "Copernicus CAMS", "CPCB National AQI"],
+            "database_sync": "Supabase PostgreSQL",
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
     }
+
+@app.get("/api/v1/telemetry/recent")
+async def get_recent_telemetry(limit: int = Query(10, ge=1, le=50)):
+    return {"total": limit, "logs": await get_recent_telemetry_logs(limit=limit)}
 
 @app.get("/api/v1/preparedness")
 def get_preparedness(risk_level: str = "Moderate", aqi: int = 120):

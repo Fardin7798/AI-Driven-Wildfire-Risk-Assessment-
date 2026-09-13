@@ -2,6 +2,7 @@ import type {
   District,
   UnifiedSearchResponse,
   GeoJSONFeatureCollection,
+  TelemetryLog,
 } from '../types'
 
 const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
@@ -28,5 +29,17 @@ export const api = {
   },
   getActiveFires: () =>
     get<GeoJSONFeatureCollection>('/api/v1/fires/active?format=geojson'),
-  getHealth: () => get<{ status: string; service: string }>('/health'),
+  getRecentTelemetry: (limit: number = 8) =>
+    get<{ total: number; logs: TelemetryLog[] }>(`/api/v1/telemetry/recent?limit=${limit}`),
+  getHealth: () =>
+    get<{
+      status: string
+      service: string
+      database?: {
+        status: string
+        provider: string
+        project_ref: string
+        regions_in_db: number
+      }
+    }>('/health'),
 }

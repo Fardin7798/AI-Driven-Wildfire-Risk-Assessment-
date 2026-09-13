@@ -100,6 +100,7 @@ export interface UnifiedSearchResponse {
   metadata: {
     standards: string[]
     timestamp: string
+    database_sync?: string
   }
 }
 
@@ -121,4 +122,23 @@ export interface GeoJSONFeature {
 export interface GeoJSONFeatureCollection {
   type: 'FeatureCollection'
   features: GeoJSONFeature[]
+}
+
+export interface TelemetryLog {
+  id: string
+  district_name: string
+  state: string
+  lat: number
+  lon: number
+  eco_zone: string
+  fwi_score: number
+  risk_level: string
+  cpcb_aqi: number
+  aqi_category: string
+  nearby_fires_50km: number
+  closest_fire_km: number | null
+  temperature: number
+  humidity: number
+  wind_speed: number
+  created_at: string
 }

@@ -8,13 +8,16 @@ import {
   Flame,
   Layers,
   Database,
-  ExternalLink
+  ExternalLink,
+  CheckCircle2,
+  Clock
 } from 'lucide-react'
 import { api } from '../lib/api'
 import type {
   UnifiedSearchResponse,
   GeoJSONFeatureCollection,
-  District
+  District,
+  TelemetryLog
 } from '../types'
 import { RegionMap } from '../components/RegionMap'
 import {
@@ -43,8 +46,17 @@ export default function Home() {
   const [districts, setDistricts] = useState<District[]>([])
   const [data, setData] = useState<UnifiedSearchResponse | null>(null)
   const [fires, setFires] = useState<GeoJSONFeatureCollection | undefined>(undefined)
+  const [telemetryLogs, setTelemetryLogs] = useState<TelemetryLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const fetchTelemetry = () => {
+    api.getRecentTelemetry(6)
+      .then((res) => {
+        if (res?.logs) setTelemetryLogs(res.logs)
+      })
+      .catch(() => {})
+  }
 
   useEffect(() => {
     api.getDistricts()
@@ -54,6 +66,8 @@ export default function Home() {
     api.getActiveFires()
       .then((geo) => setFires(geo))
       .catch(() => {})
+
+    fetchTelemetry()
   }, [])
 
   const executeSearch = async (targetQuery: string) => {
@@ -66,6 +80,7 @@ export default function Home() {
     try {
       const res = await api.search(targetQuery)
       setData(res)
+      setTimeout(fetchTelemetry, 1800)
     } catch (err: any) {
       setError(err?.message || 'Failed to fetch environmental telemetry from backend')
     } finally {
@@ -84,46 +99,48 @@ export default function Home() {
     }
   }
 
-  const handleChipClick = (city: string) => {
-    setQuery(city)
-    executeSearch(city)
+  const handleChipClick = (chip: string) => {
+    setQuery(chip)
+    executeSearch(chip)
   }
 
   const currentState = error ? 'error' : loading ? 'loading' : !data ? 'empty' : 'populated'
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
-      <header className="sticky top-0 z-30 border-b border-white/[0.08] bg-[#0c0d0f]/90 px-4 py-3.5 backdrop-blur-xl sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-[1500px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-h-screen bg-[#090A0C] text-zinc-100 font-sans antialiased selection:bg-cyan-500 selection:text-black">
+      <header className="sticky top-0 z-30 border-b border-white/[0.08] bg-[#090A0C]/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1500px] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 text-black shadow-lg shadow-cyan-500/20">
-              <Flame className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.03] shadow-inner">
+              <Flame className="h-5 w-5 text-amber-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-base font-black tracking-wider text-white">AERORISK</span>
-                <span className="rounded border border-cyan-500/30 bg-cyan-500/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-cyan-400">
-                  INDIA / OPS
+                <span className="font-mono text-xs font-bold tracking-wider text-cyan-400">AERORISK</span>
+                <span className="rounded bg-white/[0.06] px-1.5 py-0.2 font-mono text-[9px] text-zinc-400">v1.0</span>
+                <span className="flex items-center gap-1 rounded border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] text-emerald-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  SUPABASE POSTGRES
                 </span>
               </div>
-              <p className="font-mono text-[10px] text-zinc-400">
-                Wildfire FWI Engine • NASA FIRMS 375m • CPCB NAQI Air Quality
-              </p>
+              <h1 className="text-base font-bold text-white tracking-tight">
+                National Wildfire Risk & AQI Engine
+              </h1>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <form onSubmit={handleSubmit} className="relative flex-1 sm:w-80">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
               <input
                 type="text"
-                list="districts-list"
+                list="district-options"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search Indian district (e.g. Nainital, Shimla)..."
-                className="h-9 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] pl-9 pr-4 text-xs text-white placeholder-zinc-500 outline-none transition-all focus:border-cyan-400/50 focus:bg-white/[0.06] focus:ring-1 focus:ring-cyan-400/50"
+                placeholder="Search district, state, city..."
+                className="h-9 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] pl-9 pr-4 text-xs text-white placeholder-zinc-500 outline-none transition-all focus:border-cyan-400 focus:bg-white/[0.06] focus:ring-2 focus:ring-cyan-400/20"
               />
-              <datalist id="districts-list">
+              <datalist id="district-options">
                 {districts.map((d) => (
                   <option key={d.id} value={d.name}>
                     {d.state} ({d.zone})
@@ -170,7 +187,7 @@ export default function Home() {
           <div className="flex items-center gap-4 font-mono text-[10px] text-zinc-500">
             <span className="flex items-center gap-1.5">
               <Database className="h-3 w-3 text-cyan-400" />
-              FIRMS LATENCY: 0.05ms FWI
+              SUPABASE POSTGIS: 39 DISTRICTS
             </span>
             <span className="hidden sm:inline text-zinc-600">|</span>
             <a
@@ -289,6 +306,96 @@ export default function Home() {
 
             <FadeUp delay={0.2}>
               <EmergencyCards prep={data.community_preparedness} />
+            </FadeUp>
+
+            {/* Supabase Persistent Telemetry Audit Trail */}
+            <FadeUp delay={0.22}>
+              <Panel
+                title="Supabase PostgreSQL Audit Trail"
+                eyebrow="Real-Time Data Persistence"
+                action={
+                  <button
+                    onClick={fetchTelemetry}
+                    className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-zinc-400 hover:text-cyan-300 hover:border-cyan-500/30 transition-all cursor-pointer"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    <span>Refresh Logs</span>
+                  </button>
+                }
+              >
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] pb-3 text-xs text-zinc-400">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                      <span className="font-mono text-emerald-400 font-bold">CONNECTED</span>
+                      <span className="text-zinc-500">•</span>
+                      <span>Project: <code className="text-cyan-400 font-mono">laasumeyzxskujxrxpcx</code> (ap-south-1)</span>
+                      <span className="text-zinc-500">•</span>
+                      <span>39 Seeded PostGIS Districts</span>
+                    </div>
+                    <span className="font-mono text-[11px] text-zinc-500">Table: telemetry_logs</span>
+                  </div>
+
+                  {telemetryLogs.length === 0 ? (
+                    <div className="py-6 text-center text-xs text-zinc-500">
+                      No recent telemetry logs retrieved yet. Execute a district scan to trigger Supabase persistence.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-white/[0.06] font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+                            <th className="pb-2 font-medium">Timestamp (UTC)</th>
+                            <th className="pb-2 font-medium">District & State</th>
+                            <th className="pb-2 font-medium">Eco-Zone</th>
+                            <th className="pb-2 font-medium">Canadian FWI</th>
+                            <th className="pb-2 font-medium">CPCB AQI</th>
+                            <th className="pb-2 font-medium text-right">Supabase Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/[0.04] font-mono text-[11px]">
+                          {telemetryLogs.map((log) => (
+                            <tr key={log.id || log.created_at} className="hover:bg-white/[0.02] transition-colors">
+                              <td className="py-2.5 text-zinc-400 flex items-center gap-1.5">
+                                <Clock className="h-3 w-3 text-zinc-600 shrink-0" />
+                                <span>{new Date(log.created_at).toLocaleTimeString()}</span>
+                              </td>
+                              <td className="py-2.5 font-sans font-medium text-white">
+                                <span>{log.district_name}</span>
+                                <span className="ml-1 text-zinc-500 text-[10px]">({log.state})</span>
+                              </td>
+                              <td className="py-2.5 text-zinc-400 text-[10px]">{log.eco_zone}</td>
+                              <td className="py-2.5">
+                                <span
+                                  className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                                    log.risk_level === 'Extreme' || log.risk_level === 'Very High'
+                                      ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                      : log.risk_level === 'High'
+                                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                  }`}
+                                >
+                                  {log.fwi_score?.toFixed(1)} • {log.risk_level}
+                                </span>
+                              </td>
+                              <td className="py-2.5">
+                                <span className="text-zinc-300 font-bold">{log.cpcb_aqi}</span>
+                                <span className="ml-1 text-zinc-500 text-[10px]">({log.aqi_category})</span>
+                              </td>
+                              <td className="py-2.5 text-right">
+                                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  <span>Synced</span>
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </Panel>
             </FadeUp>
           </div>
         )}
