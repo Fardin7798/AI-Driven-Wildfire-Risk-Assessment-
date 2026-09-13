@@ -33,6 +33,19 @@
   background: #3f3f46;
 }
 
+/* MapLibre container guarantees */
+.maplibregl-map {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  top: 0;
+  left: 0;
+}
+.maplibregl-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 /* Custom glowing pulse for active satellite hotspots */
 @keyframes fire-pulse {
   0% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }

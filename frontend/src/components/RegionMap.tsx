@@ -8,7 +8,33 @@ interface Props {
   activeFires?: GeoJSONFeatureCollection
 }
 
-// Generate circular polygon GeoJSON for 50km buffer around a centroid
+// Lightweight embedded style with zero external JSON font/glyph dependencies
+const EMBEDDED_DARK_STYLE: any = {
+  version: 8,
+  sources: {
+    'carto-dark': {
+      type: 'raster',
+      tiles: [
+        'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'
+      ],
+      tileSize: 256,
+      attribution: '© OpenStreetMap contributors, © CARTO'
+    }
+  },
+  layers: [
+    {
+      id: 'carto-dark-layer',
+      type: 'raster',
+      source: 'carto-dark',
+      minzoom: 0,
+      maxzoom: 20
+    }
+  ]
+}
+
 function createGeoJSONCircle(center: [number, number], radiusInKm: number, points = 64) {
   const coords = {
     latitude: center[1],
@@ -52,7 +78,7 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+      style: EMBEDDED_DARK_STYLE,
       center: initialCenter as [number, number],
       zoom: initialZoom,
       attributionControl: false
@@ -60,10 +86,16 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
+    // ResizeObserver ensures canvas updates automatically after Framer Motion layout settles
+    const resizeObserver = new ResizeObserver(() => {
+      map.resize()
+    })
+    resizeObserver.observe(containerRef.current)
+
     map.on('load', () => {
       mapRef.current = map
 
-      // 1. Setup 50km proximity radius buffer layer
+      // 1. Proximity radius buffer layer
       const circleData = selectedLocation
         ? createGeoJSONCircle([selectedLocation.lon, selectedLocation.lat], 50)
         : { type: 'Feature', geometry: { type: 'Polygon', coordinates: [] }, properties: {} }
@@ -95,68 +127,65 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
         }
       })
 
-      // 2. Setup NASA FIRMS Active Fires Layer
-      if (activeFires && activeFires.features) {
-        map.addSource('nasa-fires', {
-          type: 'geojson',
-          data: activeFires as any
-        })
+      // 2. NASA FIRMS Active Fires Layer (guaranteed source creation with fallback)
+      map.addSource('nasa-fires', {
+        type: 'geojson',
+        data: (activeFires && activeFires.features) ? activeFires as any : { type: 'FeatureCollection', features: [] }
+      })
 
-        // Glowing outer halo
-        map.addLayer({
-          id: 'fires-glow',
-          type: 'circle',
-          source: 'nasa-fires',
-          paint: {
-            'circle-radius': 14,
-            'circle-color': '#f97316',
-            'circle-opacity': 0.3,
-            'circle-blur': 0.8
-          }
-        })
+      map.addLayer({
+        id: 'fires-glow',
+        type: 'circle',
+        source: 'nasa-fires',
+        paint: {
+          'circle-radius': 14,
+          'circle-color': '#f97316',
+          'circle-opacity': 0.3,
+          'circle-blur': 0.8
+        }
+      })
 
-        // Intense thermal core
-        map.addLayer({
-          id: 'fires-heat',
-          type: 'circle',
-          source: 'nasa-fires',
-          paint: {
-            'circle-radius': 5,
-            'circle-color': '#ef4444',
-            'circle-stroke-width': 1.5,
-            'circle-stroke-color': '#ffffff'
-          }
-        })
+      map.addLayer({
+        id: 'fires-heat',
+        type: 'circle',
+        source: 'nasa-fires',
+        paint: {
+          'circle-radius': 5,
+          'circle-color': '#ef4444',
+          'circle-stroke-width': 1.5,
+          'circle-stroke-color': '#ffffff'
+        }
+      })
 
-        // Click popup on fire hotspot
-        map.on('click', 'fires-heat', (e) => {
-          if (!e.features || !e.features[0]) return
-          const props = e.features[0].properties as any
-          const coords = (e.features[0].geometry as any).coordinates.slice()
-          new maplibregl.Popup({ offset: 12, className: 'custom-dark-popup' })
-            .setLngLat(coords)
-            .setHTML(`
-              <div style="background:#18181b; color:#f4f4f5; padding:8px 10px; border-radius:8px; border:1px solid #27272a; font-family:monospace; font-size:11px;">
-                <p style="color:#ef4444; font-weight:bold; margin-bottom:4px;">🔥 NASA VIIRS Hotspot</p>
-                <p>Brightness: <span style="color:#38bdf8;">${props.brightness ?? 'N/A'} K</span></p>
-                <p>Confidence: <span style="color:#4ade80;">${props.confidence ?? 'nominal'}</span></p>
-                <p style="color:#71717a; font-size:10px; margin-top:2px;">Acquired: ${props.acq_date ?? ''} ${props.acq_time ?? ''} UTC</p>
-              </div>
-            `)
-            .addTo(map)
-        })
+      map.on('click', 'fires-heat', (e) => {
+        if (!e.features || !e.features[0]) return
+        const props = e.features[0].properties as any
+        const coords = (e.features[0].geometry as any).coordinates.slice()
+        new maplibregl.Popup({ offset: 12, className: 'custom-dark-popup' })
+          .setLngLat(coords)
+          .setHTML(`
+            <div style="background:#18181b; color:#f4f4f5; padding:8px 10px; border-radius:8px; border:1px solid #27272a; font-family:monospace; font-size:11px;">
+              <p style="color:#ef4444; font-weight:bold; margin-bottom:4px;">🔥 NASA VIIRS Hotspot</p>
+              <p>Brightness: <span style="color:#38bdf8;">${props.brightness ?? 'N/A'} K</span></p>
+              <p>Confidence: <span style="color:#4ade80;">${props.confidence ?? 'nominal'}</span></p>
+              <p style="color:#71717a; font-size:10px; margin-top:2px;">Acquired: ${props.acq_date ?? ''} ${props.acq_time ?? ''} UTC</p>
+            </div>
+          `)
+          .addTo(map)
+      })
 
-        // Change cursor on hover
-        map.on('mouseenter', 'fires-heat', () => {
-          map.getCanvas().style.cursor = 'pointer'
-        })
-        map.on('mouseleave', 'fires-heat', () => {
-          map.getCanvas().style.cursor = ''
-        })
-      }
+      map.on('mouseenter', 'fires-heat', () => {
+        map.getCanvas().style.cursor = 'pointer'
+      })
+      map.on('mouseleave', 'fires-heat', () => {
+        map.getCanvas().style.cursor = ''
+      })
+
+      map.resize()
     })
 
     return () => {
+      resizeObserver.disconnect()
       map.remove()
       mapRef.current = null
     }
@@ -183,7 +212,6 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
       essential: true
     })
 
-    // Update 50km buffer source
     const bufferSource = mapRef.current.getSource('proximity-buffer') as maplibregl.GeoJSONSource
     if (bufferSource) {
       const circleData = createGeoJSONCircle([selectedLocation.lon, selectedLocation.lat], 50)
@@ -209,7 +237,7 @@ export function RegionMap({ selectedLocation, activeFires }: Props) {
 
   return (
     <div className="relative h-full w-full overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
-      <div ref={containerRef} className="h-full w-full min-h-[380px]" />
+      <div ref={containerRef} className="absolute inset-0 h-full w-full" />
       
       {/* Legend Widget Overlay */}
       <div className="absolute bottom-3 left-3 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-zinc-800/90 bg-zinc-900/80 px-3.5 py-2 text-[11px] text-zinc-300 backdrop-blur-md">
