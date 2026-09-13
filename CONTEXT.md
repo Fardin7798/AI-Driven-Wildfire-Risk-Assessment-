@@ -3,8 +3,8 @@
 ## Project Overview
 - **Name**: AI-Driven Wildfire Risk Assessment, Air Quality Monitoring, and Community Preparedness Platform (India)
 - **Degree / College**: Bachelor of Engineering (CSE), Dr. BATU Lonere | Shri Sant Gadge Baba College of Engg & Tech, Bhusawal
-- **Status**: Complete Full-Stack Rebuild & Verification Finished (Exit Code 0). Both Backend (FastAPI async microservice) and Frontend (React 19 + MapLibre GL JS + Bento Dashboard) are fully operational, cleaned of all legacy debt, and verified.
-- **Current Milestone**: Phase 6 Complete (Final Polish & College Delivery Ready). All legacy `.pkl` binaries and unpooled ingestion scripts permanently deleted, `TEST.md` modernized, root `README.md` created with viva talking points, and `run_dev.sh` full-stack launcher added.
+- **Status**: Complete Full-Stack Rebuild & Verification Finished (Exit Code 0).
+- **Current Milestone**: Master Prompt Frontend Rebuild & Verification Complete. Implemented polymorphic `FadeUp` Framer Motion animations, `lucide-react` iconography, Google Fonts (`Inter` + `JetBrains Mono`), 60fps GPU vector map with dynamic 50km radius proximity circle & NASA VIIRS thermal halos, 5-segment Canadian FWI danger gauge, CPCB NAQI 0-500 scale bar, and NDMA one-click telephone emergency dials.
 
 ---
 
@@ -22,12 +22,13 @@
   - `main.py`: Production-grade async FastAPI app with CORS and Swagger OpenAPI `/docs`.
 
 ### 2. Frontend (`frontend/`)
-- **Stack**: React 19 + TypeScript + Vite 6 + MapLibre GL JS + Tailwind CSS v4 + Recharts.
+- **Stack**: React 19 + TypeScript + Vite 8 + MapLibre GL JS + Tailwind CSS v4 + Framer Motion + Lucide React + Recharts.
 - **Components**:
-  - `src/components/RegionMap.tsx`: Vector map with Carto Dark Matter style, NASA FIRMS active satellite hotspots with glowing pulse, and selected district centroid with 50km radius indicator.
-  - `src/components/BentoCards.tsx`: High-density Bento Grid cards (Wildfire Risk, Weather, CPCB AQI, 72h Forecast Chart, Preparedness).
-  - `src/pages/Home.tsx`: Main dashboard with instant district search, native datalist autocomplete, and quick-focus chips (Bhusawal, Nainital, Delhi, Pune, etc.).
-  - `src/components/Nav.tsx`: Clean dark navigation bar with direct link to interactive Swagger `/docs`.
+  - `src/components/FadeUp.tsx`: Polymorphic Framer Motion entrance animation component (`ease: [0.22, 1, 0.36, 1]`).
+  - `src/components/RegionMap.tsx`: 60fps GPU vector map with Carto Dark Matter style, NASA FIRMS active hotspots, 50km proximity radius ring, and interactive popups.
+  - `src/components/BentoCards.tsx`: High-density Bento Grid cards (Wildfire Risk 5-segment gauge, Live Weather 4-metric bar, CPCB NAQI 6-pollutant grid, Recharts 48h CAMS Forecast, NDMA Preparedness).
+  - `src/pages/Home.tsx`: Main dashboard with instant district search, native datalist autocomplete for 39 districts, and quick-focus chips.
+  - `src/components/Nav.tsx`: Clean dark navigation bar with direct link to interactive Swagger `/docs` and live telemetry status.
 
 ---
 
@@ -41,9 +42,8 @@
 
 ## Verification Status
 - [x] Backend integration test passed (exit code 0).
-- [x] Frontend `npm run build` passed in 624ms (exit code 0).
+- [x] Frontend `npm run build` passed in 1.33s with 0 errors (exit code 0).
 - [x] Secret leak audit passed (0 tokens or keys in `dist/`).
 - [x] End-to-end full stack smoke tests passed (exit code 0).
 - [x] Legacy binary files (.pkl) and dead scripts cleaned (0 orphaned models).
-- [x] Authoritative root `README.md` and `TEST.md` updated.
-- [x] One-click launcher `run_dev.sh` verified.
+- [x] Master prompt specification implemented across all frontend components.

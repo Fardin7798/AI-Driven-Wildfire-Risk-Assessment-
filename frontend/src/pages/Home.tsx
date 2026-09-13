@@ -1,31 +1,33 @@
-import { useState, useEffect } from "react"
-import { api } from "../lib/api"
+import { useState, useEffect } from 'react'
+import { Search, AlertCircle, RefreshCw, MapPin, Sparkles } from 'lucide-react'
+import { api } from '../lib/api'
 import type {
   UnifiedSearchResponse,
   GeoJSONFeatureCollection,
   District
-} from "../types"
-import { RegionMap } from "../components/RegionMap"
+} from '../types'
+import { RegionMap } from '../components/RegionMap'
 import {
   WildfireRiskCard,
   WeatherCard,
   AirQualityCard,
   ForecastChartCard,
   PreparednessCard
-} from "../components/BentoCards"
+} from '../components/BentoCards'
+import { FadeUp } from '../components/FadeUp'
 
 const QUICK_CHIPS = [
-  "Jalgaon / Bhusawal",
-  "Nainital",
-  "Delhi-NCR",
-  "Pune",
-  "Shimla",
-  "Mayurbhanj (Similipal)",
-  "Balaghat"
+  'Jalgaon / Bhusawal',
+  'Nainital',
+  'Delhi-NCR',
+  'Pune',
+  'Shimla',
+  'Mayurbhanj (Similipal)',
+  'Balaghat'
 ]
 
 export default function Home() {
-  const [query, setQuery] = useState("Jalgaon / Bhusawal")
+  const [query, setQuery] = useState('Jalgaon / Bhusawal')
   const [districts, setDistricts] = useState<District[]>([])
   const [data, setData] = useState<UnifiedSearchResponse | null>(null)
   const [fires, setFires] = useState<GeoJSONFeatureCollection | undefined>(undefined)
@@ -49,7 +51,7 @@ export default function Home() {
       const res = await api.search(targetQuery)
       setData(res)
     } catch (err: any) {
-      setError(err?.message || "Failed to fetch environmental intelligence")
+      setError(err?.message || 'Failed to fetch environmental intelligence')
     } finally {
       setLoading(false)
     }
@@ -73,33 +75,37 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4 sm:p-6 lg:p-8">
-      {/* Top Header */}
-      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800/80 pb-5">
+      {/* 1. Header & Search Portal */}
+      <FadeUp as="header" delay={0.05} className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800/80 pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-400">
-              SYSTEM ONLINE // NASA FIRMS & CAMS SYNCED
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+            </span>
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-widest text-emerald-400">
+              TELEMETRY SYNCHRONIZED // NASA FIRMS & CAMS
             </span>
           </div>
           <h1 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">
-            AERORISK <span className="text-zinc-500 font-light">// INDIA</span>
+            AERORISK <span className="text-zinc-600 font-light">// INDIA</span>
           </h1>
           <p className="text-xs text-zinc-400">
-            AI-Driven Wildfire Danger Assessment, Satellite Hotspots & CPCB Air Quality Intelligence
+            Canadian FWI Fire Danger, NASA Satellite Hotspots & CPCB Air Quality Intelligence
           </p>
         </div>
 
         {/* Search Bar with Datalist Autocomplete */}
         <form onSubmit={handleSubmit} className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
             <input
               type="text"
               list="district-options"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search Indian District (e.g. Bhusawal, Nainital)..."
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/90 px-4 py-2 text-xs text-white placeholder-zinc-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/90 pl-9 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-all"
             />
             <datalist id="district-options">
               {districts.map((d) => (
@@ -111,74 +117,84 @@ export default function Home() {
           </div>
           <button
             type="submit"
-            className="rounded-xl bg-cyan-500 px-4 py-2 text-xs font-semibold text-zinc-950 hover:bg-cyan-400 transition-colors shrink-0 cursor-pointer"
+            className="rounded-xl bg-cyan-500 px-5 py-2.5 text-xs font-bold text-zinc-950 hover:bg-cyan-400 transition-all shadow-sm shadow-cyan-500/20 shrink-0 cursor-pointer"
           >
             Analyze
           </button>
         </form>
-      </header>
+      </FadeUp>
 
-      {/* Quick Select Chips */}
-      <div className="mb-6 flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-zinc-500">Quick Focus:</span>
+      {/* 2. Quick Focus District Chips */}
+      <FadeUp delay={0.1} className="mb-6 flex flex-wrap items-center gap-2 text-xs">
+        <span className="flex items-center gap-1 text-zinc-500 text-[11px] font-mono">
+          <Sparkles className="h-3 w-3 text-cyan-400" />
+          QUICK FOCUS:
+        </span>
         {QUICK_CHIPS.map((chip) => (
           <button
             key={chip}
             onClick={() => handleChipClick(chip)}
-            className={`rounded-lg border px-2.5 py-1 transition-colors cursor-pointer ${
+            className={`rounded-lg border px-3 py-1 text-xs transition-all cursor-pointer ${
               query === chip
-                ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-300 font-medium"
-                : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                ? 'border-cyan-500/50 bg-cyan-500/10 text-cyan-300 font-semibold shadow-sm shadow-cyan-500/20'
+                : 'border-zinc-800/80 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
             }`}
           >
             {chip}
           </button>
         ))}
-      </div>
+      </FadeUp>
 
-      {/* State 1: Error State */}
+      {/* 3. Mandatory State: Error State */}
       {error && (
-        <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-xs text-red-300 flex items-center justify-between">
-          <span>Error connecting to backend services: {error}</span>
+        <FadeUp delay={0.1} className="mb-6 rounded-2xl border border-red-500/30 bg-red-950/20 p-4 text-xs text-red-300 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
+            <span>Telemetry Error: {error}</span>
+          </div>
           <button
             onClick={() => executeSearch(query)}
-            className="rounded-lg bg-red-600 px-3 py-1 font-semibold text-white hover:bg-red-500 cursor-pointer"
+            className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 font-bold text-white hover:bg-red-500 transition-colors cursor-pointer"
           >
-            Retry
+            <RefreshCw className="h-3 w-3" />
+            <span>Retry</span>
           </button>
-        </div>
+        </FadeUp>
       )}
 
-      {/* State 2: Loading Skeleton */}
+      {/* 4. Mandatory State: Skeleton Loading State */}
       {loading && !data && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 animate-pulse">
-          <div className="h-96 rounded-2xl bg-zinc-900 lg:col-span-7"></div>
-          <div className="h-96 rounded-2xl bg-zinc-900 lg:col-span-5"></div>
-          <div className="h-44 rounded-2xl bg-zinc-900 lg:col-span-12"></div>
+          <div className="h-96 rounded-2xl bg-zinc-900/60 lg:col-span-7"></div>
+          <div className="h-96 rounded-2xl bg-zinc-900/60 lg:col-span-5"></div>
+          <div className="h-24 rounded-2xl bg-zinc-900/60 lg:col-span-12"></div>
+          <div className="h-80 rounded-2xl bg-zinc-900/60 lg:col-span-5"></div>
+          <div className="h-80 rounded-2xl bg-zinc-900/60 lg:col-span-7"></div>
         </div>
       )}
 
-      {/* State 3: Populated High-Density Bento Grid */}
+      {/* 5. Mandatory State: Populated High-Density Bento Grid */}
       {data && (
         <div className="space-y-4">
           {/* Active Target Info Header */}
-          <div className="flex flex-wrap items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-2.5 text-xs text-zinc-400">
+          <FadeUp delay={0.12} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-2.5 text-xs text-zinc-400 backdrop-blur-md">
             <div className="flex items-center gap-2">
+              <MapPin className="h-3.5 w-3.5 text-cyan-400" />
               <span className="font-bold text-white text-sm">{data.location.name}</span>
-              <span>({data.location.state})</span>
-              <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-300">
+              <span className="text-zinc-400">({data.location.state})</span>
+              <span className="rounded-md border border-zinc-800 bg-zinc-800/80 px-2 py-0.5 text-[10px] font-mono text-zinc-300">
                 {data.location.eco_zone}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-[11px]">
-              <span>Lat: {data.location.latitude}° N, Lon: {data.location.longitude}° E</span>
-              <span className="text-zinc-500">Updated: {new Date(data.metadata.timestamp).toLocaleTimeString()}</span>
+            <div className="flex items-center gap-4 text-[11px] font-mono">
+              <span>LAT {data.location.latitude.toFixed(2)}° N / LON {data.location.longitude.toFixed(2)}° E</span>
+              <span className="text-zinc-500">FEED SYNC: {new Date(data.metadata.timestamp).toLocaleTimeString()}</span>
             </div>
-          </div>
+          </FadeUp>
 
-          {/* Row 1: Map (7 cols) + Wildfire Risk Card (5 cols) */}
+          {/* Row 1: 60fps Vector Map (7 cols) + Wildfire Risk Card (5 cols) */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-            <div className="h-[420px] lg:col-span-7">
+            <FadeUp delay={0.15} className="h-[430px] lg:col-span-7">
               <RegionMap
                 selectedLocation={{
                   lat: data.location.latitude,
@@ -187,13 +203,13 @@ export default function Home() {
                 }}
                 activeFires={fires}
               />
-            </div>
+            </FadeUp>
             <div className="lg:col-span-5">
               <WildfireRiskCard risk={data.wildfire_assessment} />
             </div>
           </div>
 
-          {/* Row 2: Live Weather Bar */}
+          {/* Row 2: Live Weather Meteorology Bar */}
           <WeatherCard weather={data.weather} />
 
           {/* Row 3: Air Quality (5 cols) + 48h Forecast Chart (7 cols) */}
