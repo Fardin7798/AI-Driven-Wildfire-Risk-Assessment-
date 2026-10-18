@@ -9,7 +9,7 @@ Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Ri
 
 ## Phased Build Checklist
 
-- [ ] **Phase 1: Project Scaffolding, Documentation & CI/CD**
+- [x] **Phase 1: Project Scaffolding, Documentation & CI/CD**
   - [x] Create `.gitignore` and `.env.example`
   - [x] Create `AGENTS.md` and `CONTEXT.md`
   - [ ] Create `backend/pyproject.toml` (groups: api, pipeline, train, dev)
@@ -18,7 +18,7 @@ Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Ri
   - [ ] Create seed data: `backend/data/seed/countries.yaml`, `backend/data/seed/preparedness.json`
   - [ ] Setup GitHub Actions: `.github/workflows/ci.yml`, `.github/workflows/scheduled-jobs.yml`
 
-- [ ] **Phase 2: Database Layer & Migrations (schema `wf`, PostGIS)**
+- [x] **Phase 2: Database Layer & Migrations (schema `wf`, PostGIS)**
   - [ ] Async SQLAlchemy 2.0 session & base
   - [ ] Models: `regions`, `fire_detections`, `weather_daily`, `fwi_state`, `aq_stations`, `aq_observations`, `aq_forecasts`, `risk_predictions`, `model_versions`, `ingestion_runs`, `preparedness_items`
   - [ ] RLS policies and schema permissions
