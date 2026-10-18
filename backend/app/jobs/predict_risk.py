@@ -94,8 +94,8 @@ async def job_predict_risk() -> int:
             fires_prev_30d = (await session.execute(fires_30d_q)).scalar() or 0
 
             # 4. Construct features
-            lat = 28.6139
-            lon = 77.2090
+            lat = reg.centroid_lat or 28.6139
+            lon = reg.centroid_lon or 77.2090
             features = extract_features(
                 target_date=today,
                 current_weather=today_weather,
