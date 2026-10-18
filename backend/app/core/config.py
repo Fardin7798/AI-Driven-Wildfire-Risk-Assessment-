@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -43,7 +45,7 @@ class Settings(BaseSettings):
 
     DEFAULT_COUNTRY: str = "IN"
 
-    MODEL_DIR: str = "backend/models"
+    MODEL_DIR: str = str(Path(__file__).resolve().parents[2] / "models")
     ACTIVE_WILDFIRE_MODEL: str = "wildfire_xgb_v1"
     ACTIVE_AQI_MODEL: str = "aqi_prophet_v1"
 

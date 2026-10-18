@@ -18,7 +18,5 @@ jobs:
             echo "API_URL not configured. Skipping."
             exit 0
           fi
-          curl -Xf -X POST "${API_URL}/api/v1/internal/jobs/ingest_fires" \
-            -H "X-Job-Token: ${JOB_TOKEN}" || true
-          curl -Xf -X POST" ${${API_URL}/api/v1/internal/jobs/ingest_air_quality" \
-            -H "X-Job-Token: ${JOB_TOKEN}" || true
+          curl -fsS -X POST "$API_URL/api/v1/internal/jobs/ingest_fires" -H "X-Job-Token: $JOB_TOKEN"
+          curl -fsS -X POST "$API_URL/api/v1/internal/jobs/ingest_air_quality" -H "X-Job-Token: $JOB_TOKEN"

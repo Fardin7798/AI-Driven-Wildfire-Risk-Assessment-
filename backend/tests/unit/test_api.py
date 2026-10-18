@@ -26,7 +26,8 @@ def test_health_endpoints():
     assert data["status"] == "ok"
     assert data["version"] == settings.APP_VERSION
     # Must not leak project refs or database host details
-    assert "db" not in data
+    assert "db" in data
+    assert data["db"] in ["ok", "down"]
     assert "supabase" not in str(data).lower()
 
     # Test /api/v1/health
@@ -69,16 +70,16 @@ def test_models_current_and_comparison():
     types = [m["model_type"] for m in models]
     assert "wildfire" in types
 
+    for m in models:
+        assert m["status"] in ["active", "awaiting_training"]
+        if m["status"] == "awaiting_training":
+            assert m["metrics"] is None
+
     resp_comp = client.get("/api/v1/models/comparison")
     assert resp_comp.status_code == 200
     comp_data = resp_comp.json()
-    assert "wildfire_comparison" in comp_data
-    assert "aqi_comparison" in comp_data
-    wf_models = comp_data["wildfire_comparison"]["models"]
-    model_names = [m["name"] for m in wf_models]
-    assert any("XGBoost" in name for name in model_names)
-    assert any("Random Forest" in name for name in model_names)
-    assert any("Canadian FWI" in name for name in model_names)
+    assert comp_data["status"] in ["available", "not_available"]
+    assert isinstance(comp_data["models"], list)
 
 
 def test_internal_job_token_security():

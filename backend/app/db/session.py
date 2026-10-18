@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -9,12 +10,22 @@ if db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 # Configure async engine with connection pooling
+connect_args: dict[str, Any] = {}
+if ":6543" in db_url:
+    connect_args["statement_cache_size"] = 0
+if "localhost" not in db_url and "127.0.0.1" not in db_url:
+    connect_args["ssl"] = "require"
+elif "sslmode=require" in db_url or "ssl=require" in db_url:
+    connect_args["ssl"] = "require"
+
 engine = create_async_engine(
     db_url,
     echo=(settings.ENV == "development" and settings.LOG_LEVEL.upper() == "DEBUG"),
     pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
+    pool_size=3,
+    max_overflow=2,
+    pool_recycle=300,
+    connect_args=connect_args,
 )
 
 async_session_factory = async_sessionmaker(

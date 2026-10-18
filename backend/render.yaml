@@ -2,12 +2,12 @@ services:
   - type: web
     name: wildfire-platform-api
     env: python
-    region: frankfurt
+    region: singapore
     plan: free
     branch: rebuild/backend-v2
     rootDir: backend
     buildCommand: pip install -e .
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/v1/health
     envVars:
       - key: ENV
@@ -24,3 +24,15 @@ services:
         value: "true"
       - key: RETENTION_DAYS
         value: "400"
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: FIRMS_SOURCES
+        value: "VIIRS_NOAA20_NRT,VIIRS_SNPP_NRT,MODIS_NRT"
+      - key: DATAGOVIN_API_KEY
+        sync: false
+      - key: ENABLE_CPCB
+        value: "false"
+      - key: MODEL_DIR
+        value: "models"
+      - key: DEFAULT_COUNTRY
+        value: "IN"
