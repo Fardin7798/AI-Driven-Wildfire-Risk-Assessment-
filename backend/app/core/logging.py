@@ -1,6 +1,9 @@
 import logging
 import sys
+from typing import Any
+
 import structlog
+
 from app.core.config import settings
 
 
@@ -13,7 +16,7 @@ def setup_logging() -> None:
         level=log_level,
     )
 
-    processors = [
+    processors: list[Any] = [
         structlog.contextvars.merge_contextvars,
         structlog.processors.add_log_level,
         structlog.processors.StackInfoRenderer(),

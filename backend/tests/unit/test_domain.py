@@ -1,29 +1,22 @@
 from datetime import date, timedelta
-from app.domain.fwi import (
-    compute_ffmc,
-    compute_dmc,
-    compute_dc,
-    compute_isi,
-    compute_bui,
-    compute_fwi,
-    calculate_daily_fwi,
-)
+
 from app.domain.aqi import (
+    calculate_cpcb_aqi,
     calculate_sub_index,
     get_aqi_category,
-    calculate_cpcb_aqi,
-)
-from app.domain.risk_classes import (
-    classify_probability,
-    classify_fwi,
 )
 from app.domain.features import (
-    DailyWeatherRecord,
-    compute_cyclical_features,
-    compute_rolling_weather_features,
-    extract_features,
-    derive_wildfire_label,
     FEATURE_NAMES,
+    DailyWeatherRecord,
+    derive_wildfire_label,
+    extract_features,
+)
+from app.domain.fwi import (
+    calculate_daily_fwi,
+)
+from app.domain.risk_classes import (
+    classify_fwi,
+    classify_probability,
 )
 
 
@@ -77,11 +70,13 @@ def test_cpcb_naqi_breakpoints():
     assert get_aqi_category(450) == "Severe"
 
     # Composite AQI calculation
-    res = calculate_cpcb_aqi({
-        "pm25": 120.0, # AQI 300 (Poor)
-        "pm10": 80.0,  # AQI 80 (Satisfactory)
-        "no2": 25.0,   # AQI 31 (Good)
-    })
+    res = calculate_cpcb_aqi(
+        {
+            "pm25": 120.0,  # AQI 300 (Poor)
+            "pm10": 80.0,  # AQI 80 (Satisfactory)
+            "no2": 25.0,  # AQI 31 (Good)
+        }
+    )
     assert res.aqi == 300
     assert res.category == "Poor"
     assert res.prominent_pollutant == "PM25"
@@ -107,17 +102,19 @@ def test_zero_lookahead_leakage_assertion():
     # 30 days of past weather + 5 days of FUTURE weather
     history = []
     for d in range(30, 0, -1):
-        history.append(DailyWeatherRecord(
-            record_date=target_date - timedelta(days=d),
-            temp_max=32.0,
-            temp_mean=26.0,
-            rh_min=20.0,
-            rh_mean=45.0,
-            wind_max=15.0,
-            precip_sum=0.0,
-            et0=5.0,
-            soil_moisture=0.15,
-        ))
+        history.append(
+            DailyWeatherRecord(
+                record_date=target_date - timedelta(days=d),
+                temp_max=32.0,
+                temp_mean=26.0,
+                rh_min=20.0,
+                rh_mean=45.0,
+                wind_max=15.0,
+                precip_sum=0.0,
+                et0=5.0,
+                soil_moisture=0.15,
+            )
+        )
 
     # Add Target Day record
     current_record = DailyWeatherRecord(
@@ -136,17 +133,19 @@ def test_zero_lookahead_leakage_assertion():
     # Add FUTURE records (with massive rain that would alter rolling sums if leaked)
     future_history = list(history)
     for d in range(1, 6):
-        future_history.append(DailyWeatherRecord(
-            record_date=target_date + timedelta(days=d),
-            temp_max=20.0,
-            temp_mean=18.0,
-            rh_min=80.0,
-            rh_mean=90.0,
-            wind_max=50.0,
-            precip_sum=200.0, # Huge rain in future
-            et0=1.0,
-            soil_moisture=0.8,
-        ))
+        future_history.append(
+            DailyWeatherRecord(
+                record_date=target_date + timedelta(days=d),
+                temp_max=20.0,
+                temp_mean=18.0,
+                rh_min=80.0,
+                rh_mean=90.0,
+                wind_max=50.0,
+                precip_sum=200.0,  # Huge rain in future
+                et0=1.0,
+                soil_moisture=0.8,
+            )
+        )
 
     # Features calculated with clean history vs tainted future history
     feat_clean = extract_features(

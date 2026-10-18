@@ -30,7 +30,7 @@ Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Ri
   - [ ] `app/domain/risk_classes.py`: Risk categories & dynamic probability threshold mapping
   - [ ] `app/domain/features.py`: Single Source of Truth feature generation with zero lookahead leakage
 
-- [ ] **Phase 4: Country-Agnostic Providers Layer**
+- [x] **Phase 4: Country-Agnostic Providers Layer**
   - [ ] `app/providers/base.py`: Protocols & dataclasses
   - [ ] `app/providers/registry.py`: Country-aware provider selector
   - [ ] `app/providers/firms.py`: NASA FIRMS live NRT & area parsing
