@@ -1,0 +1,22 @@
+{
+  "model_name": "wildfire_xgb_v1",
+  "accuracy": 0.8755,
+  "roc_auc": 0.9418,
+  "f1_score": 0.9046,
+  "precision": 0.8749,
+  "recall": 0.9363,
+  "train_samples": 461398,
+  "test_samples": 70681,
+  "features": [
+    "latitude",
+    "longitude",
+    "brightness",
+    "scan",
+    "track",
+    "bright_t31",
+    "month",
+    "day_of_year",
+    "day_of_week",
+    "is_day"
+  ]
+}

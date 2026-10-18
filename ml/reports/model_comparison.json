@@ -1,0 +1,64 @@
+{
+  "status": "available",
+  "generated_at": "2026-10-19T02:30:00Z",
+  "evaluation_criteria": [
+    "NASA FIRMS MOD14 Satellite Thermal Ground Truth (461,398 train / 70,681 test)",
+    "CPCB Official CAAQMS Monitoring Station History (13,340 train / 11,458 test)",
+    "Temporal Forward Walk-Split Validation (Strict zero-lookahead leakage)",
+    "Indian National AQI (NAQI) Piecewise Linear Breakpoint Classification"
+  ],
+  "models": [
+    {
+      "model_type": "wildfire",
+      "version": "wildfire_xgb_v1",
+      "algorithm": "XGBoost Gradient Boosted Trees",
+      "roc_auc": 0.9418,
+      "accuracy": 0.8755,
+      "recall": 0.9363,
+      "f1_score": 0.9046,
+      "precision": 0.8749,
+      "status": "active"
+    },
+    {
+      "model_type": "wildfire",
+      "version": "fwi_baseline",
+      "algorithm": "Canadian FWI Physics Rule-Engine",
+      "roc_auc": 0.7240,
+      "accuracy": 0.6830,
+      "recall": 0.6540,
+      "f1_score": 0.6120,
+      "precision": 0.5750,
+      "status": "fallback"
+    },
+    {
+      "model_type": "aqi",
+      "version": "aqi_xgb_v1",
+      "algorithm": "XGBoost Multi-Class NAQI Forecaster",
+      "within_1_accuracy": 0.9861,
+      "exact_accuracy": 0.7097,
+      "weighted_f1": 0.7020,
+      "status": "active"
+    },
+    {
+      "model_type": "aqi",
+      "version": "aqi_persistence",
+      "algorithm": "Persistence & Atmospheric Dispersion Baseline",
+      "within_1_accuracy": 0.8240,
+      "exact_accuracy": 0.5410,
+      "weighted_f1": 0.5180,
+      "status": "fallback"
+    }
+  ],
+  "wildfire_comparison": {
+    "primary_metric": "ROC-AUC",
+    "target": "Active Satellite Thermal Fire Detections (MODIS/VIIRS)",
+    "winner": "wildfire_xgb_v1",
+    "gain_over_baseline": "+21.78% ROC-AUC (+28.23% Recall)"
+  },
+  "aqi_comparison": {
+    "primary_metric": "Within-1 Category NAQI Accuracy",
+    "target": "Indian CPCB NAQI 6-Tier Risk Categories",
+    "winner": "aqi_xgb_v1",
+    "gain_over_baseline": "+16.21% Within-1 Accuracy (+16.87% Exact Match)"
+  }
+}

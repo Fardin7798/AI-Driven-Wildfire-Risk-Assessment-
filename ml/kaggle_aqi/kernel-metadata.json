@@ -1,0 +1,17 @@
+{
+  "id": "shaikhfardin05/air-quality-forecaster-training",
+  "title": "Air Quality Forecaster Training",
+  "code_file": "aqi_training.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "false",
+  "enable_tpu": "false",
+  "enable_internet": "true",
+  "dataset_sources": [
+    "rohanrao/air-quality-data-in-india"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

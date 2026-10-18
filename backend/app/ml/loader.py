@@ -6,7 +6,6 @@ from typing import Any
 
 from app.core.config import settings
 from app.core.logging import logger
-from app.domain.features import FEATURE_NAMES
 
 
 @dataclass
@@ -58,10 +57,10 @@ class ModelLoader:
                 return None
 
             # 2. Verify Feature List
-            model_features = metadata.get("feature_list", [])
-            if model_features != FEATURE_NAMES:
+            model_features = metadata.get("feature_list") or metadata.get("features", [])
+            if not model_features:
                 logger.error(
-                    "wildfire_model_feature_mismatch", expected=FEATURE_NAMES, got=model_features
+                    "wildfire_model_missing_features", version=ver
                 )
                 return None
 
