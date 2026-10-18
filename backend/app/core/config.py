@@ -1,24 +1,19 @@
-from typing import List, Union
-from pydantic import Field, field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     ENV: str = "development"
     LOG_LEVEL: str = "INFO"
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgrespassword@localhost:5432/postgres"
 
-    ALLOWED_ORIGINS: Union[str, List[str]] = ["*"]
+    ALLOWED_ORIGINS: str | list[str] = ["*"]
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
-    def parse_allowed_origins(cls, v: Union[str, List[str]]) -> List[str]:
+    def parse_allowed_origins(cls, v: str | list[str]) -> list[str]:
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
@@ -26,15 +21,11 @@ class Settings(BaseSettings):
     JOB_TOKEN: str = "dev-job-token"
 
     FIRMS_MAP_KEY: str = ""
-    FIRMS_SOURCES: Union[str, List[str]] = [
-        "VIIRS_NOAA20_NRT",
-        "VIIRS_NOAA21_NRT",
-        "MODIS_NRT"
-    ]
+    FIRMS_SOURCES: str | list[str] = ["VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT", "MODIS_NRT"]
 
     @field_validator("FIRMS_SOURCES", mode="before")
     @classmethod
-    def parse_firms_sources(cls, v: Union[str, List[str]]) -> List[str]:
+    def parse_firms_sources(cls, v: str | list[str]) -> list[str]:
         if isinstance(v, str):
             return [s.strip() for s in v.split(",") if s.strip()]
         return v

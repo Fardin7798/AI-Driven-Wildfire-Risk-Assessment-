@@ -2,8 +2,8 @@
 Indian National Air Quality Index (NAQI) Standard Implementation.
 Reference: Central Pollution Control Board (CPCB), Ministry of Environment, Forest & Climate Change (2014).
 """
+
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
 
 
 @dataclass(frozen=True)
@@ -11,11 +11,11 @@ class AQIResult:
     aqi: int
     category: str
     prominent_pollutant: str
-    sub_indices: Dict[str, int]
+    sub_indices: dict[str, int]
 
 
 # Breakpoint format: (B_low, B_high, I_low, I_high)
-BREAKPOINTS: Dict[str, List[Tuple[float, float, int, int]]] = {
+BREAKPOINTS: dict[str, list[tuple[float, float, int, int]]] = {
     "pm25": [
         (0.0, 30.0, 0, 50),
         (31.0, 60.0, 51, 100),
@@ -75,7 +75,7 @@ BREAKPOINTS: Dict[str, List[Tuple[float, float, int, int]]] = {
 }
 
 
-def calculate_sub_index(pollutant: str, conc: float) -> Optional[int]:
+def calculate_sub_index(pollutant: str, conc: float) -> int | None:
     """Calculate sub-index for a specific pollutant concentration using CPCB piecewise linear formula."""
     if conc < 0.0 or pollutant not in BREAKPOINTS:
         return None
@@ -109,12 +109,12 @@ def get_aqi_category(aqi: int) -> str:
         return "Severe"
 
 
-def calculate_cpcb_aqi(pollutants: Dict[str, Optional[float]]) -> AQIResult:
+def calculate_cpcb_aqi(pollutants: dict[str, float | None]) -> AQIResult:
     """
     Calculate composite CPCB National AQI from pollutant dictionary.
     Keys expected: pm25, pm10, no2, so2, co, o3, nh3 (concentrations in µg/m³, CO in mg/m³).
     """
-    sub_indices: Dict[str, int] = {}
+    sub_indices: dict[str, int] = {}
 
     for pol, val in pollutants.items():
         if val is not None:
@@ -123,12 +123,7 @@ def calculate_cpcb_aqi(pollutants: Dict[str, Optional[float]]) -> AQIResult:
                 sub_indices[pol.lower()] = sub
 
     if not sub_indices:
-        return AQIResult(
-            aqi=0,
-            category="Good",
-            prominent_pollutant="None",
-            sub_indices={}
-        )
+        return AQIResult(aqi=0, category="Good", prominent_pollutant="None", sub_indices={})
 
     # Composite AQI is the maximum of the sub-indices
     prominent = max(sub_indices, key=sub_indices.get)  # type: ignore[arg-type]
@@ -138,5 +133,5 @@ def calculate_cpcb_aqi(pollutants: Dict[str, Optional[float]]) -> AQIResult:
         aqi=max_aqi,
         category=get_aqi_category(max_aqi),
         prominent_pollutant=prominent.upper(),
-        sub_indices=sub_indices
+        sub_indices=sub_indices,
     )

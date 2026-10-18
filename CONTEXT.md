@@ -52,10 +52,10 @@ Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Ri
   - [ ] `app/services/risk_service.py`
   - [ ] `app/services/preparedness_service.py`
 
-- [ ] **Phase 7: Scheduled Ingestion & Background Jobs**
-  - [ ] `app/jobs/scheduler.py` (APScheduler + Postgres advisory lock)
-  - [ ] Job implementations: `ingest_fires`, `ingest_weather`, `update_fwi_state`, `predict_risk`, `ingest_air_quality`, `forecast_aqi`, `retention`
-  - [ ] Idempotent upserts & `ingestion_runs` tracking
+- [x] **Phase 7: Scheduled Ingestion - [ ] **Phase 7: Scheduled Ingestion & Background Jobs** Background Jobs**
+  - [x] `app/jobs/scheduler.py` (APScheduler + Postgres advisory lock)
+  - [x] Job implementations: `ingest_fires`, `ingest_weather`, `update_fwi_state`, `predict_risk`, `ingest_air_quality`, `forecast_aqi`, `retention`
+  - [x] Idempotent upserts & `ingestion_runs` tracking
 
 - [ ] **Phase 8: FastAPI API Layer & Internal Jobs Endpoint**
   - [ ] Application factory, lifespan, CORS, rate limiting (`slowapi`), JSON logger (`structlog`)

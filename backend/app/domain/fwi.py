@@ -3,9 +3,9 @@ Canadian Forest Fire Weather Index (FWI) System Implementation.
 Reference: Van Wagner (1987) Development and structure of the Canadian Forest Fire
 Weather Index System. Forestry Technical Report 35. Canadian Forestry Service.
 """
+
 import math
 from dataclasses import dataclass
-from typing import Dict, Optional
 
 
 @dataclass(frozen=True)
@@ -19,19 +19,41 @@ class FWIResult:
 
 
 # Day length adjustment factors for DMC (hours of drying by month for latitudes near India / North of Equator)
-DMC_DAY_LENGTH_NORTH: Dict[int, float] = {
-    1: 6.5, 2: 7.5, 3: 9.0, 4: 12.8, 5: 13.9, 6: 13.9,
-    7: 12.4, 8: 10.9, 9: 9.4, 10: 8.0, 11: 7.0, 12: 6.0
+DMC_DAY_LENGTH_NORTH: dict[int, float] = {
+    1: 6.5,
+    2: 7.5,
+    3: 9.0,
+    4: 12.8,
+    5: 13.9,
+    6: 13.9,
+    7: 12.4,
+    8: 10.9,
+    9: 9.4,
+    10: 8.0,
+    11: 7.0,
+    12: 6.0,
 }
 
 # Day length adjustment factor for DC by month (North of Equator)
-DC_DAY_LENGTH_NORTH: Dict[int, float] = {
-    1: -1.6, 2: -1.6, 3: -1.6, 4: 0.9, 5: 3.8, 6: 5.8,
-    7: 6.4, 8: 5.0, 9: 2.4, 10: 0.4, 11: -1.6, 12: -1.6
+DC_DAY_LENGTH_NORTH: dict[int, float] = {
+    1: -1.6,
+    2: -1.6,
+    3: -1.6,
+    4: 0.9,
+    5: 3.8,
+    6: 5.8,
+    7: 6.4,
+    8: 5.0,
+    9: 2.4,
+    10: 0.4,
+    11: -1.6,
+    12: -1.6,
 }
 
 
-def compute_ffmc(temp: float, rh: float, wind: float, rain: float, prev_ffmc: float = 85.0) -> float:
+def compute_ffmc(
+    temp: float, rh: float, wind: float, rain: float, prev_ffmc: float = 85.0
+) -> float:
     """Calculate Fine Fuel Moisture Code (FFMC)."""
     # Pre-condition bounds
     rh = max(0.0, min(100.0, rh))
@@ -45,25 +67,41 @@ def compute_ffmc(temp: float, rh: float, wind: float, rain: float, prev_ffmc: fl
     if rain > 0.5:
         r_f = rain - 0.5
         if m_0 > 150.0:
-            m_r = m_0 + 42.5 * r_f * math.exp(-100.0 / (251.0 - m_0)) * (1.0 - math.exp(-6.93 / r_f)) + (0.0015 * ((m_0 - 150.0) ** 2)) * math.sqrt(r_f)
+            m_r = (
+                m_0
+                + 42.5 * r_f * math.exp(-100.0 / (251.0 - m_0)) * (1.0 - math.exp(-6.93 / r_f))
+                + (0.0015 * ((m_0 - 150.0) ** 2)) * math.sqrt(r_f)
+            )
         else:
-            m_r = m_0 + 42.5 * r_f * math.exp(-100.0 / (251.0 - m_0)) * (1.0 - math.exp(-6.93 / r_f))
+            m_r = m_0 + 42.5 * r_f * math.exp(-100.0 / (251.0 - m_0)) * (
+                1.0 - math.exp(-6.93 / r_f)
+            )
         m_r = min(250.0, m_r)
         m_0 = m_r
 
     # Equilibrium Moisture Content (EMC)
-    e_d = 0.942 * (rh ** 0.679) + 11.0 * math.exp((rh - 100.0) / 10.0) + 0.18 * (21.1 - temp) * (1.0 - math.exp(-0.115 * rh))
-    
+    e_d = (
+        0.942 * (rh**0.679)
+        + 11.0 * math.exp((rh - 100.0) / 10.0)
+        + 0.18 * (21.1 - temp) * (1.0 - math.exp(-0.115 * rh))
+    )
+
     if m_0 > e_d:
         # Drying rate k_a and k_d
-        k_a = 0.424 * (1.0 - (rh / 100.0) ** 1.7) + 0.0694 * (wind ** 0.5) * (1.0 - (rh / 100.0) ** 8)
+        k_a = 0.424 * (1.0 - (rh / 100.0) ** 1.7) + 0.0694 * (wind**0.5) * (1.0 - (rh / 100.0) ** 8)
         k_d = k_a * 0.581 * math.exp(0.0365 * temp)
         m = e_d + (m_0 - e_d) * (10.0 ** (-k_d))
     else:
         # Wetting equilibrium E_w and rate k_w
-        e_w = 0.618 * (rh ** 0.753) + 10.0 * math.exp((rh - 100.0) / 10.0) + 0.18 * (21.1 - temp) * (1.0 - math.exp(-0.115 * rh))
+        e_w = (
+            0.618 * (rh**0.753)
+            + 10.0 * math.exp((rh - 100.0) / 10.0)
+            + 0.18 * (21.1 - temp) * (1.0 - math.exp(-0.115 * rh))
+        )
         if m_0 < e_w:
-            k_a = 0.424 * (1.0 - ((100.0 - rh) / 100.0) ** 1.7) + 0.0694 * (wind ** 0.5) * (1.0 - ((100.0 - rh) / 100.0) ** 8)
+            k_a = 0.424 * (1.0 - ((100.0 - rh) / 100.0) ** 1.7) + 0.0694 * (wind**0.5) * (
+                1.0 - ((100.0 - rh) / 100.0) ** 8
+            )
             k_w = k_a * 0.581 * math.exp(0.0365 * temp)
             m = e_w - (e_w - m_0) * (10.0 ** (-k_w))
         else:
@@ -90,7 +128,7 @@ def compute_dmc(temp: float, rh: float, rain: float, month: int, prev_dmc: float
             b = 14.0 - 1.3 * math.log(prev_dmc)
         else:
             b = 6.2 * math.log(prev_dmc) - 17.2
-        
+
         m_r = m_0 + 1000.0 * r_e / (48.77 + b * r_e)
         dmc_rain = 43.43 * (5.6348 - math.log(m_r - 20.0))
         prev_dmc = max(0.0, dmc_rain)
@@ -131,7 +169,7 @@ def compute_isi(ffmc: float, wind: float) -> float:
     wind = max(0.0, wind)
     f_w = math.exp(0.05039 * wind)
     m = 147.2 * (101.0 - ffmc) / (59.5 + ffmc)
-    f_f = 91.9 * math.exp(-0.1386 * m) * (1.0 + (m ** 5.31) / (4.93 * 1e7))
+    f_f = 91.9 * math.exp(-0.1386 * m) * (1.0 + (m**5.31) / (4.93 * 1e7))
     return max(0.0, round(0.208 * f_w * f_f, 2))
 
 
@@ -149,10 +187,10 @@ def compute_bui(dmc: float, dc: float) -> float:
 def compute_fwi(isi: float, bui: float) -> float:
     """Calculate Fire Weather Index (FWI)."""
     if bui <= 80.0:
-        f_d = 0.626 * (bui ** 0.809) + 2.0
+        f_d = 0.626 * (bui**0.809) + 2.0
     else:
         f_d = 1000.0 / (25.0 + 108.64 * math.exp(-0.023 * bui))
-    
+
     b = 0.1 * isi * f_d
     if b > 1.0:
         ln_fwi = 2.72 * ((0.434 * math.log(b)) ** 0.647)

@@ -3,13 +3,14 @@ Single Source of Truth (SSOT) Feature Engineering Engine.
 Shared identically by offline dataset generation, model training, and online live inference.
 Guarantees zero-lookahead leakage.
 """
+
+import math
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
-import math
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any
 
-
-FEATURE_NAMES: List[str] = [
+FEATURE_NAMES: list[str] = [
     # 1. Daily Surface Weather
     "temp_max",
     "temp_mean",
@@ -19,7 +20,6 @@ FEATURE_NAMES: List[str] = [
     "precip_sum",
     "et0",
     "soil_moisture",
-
     # 2. Rolling Aggregations (Past N days up to Day D)
     "precip_sum_3d",
     "precip_sum_7d",
@@ -27,11 +27,9 @@ FEATURE_NAMES: List[str] = [
     "precip_sum_30d",
     "temp_max_mean_7d",
     "rh_min_mean_7d",
-
     # 3. Dryness & Drought State
-    "consecutive_dry_days",      # Days with precip < 1.0 mm
-    "days_since_rain_gt_10mm",   # Days elapsed since last daily rain > 10.0 mm
-
+    "consecutive_dry_days",  # Days with precip < 1.0 mm
+    "days_since_rain_gt_10mm",  # Days elapsed since last daily rain > 10.0 mm
     # 4. Canadian FWI Physics Sub-Indices
     "ffmc",
     "dmc",
@@ -39,24 +37,20 @@ FEATURE_NAMES: List[str] = [
     "isi",
     "bui",
     "fwi",
-
     # 5. Seasonality (Cyclical Encodings)
     "month_sin",
     "month_cos",
     "day_of_year_sin",
     "day_of_year_cos",
-
     # 6. Spatial / Topography
     "lat",
     "lon",
-
     # 7. Land Cover Fractions (ESA WorldCover 10m)
     "fraction_tree",
     "fraction_shrub",
     "fraction_grass",
     "fraction_crop",
     "fraction_built",
-
     # 8. Lagged Historical Fire Activity (Strictly prior to Day D, never same day)
     "fires_prev_7d",
     "fires_prev_30d",
@@ -77,7 +71,7 @@ class DailyWeatherRecord:
     soil_moisture: float
 
 
-def compute_cyclical_features(target_date: date) -> Dict[str, float]:
+def compute_cyclical_features(target_date: date) -> dict[str, float]:
     """Calculate sine/cosine transformations for month and day of year."""
     month = target_date.month
     day_of_year = target_date.timetuple().tm_yday
@@ -91,9 +85,8 @@ def compute_cyclical_features(target_date: date) -> Dict[str, float]:
 
 
 def compute_rolling_weather_features(
-    history: Sequence[DailyWeatherRecord],
-    target_date: date
-) -> Dict[str, float]:
+    history: Sequence[DailyWeatherRecord], target_date: date
+) -> dict[str, float]:
     """
     Compute rolling precip sums, temp means, and dry day counters strictly using data <= target_date.
     history must be sorted chronologically ascending up to target_date.
@@ -155,14 +148,14 @@ def extract_features(
     target_date: date,
     current_weather: DailyWeatherRecord,
     weather_history: Sequence[DailyWeatherRecord],
-    fwi_values: Dict[str, float],
+    fwi_values: dict[str, float],
     lat: float,
     lon: float,
-    landcover: Dict[str, float],
+    landcover: dict[str, float],
     fires_prev_7d: int = 0,
     fires_prev_30d: int = 0,
     climatological_fire_freq: float = 0.0,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Construct a complete single feature row for live inference or dataset generation.
     Strictly asserts zero lookahead leakage.
@@ -174,7 +167,7 @@ def extract_features(
     rolling = compute_rolling_weather_features(weather_history, target_date)
 
     # 3. Assemble
-    row: Dict[str, float] = {
+    row: dict[str, float] = {
         "temp_max": current_weather.temp_max,
         "temp_mean": current_weather.temp_mean,
         "rh_min": current_weather.rh_min,
@@ -183,38 +176,31 @@ def extract_features(
         "precip_sum": current_weather.precip_sum,
         "et0": current_weather.et0,
         "soil_moisture": current_weather.soil_moisture,
-
         "precip_sum_3d": rolling["precip_sum_3d"],
         "precip_sum_7d": rolling["precip_sum_7d"],
         "precip_sum_14d": rolling["precip_sum_14d"],
         "precip_sum_30d": rolling["precip_sum_30d"],
         "temp_max_mean_7d": rolling["temp_max_mean_7d"],
         "rh_min_mean_7d": rolling["rh_min_mean_7d"],
-
         "consecutive_dry_days": rolling["consecutive_dry_days"],
         "days_since_rain_gt_10mm": rolling["days_since_rain_gt_10mm"],
-
         "ffmc": fwi_values.get("ffmc", 85.0),
         "dmc": fwi_values.get("dmc", 6.0),
         "dc": fwi_values.get("dc", 15.0),
         "isi": fwi_values.get("isi", 2.0),
         "bui": fwi_values.get("bui", 8.0),
         "fwi": fwi_values.get("fwi", 5.0),
-
         "month_sin": cyclical["month_sin"],
         "month_cos": cyclical["month_cos"],
         "day_of_year_sin": cyclical["day_of_year_sin"],
         "day_of_year_cos": cyclical["day_of_year_cos"],
-
         "lat": round(lat, 4),
         "lon": round(lon, 4),
-
         "fraction_tree": round(landcover.get("tree", 0.0), 4),
         "fraction_shrub": round(landcover.get("shrub", 0.0), 4),
         "fraction_grass": round(landcover.get("grass", 0.0), 4),
         "fraction_crop": round(landcover.get("crop", 0.0), 4),
         "fraction_built": round(landcover.get("built", 0.0), 4),
-
         "fires_prev_7d": float(fires_prev_7d),
         "fires_prev_30d": float(fires_prev_30d),
         "climatological_fire_freq": round(climatological_fire_freq, 6),
@@ -224,9 +210,9 @@ def extract_features(
 
 
 def derive_wildfire_label(
-    fire_detections: Sequence[Dict[str, Any]],
-    landcover_classes: Optional[Sequence[str]] = ("tree", "shrub", "grass"),
-    min_confidence: str = "nominal"
+    fire_detections: Sequence[dict[str, Any]],
+    landcover_classes: Sequence[str] | None = ("tree", "shrub", "grass"),
+    min_confidence: str = "nominal",
 ) -> int:
     """
     Binary label definition:

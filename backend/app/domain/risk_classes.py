@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Dict, Optional
 
 
 @dataclass(frozen=True)
@@ -11,45 +10,45 @@ class RiskClassInfo:
     advisory: str
 
 
-RISK_CLASSES: Dict[str, RiskClassInfo] = {
+RISK_CLASSES: dict[str, RiskClassInfo] = {
     "Low": RiskClassInfo(
         name="Low",
         code="LOW",
         color_hex="#10B981",
         badge_label="Low Fire Danger",
-        advisory="Low probability of ignition and fire spread. Standard agricultural precautions apply."
+        advisory="Low probability of ignition and fire spread. Standard agricultural precautions apply.",
     ),
     "Moderate": RiskClassInfo(
         name="Moderate",
         code="MODERATE",
         color_hex="#F59E0B",
         badge_label="Moderate Fire Danger",
-        advisory="Vegetation fuels are moderately dry. Surface fires may ignite from open sparks; caution advised during afternoon hours."
+        advisory="Vegetation fuels are moderately dry. Surface fires may ignite from open sparks; caution advised during afternoon hours.",
     ),
     "High": RiskClassInfo(
         name="High",
         code="HIGH",
         color_hex="#F97316",
         badge_label="High Fire Danger",
-        advisory="Critical fuel dryness and active wind spread potential. Controlled open burning prohibited; monitoring advised."
+        advisory="Critical fuel dryness and active wind spread potential. Controlled open burning prohibited; monitoring advised.",
     ),
     "Extreme": RiskClassInfo(
         name="Extreme",
         code="EXTREME",
         color_hex="#EF4444",
         badge_label="Extreme Wildfire Threat",
-        advisory="Severe wildfire spread conditions. Explosive ignition risk; immediate alert to district civil defense and rapid response teams."
+        advisory="Severe wildfire spread conditions. Explosive ignition risk; immediate alert to district civil defense and rapid response teams.",
     ),
 }
 
-DEFAULT_PROBABILITY_THRESHOLDS: Dict[str, float] = {
+DEFAULT_PROBABILITY_THRESHOLDS: dict[str, float] = {
     "moderate": 0.25,
     "high": 0.55,
     "extreme": 0.80,
 }
 
 
-def classify_probability(prob: float, thresholds: Optional[Dict[str, float]] = None) -> str:
+def classify_probability(prob: float, thresholds: dict[str, float] | None = None) -> str:
     """Classify model probability into Low / Moderate / High / Extreme using calibrated thresholds."""
     th = thresholds or DEFAULT_PROBABILITY_THRESHOLDS
     mod_th = th.get("moderate", 0.25)

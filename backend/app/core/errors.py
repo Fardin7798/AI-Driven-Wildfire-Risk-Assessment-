@@ -1,8 +1,10 @@
-from typing import Any, Dict, Optional
+from typing import Any
+
 from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+
 from app.core.logging import logger
 
 
@@ -11,8 +13,8 @@ class ProblemDetails(BaseModel):
     title: str
     status: int
     detail: str
-    instance: Optional[str] = None
-    extra: Optional[Dict[str, Any]] = None
+    instance: str | None = None
+    extra: dict[str, Any] | None = None
 
 
 class AppException(Exception):
@@ -22,7 +24,7 @@ class AppException(Exception):
         status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
         detail: str = "An internal server error occurred.",
         type_: str = "about:blank",
-        extra: Optional[Dict[str, Any]] = None,
+        extra: dict[str, Any] | None = None,
     ):
         super().__init__(detail)
         self.title = title
@@ -33,7 +35,9 @@ class AppException(Exception):
 
 
 class NotFoundException(AppException):
-    def __init__(self, detail: str = "The requested resource was not found.", title: str = "Not Found"):
+    def __init__(
+        self, detail: str = "The requested resource was not found.", title: str = "Not Found"
+    ):
         super().__init__(
             title=title,
             status_code=status.HTTP_404_NOT_FOUND,
@@ -64,7 +68,9 @@ def register_exception_handlers(app: FastAPI) -> None:
             instance=request.url.path,
             extra=exc.extra,
         )
-        return JSONResponse(status_code=exc.status_code, content=problem.model_dump(exclude_none=True))
+        return JSONResponse(
+            status_code=exc.status_code, content=problem.model_dump(exclude_none=True)
+        )
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -77,7 +83,10 @@ def register_exception_handlers(app: FastAPI) -> None:
             instance=request.url.path,
             extra={"errors": exc.errors()},
         )
-        return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content=problem.model_dump(exclude_none=True))
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content=problem.model_dump(exclude_none=True),
+        )
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception):
@@ -89,4 +98,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             detail="An unexpected error occurred. Please try again later.",
             instance=request.url.path,
         )
-        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=problem.model_dump(exclude_none=True))
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=problem.model_dump(exclude_none=True),
+        )
