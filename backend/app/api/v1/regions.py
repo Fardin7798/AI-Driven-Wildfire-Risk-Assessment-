@@ -59,4 +59,26 @@ async def get_district_detail(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Region with id {region_id} not found.",
         )
-    return RegionDetail.model_validate(record)
+    geom_dict = None
+    if record.geom is not None:
+        try:
+            from geoalchemy2.shape import to_shape
+            from shapely.geometry import mapping
+
+            geom_dict = mapping(to_shape(record.geom))
+        except Exception:
+            geom_dict = None
+    return RegionDetail(
+        id=record.id,
+        country_code=record.country_code,
+        admin_level=record.admin_level,
+        state_name=record.state_name,
+        district_name=record.district_name,
+        gadm_id=record.gadm_id,
+        centroid_lat=record.centroid_lat,
+        centroid_lon=record.centroid_lon,
+        area_km2=record.area_km2,
+        landcover=record.landcover,
+        timezone=record.timezone,
+        geom=geom_dict,
+    )

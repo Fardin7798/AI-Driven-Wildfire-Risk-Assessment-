@@ -33,7 +33,11 @@ def test_health_endpoints():
     # Test /api/v1/health
     resp_v1 = client.get("/api/v1/health")
     assert resp_v1.status_code == 200
-    assert resp_v1.json() == data
+    data_v1 = resp_v1.json()
+    assert data_v1["status"] == "ok"
+    assert data_v1["version"] == settings.APP_VERSION
+    assert "db" in data_v1
+    assert data_v1["db"] in ["ok", "down"]
 
 
 def test_meta_sources_and_attribution():

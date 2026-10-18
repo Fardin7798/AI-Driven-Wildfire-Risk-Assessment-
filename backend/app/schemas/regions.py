@@ -12,10 +12,10 @@ class RegionSummary(BaseModel):
     state_name: str
     district_name: str
     gadm_id: str
-    centroid_lat: float
-    centroid_lon: float
-    area_km2: float
-    landcover: dict[str, float] | None = None
+    centroid_lat: float | None = None
+    centroid_lon: float | None = None
+    area_km2: float | None = None
+    landcover: dict[str, Any] | None = None
     timezone: str
 
 

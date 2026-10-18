@@ -73,3 +73,8 @@ ml/artifacts/
 
 # Node / Frontend (when added)
 node_modules/
+
+backend/data/raw/
+backend/data/processed/
+**/data/raw/
+**/data/processed/

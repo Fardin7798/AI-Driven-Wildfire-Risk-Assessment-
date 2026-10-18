@@ -43,3 +43,27 @@ class Region(Base):
         "AQObservation", back_populates="region", cascade="all, delete-orphan"
     )
     aq_forecasts = relationship("AQForecast", back_populates="region", cascade="all, delete-orphan")
+
+    @property
+    def centroid_lat(self) -> float | None:
+        if self.centroid is None:
+            return None
+        try:
+            from geoalchemy2.shape import to_shape
+
+            pt = to_shape(self.centroid)
+            return float(pt.y)
+        except Exception:
+            return None
+
+    @property
+    def centroid_lon(self) -> float | None:
+        if self.centroid is None:
+            return None
+        try:
+            from geoalchemy2.shape import to_shape
+
+            pt = to_shape(self.centroid)
+            return float(pt.x)
+        except Exception:
+            return None
