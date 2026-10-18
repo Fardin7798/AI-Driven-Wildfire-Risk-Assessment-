@@ -33,10 +33,14 @@ def _serialize_risk(pred: RiskPrediction) -> RiskPredictionResponse:
                     TopFactor(feature=str(item["feature"]), impact=float(item["impact"]))
                 )
 
-    district_name = (
-        pred.region.district_name if getattr(pred, "region", None) else f"District {pred.region_id}"
-    )
-    state_name = pred.region.state_name if getattr(pred, "region", None) else "India"
+    try:
+        district_name = (
+            pred.region.district_name if getattr(pred, "region", None) else f"District {pred.region_id}"
+        )
+        state_name = pred.region.state_name if getattr(pred, "region", None) else "India"
+    except Exception:
+        district_name = f"District {pred.region_id}"
+        state_name = "India"
 
     return RiskPredictionResponse(
         region_id=pred.region_id,

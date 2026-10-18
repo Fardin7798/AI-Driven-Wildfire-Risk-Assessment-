@@ -35,6 +35,7 @@ async def get_risk_by_region(
     t_date = target_date or today_ist()
     query = (
         select(RiskPrediction)
+        .options(selectinload(RiskPrediction.region))
         .where(RiskPrediction.region_id == region_id, RiskPrediction.date == t_date)
         .order_by(RiskPrediction.created_at.desc())
         .limit(1)
@@ -44,7 +45,7 @@ async def get_risk_by_region(
     if not record:
         # Fallback to most recent record
         query_fallback = (
-            select(RiskPrediction)
+            select(RiskPrediction).options(selectinload(RiskPrediction.region))
             .where(RiskPrediction.region_id == region_id)
             .order_by(RiskPrediction.date.desc())
             .limit(1)
@@ -59,6 +60,7 @@ async def get_risk_history(
     start_date = today_ist() - timedelta(days=days)
     query = (
         select(RiskPrediction)
+        .options(selectinload(RiskPrediction.region))
         .where(RiskPrediction.region_id == region_id, RiskPrediction.date >= start_date)
         .order_by(RiskPrediction.date.asc())
     )

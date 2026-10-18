@@ -15,8 +15,12 @@ router = APIRouter(prefix="/air-quality", tags=["Air Quality"])
 
 
 def _serialize_aq(obs: AQObservation) -> AQObservationResponse:
-    district_name = obs.region.district_name if getattr(obs, "region", None) else None
-    state_name = obs.region.state_name if getattr(obs, "region", None) else None
+    try:
+        district_name = obs.region.district_name if getattr(obs, "region", None) else None
+        state_name = obs.region.state_name if getattr(obs, "region", None) else None
+    except Exception:
+        district_name = None
+        state_name = None
 
     return AQObservationResponse(
         region_id=obs.region_id,
@@ -39,7 +43,10 @@ def _serialize_aq(obs: AQObservation) -> AQObservationResponse:
 
 
 def _serialize_forecast(fc: AQForecast) -> AQForecastResponse:
-    district_name = fc.region.district_name if getattr(fc, "region", None) else None
+    try:
+        district_name = fc.region.district_name if getattr(fc, "region", None) else None
+    except Exception:
+        district_name = None
     return AQForecastResponse(
         region_id=fc.region_id,
         district_name=district_name,
