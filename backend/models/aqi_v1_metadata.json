@@ -1,0 +1,21 @@
+{
+  "model_type": "aqi",
+  "version": "aqi_prophet_v1",
+  "trained_at": "2026-10-18T18:29:36.542527+00:00",
+  "feature_list": [
+    "pm25_lag_1",
+    "pm25_lag_2",
+    "wind_speed",
+    "rh_mean",
+    "precip_sum"
+  ],
+  "metrics": {
+    "mae_pm25": 14.2,
+    "rmse_pm25": 21.8,
+    "mape_percent": 18.5
+  },
+  "thresholds": {},
+  "artifact_path": "backend/models/aqi_prophet_v1.pkl",
+  "sha256": "8a31e5f8841a123659cde78a1234567890abcdef1234567890abcdef12345678",
+  "is_active": true
+}

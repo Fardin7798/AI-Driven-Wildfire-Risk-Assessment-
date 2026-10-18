@@ -62,11 +62,11 @@ Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Ri
   - [x] Pydantic v2 schemas for all responses
   - [x] API v1 endpoints: `/health`, `/regions`, `/risk`, `/fires`, `/air-quality`, `/weather`, `/models`, `/preparedness`, `/meta`, `/internal/jobs`
 
-- [ ] **Phase 9: ML Training Pipeline & Kaggle Notebooks (`ml/`)**
-  - [ ] Historical data downloaders with resumable parquet caches
-  - [ ] Dataset construction scripts & validation reports
-  - [ ] Kaggle training notebooks for Wildfire (XGBoost/RF/FWI) and AQI (Prophet)
-  - [ ] Operational scripts (`load_regions.py`, `compute_landcover.py`, `backfill.py`)
+- [x] **Phase 9: ML Training Pipeline - [ ] **Phase 9: ML Training Pipeline & Kaggle Notebooks (`ml/`)** Kaggle Notebooks (`ml/`)**
+  - [x] Historical data downloaders with resumable parquet caches
+  - [x] Dataset construction scripts - [ ] Dataset construction scripts & validation reports validation reports
+  - [x] Kaggle training notebooks for Wildfire (XGBoost/RF/FWI) and AQI (Prophet)
+  - [x] Operational scripts (`load_regions.py`, `compute_landcover.py`, `backfill.py`)
 
 - [ ] **Phase 10: Tests & Verification**
   - [ ] Unit tests for FWI reference values, NAQI breakpoints, feature leakage, provider parsers
