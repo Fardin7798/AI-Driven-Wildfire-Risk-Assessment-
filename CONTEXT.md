@@ -44,7 +44,7 @@ Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Ri
   - [ ] `app/ml/wildfire_predictor.py`: XGBoost inference engine with FWI fallback
   - [ ] `app/ml/aqi_forecaster.py`: Prophet & seasonal persistence forecaster
 
-- [ ] **Phase 6: Business Services Layer**
+- [x] **Phase 6: Business Services Layer**
   - [ ] `app/services/regions_service.py`
   - [ ] `app/services/fire_service.py`
   - [ ] `app/services/weather_service.py`
