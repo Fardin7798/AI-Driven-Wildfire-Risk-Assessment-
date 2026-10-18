@@ -1,9 +1,8 @@
-from sqlalchemy import func, select
+from sqlalchemy import func, text
 from sqlalchemy.dialects.postgresql import insert
 
 from app.core.logging import logger
 from app.db.models.fire import FireDetection
-from app.db.models.region import Region
 from app.db.session import async_session_factory
 from app.jobs.scheduler import tracked_job
 from app.providers.registry import registry
@@ -21,47 +20,48 @@ async def job_ingest_fires() -> int:
         return 0
 
     inserted_count = 0
+    batch_size = 200
     async with async_session_factory() as session:
-        # Load regions with coordinates for point-in-polygon matching
-        regions = (await session.execute(select(Region.id, Region.centroid))).all()
-
-        for fire in raw_fires:
-            point_geom = func.ST_SetSRID(func.ST_MakePoint(fire.lon, fire.lat), 4326)
-
-            # Find matching region by centroid proximity fallback if polygons empty
-            closest_region_id = None
-            if regions:
-                closest_region_id = regions[0].id
-
+        for i in range(0, len(raw_fires), batch_size):
+            chunk = raw_fires[i : i + batch_size]
+            values = [
+                {
+                    "source": fire.source,
+                    "satellite": fire.satellite,
+                    "instrument": fire.instrument,
+                    "acq_datetime_utc": fire.acq_datetime_utc,
+                    "lat": fire.lat,
+                    "lon": fire.lon,
+                    "geom": func.ST_SetSRID(func.ST_MakePoint(fire.lon, fire.lat), 4326),
+                    "brightness": fire.brightness,
+                    "frp": fire.frp,
+                    "confidence": fire.confidence,
+                    "daynight": fire.daynight,
+                    "landcover_class": None,
+                    "region_id": None,
+                }
+                for fire in chunk
+            ]
             stmt = (
                 insert(FireDetection)
-                .values(
-                    source=fire.source,
-                    satellite=fire.satellite,
-                    instrument=fire.instrument,
-                    acq_datetime_utc=fire.acq_datetime_utc,
-                    lat=fire.lat,
-                    lon=fire.lon,
-                    geom=point_geom,
-                    brightness=fire.brightness,
-                    frp=fire.frp,
-                    confidence=fire.confidence,
-                    daynight=fire.daynight,
-                    landcover_class=None,
-                    region_id=closest_region_id,
-                )
-                .on_conflict_do_update(
+                .values(values)
+                .on_conflict_do_nothing(
                     index_elements=["source", "acq_datetime_utc", "lat", "lon"],
-                    set_={
-                        "brightness": fire.brightness,
-                        "frp": fire.frp,
-                        "confidence": fire.confidence,
-                    },
                 )
             )
             await session.execute(stmt)
-            inserted_count += 1
+            inserted_count += len(chunk)
 
+        # Spatially map fires to their true district boundaries via PostGIS
+        await session.execute(
+            text("""
+            UPDATE wf.fire_detections f
+            SET region_id = r.id
+            FROM wf.regions r
+            WHERE f.region_id IS NULL
+              AND ST_Contains(r.geom, f.geom)
+            """)
+        )
         await session.commit()
 
     return inserted_count

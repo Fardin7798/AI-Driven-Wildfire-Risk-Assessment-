@@ -28,8 +28,12 @@ class CPCBDataGovInProvider:
         }
 
         results: list[RawAQObservation] = []
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json",
+        }
         try:
-            async with httpx.AsyncClient(timeout=20.0) as client:
+            async with httpx.AsyncClient(timeout=20.0, headers=headers) as client:
                 resp = await client.get(self.resource_url, params=params)
                 resp.raise_for_status()
                 payload = resp.json()

@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.core.config import settings
 from app.core.logging import logger
@@ -17,9 +17,20 @@ async def job_ingest_air_quality() -> int:
 
     async with async_session_factory() as session:
         # 1. Ingest CAMS Regional AQ for Region Centroids
-        regions = (await session.execute(select(Region.id, Region.centroid).limit(100))).all()
+        query = (
+            select(
+                Region.id,
+                func.ST_Y(Region.centroid).label("lat"),
+                func.ST_X(Region.centroid).label("lon"),
+            )
+            .where(Region.centroid.isnot(None))
+            .limit(100)
+        )
+        regions = (await session.execute(query)).all()
         for reg in regions:
-            lat, lon = 28.6139, 77.2090
+            if reg.lat is None or reg.lon is None:
+                continue
+            lat, lon = float(reg.lat), float(reg.lon)
             try:
                 obs_list = await aq_provider.fetch_air_quality(lat=lat, lon=lon)
                 for obs in obs_list:

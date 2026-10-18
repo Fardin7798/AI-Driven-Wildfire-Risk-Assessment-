@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.core.logging import logger
 from app.db.models.region import Region
@@ -14,13 +14,22 @@ async def job_ingest_weather() -> int:
     total_written = 0
 
     async with async_session_factory() as session:
-        # Load regions to ingest weather
-        query = select(Region.id, Region.centroid).limit(200)
+        # Load regions to ingest weather with their centroid coordinates
+        query = (
+            select(
+                Region.id,
+                func.ST_Y(Region.centroid).label("lat"),
+                func.ST_X(Region.centroid).label("lon"),
+            )
+            .where(Region.centroid.isnot(None))
+            .limit(200)
+        )
         regions = (await session.execute(query)).all()
 
         for region in regions:
-            # Estimate lat, lon from region centroid if available, default to New Delhi
-            lat, lon = 28.6139, 77.2090
+            if region.lat is None or region.lon is None:
+                continue
+            lat, lon = float(region.lat), float(region.lon)
             try:
                 records = await weather_provider.fetch_weather_forecast(
                     lat=lat, lon=lon, past_days=3, forecast_days=3
