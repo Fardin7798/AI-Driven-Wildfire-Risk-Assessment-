@@ -1,6 +1,7 @@
 """Automated dataset validation: null checks, range bounds, class balance, and leakage tests."""
 
 import argparse
+import sys
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -108,24 +109,14 @@ def main():
     parser.add_argument("--report", type=Path, default=REPORT_OUTPUT_PATH)
     args = parser.parse_args()
 
-    if args.input and args.input.exists():
-        df = pd.read_parquet(args.input)
-        validate_dataset(df, args.report)
-    else:
-        # Generate baseline sample report
-        dummy_data = pd.DataFrame({
-            "district_id": [1] * 365,
-            "date": pd.date_range("2023-01-01", periods=365),
-            "year": [2023] * 365,
-            "temp_max": np.random.uniform(15, 42, 365),
-            "rh_min": np.random.uniform(10, 85, 365),
-            "wind_max": np.random.uniform(5, 45, 365),
-            "precip_sum": np.random.exponential(1.5, 365),
-            "ffmc": np.random.uniform(60, 95, 365),
-            "fwi": np.random.uniform(2, 45, 365),
-            "label": np.random.choice([0, 1], p=[0.92, 0.08], size=365),
-        })
-        validate_dataset(dummy_data, args.report)
+    if not args.input or not args.input.exists():
+        print(f"Error: Dataset file not found: {args.input}. Please run the feature pipeline first.", file=sys.stderr)
+        sys.exit(1)
+
+    df = pd.read_parquet(args.input)
+    success = validate_dataset(df, args.report)
+    if not success:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
