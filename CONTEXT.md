@@ -57,10 +57,10 @@ Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Ri
   - [x] Job implementations: `ingest_fires`, `ingest_weather`, `update_fwi_state`, `predict_risk`, `ingest_air_quality`, `forecast_aqi`, `retention`
   - [x] Idempotent upserts & `ingestion_runs` tracking
 
-- [ ] **Phase 8: FastAPI API Layer & Internal Jobs Endpoint**
-  - [ ] Application factory, lifespan, CORS, rate limiting (`slowapi`), JSON logger (`structlog`)
-  - [ ] Pydantic v2 schemas for all responses
-  - [ ] API v1 endpoints: `/health`, `/regions`, `/risk`, `/fires`, `/air-quality`, `/weather`, `/models`, `/preparedness`, `/meta`, `/internal/jobs`
+- [x] **Phase 8: FastAPI API Layer - [ ] **Phase 8: FastAPI API Layer & Internal Jobs Endpoint** Internal Jobs Endpoint**
+  - [x] Application factory, lifespan, CORS, rate limiting (`slowapi`), JSON logger (`structlog`)
+  - [x] Pydantic v2 schemas for all responses
+  - [x] API v1 endpoints: `/health`, `/regions`, `/risk`, `/fires`, `/air-quality`, `/weather`, `/models`, `/preparedness`, `/meta`, `/internal/jobs`
 
 - [ ] **Phase 9: ML Training Pipeline & Kaggle Notebooks (`ml/`)**
   - [ ] Historical data downloaders with resumable parquet caches

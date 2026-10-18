@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -57,6 +57,20 @@ class UnauthorizedJobTokenException(AppException):
 
 
 def register_exception_handlers(app: FastAPI) -> None:
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException):
+        problem = ProblemDetails(
+            type="https://errors.wildfire.org/http-error",
+            title="Client Error" if exc.status_code < 500 else "Server Error",
+            status=exc.status_code,
+            detail=str(exc.detail),
+            instance=request.url.path,
+        )
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=problem.model_dump(exclude_none=True),
+        )
+
     @app.exception_handler(AppException)
     async def app_exception_handler(request: Request, exc: AppException):
         logger.warn("app_exception", title=exc.title, status=exc.status_code, path=request.url.path)

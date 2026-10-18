@@ -6,10 +6,17 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     ENV: str = "development"
+    APP_VERSION: str = "2.0.0"
     LOG_LEVEL: str = "INFO"
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgrespassword@localhost:5432/postgres"
 
     ALLOWED_ORIGINS: str | list[str] = ["*"]
+
+    @property
+    def cors_origins(self) -> list[str]:
+        if isinstance(self.ALLOWED_ORIGINS, list):
+            return self.ALLOWED_ORIGINS
+        return [str(self.ALLOWED_ORIGINS)]
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod

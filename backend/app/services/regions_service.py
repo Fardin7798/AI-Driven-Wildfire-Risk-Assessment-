@@ -10,13 +10,17 @@ async def get_regions(
     state: str | None = None,
     limit: int = 100,
     offset: int = 0,
-) -> list[Region]:
+) -> tuple[list[Region], int]:
     query = select(Region).where(Region.country_code == country.upper())
     if state:
         query = query.where(func.lower(Region.state_name) == state.lower().strip())
     query = query.order_by(Region.state_name, Region.district_name).limit(limit).offset(offset)
+    count_query = select(func.count(Region.id)).where(Region.country_code == country.upper())
+    if state:
+        count_query = count_query.where(func.lower(Region.state_name) == state.lower().strip())
+    total = (await session.execute(count_query)).scalar() or 0
     result = await session.execute(query)
-    return list(result.scalars().all())
+    return list(result.scalars().all()), total
 
 
 async def get_region_by_id(session: AsyncSession, region_id: int) -> Region | None:

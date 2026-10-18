@@ -1,17 +1,29 @@
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.db.models.air_quality import AQForecast, AQObservation
+from app.db.models.region import Region
 from app.providers.base import RawAQObservation
 
 
 async def get_latest_air_quality(
     session: AsyncSession, state: str | None = None, limit: int = 50
 ) -> list[AQObservation]:
-    query = select(AQObservation).order_by(AQObservation.observed_at_utc.desc()).limit(limit)
+    query = (
+        select(AQObservation)
+        .options(selectinload(AQObservation.region))
+        .options(selectinload(AQObservation.region))
+        .order_by(AQObservation.observed_at_utc.desc())
+    )
+    if state:
+        query = query.join(Region, AQObservation.region_id == Region.id).where(
+            func.lower(Region.state_name) == state.lower().strip()
+        )
+    query = query.limit(limit)
     result = await session.execute(query)
     return list(result.scalars().all())
 
@@ -19,6 +31,7 @@ async def get_latest_air_quality(
 async def get_air_quality_for_region(session: AsyncSession, region_id: int) -> AQObservation | None:
     query = (
         select(AQObservation)
+        .options(selectinload(AQObservation.region))
         .where(AQObservation.region_id == region_id)
         .order_by(AQObservation.observed_at_utc.desc())
         .limit(1)
@@ -31,6 +44,7 @@ async def get_air_quality_forecast(session: AsyncSession, region_id: int) -> lis
     today = date.today()
     query = (
         select(AQForecast)
+        .options(selectinload(AQForecast.region))
         .where(AQForecast.region_id == region_id, AQForecast.target_date >= today)
         .order_by(AQForecast.target_date.asc())
     )

@@ -4,6 +4,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.db.models.region import Region
 from app.db.models.risk import RiskPrediction
@@ -12,7 +13,11 @@ from app.db.models.risk import RiskPrediction
 async def get_latest_risk(
     session: AsyncSession, state: str | None = None, limit: int = 50
 ) -> list[RiskPrediction]:
-    query = select(RiskPrediction).join(Region, RiskPrediction.region_id == Region.id)
+    query = (
+        select(RiskPrediction)
+        .join(Region, RiskPrediction.region_id == Region.id)
+        .options(selectinload(RiskPrediction.region))
+    )
     if state:
         query = query.where(func.lower(Region.state_name) == state.lower().strip())
 
