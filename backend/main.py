@@ -22,11 +22,14 @@ from services.firms_service import fetch_active_fires, find_nearby_fires, fires_
 from services.weather_service import fetch_live_weather
 from services.aqi_service import fetch_live_and_forecast_aqi
 from services.preparedness_service import generate_preparedness_advisory
-from services.supabase_service import log_telemetry, get_recent_telemetry_logs, check_supabase_health
+from services.supabase_service import log_telemetry, check_supabase_health
 
 load_dotenv()
 
 app = FastAPI(
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
     title="AI-Driven Wildfire Risk Assessment & Air Quality Platform (India)",
     description="Production-grade API providing scientific Canadian FWI fire danger rating, NASA FIRMS VIIRS 375m active satellite fire correlation, Copernicus CAMS 72-hour AQI forecasts, Supabase persistent audit telemetry, and actionable community preparedness advisories across India.",
     version="1.0.0"
@@ -92,6 +95,7 @@ def find_best_district_match(query_str: str) -> Optional[Dict[str, Any]]:
 @app.get("/health")
 async def health_check():
     db_health = await check_supabase_health()
+    db_health = {"status": db_health.get("status")}
     return {
         "status": "healthy",
         "service": "Wildfire Risk & Air Quality Engine (India)",
@@ -275,9 +279,6 @@ async def search_city_or_district(
         }
     }
 
-@app.get("/api/v1/telemetry/recent")
-async def get_recent_telemetry(limit: int = Query(10, ge=1, le=50)):
-    return {"total": limit, "logs": await get_recent_telemetry_logs(limit=limit)}
 
 @app.get("/api/v1/preparedness")
 def get_preparedness(risk_level: str = "Moderate", aqi: int = 120):

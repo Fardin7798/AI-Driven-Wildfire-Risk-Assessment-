@@ -2,14 +2,11 @@ import type {
   District,
   UnifiedSearchResponse,
   GeoJSONFeatureCollection,
-  TelemetryLog,
 } from '../types'
 
 export const API_BASE =
   import.meta.env.VITE_API_BASE ||
   (import.meta.env.DEV ? 'http://localhost:8000' : 'https://wildfire-aqi-backend.onrender.com')
-
-export const DOCS_URL = `${API_BASE}/docs`
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`)
@@ -33,8 +30,6 @@ export const api = {
   },
   getActiveFires: () =>
     get<GeoJSONFeatureCollection>('/api/v1/fires/active?format=geojson'),
-  getRecentTelemetry: (limit: number = 8) =>
-    get<{ total: number; logs: TelemetryLog[] }>(`/api/v1/telemetry/recent?limit=${limit}`),
   getHealth: () =>
     get<{
       status: string

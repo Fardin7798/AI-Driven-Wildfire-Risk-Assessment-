@@ -51,6 +51,18 @@
   - Interactive Docs (`Docs.tsx`): Unified to Post 1 light theme with clean cURL panel and embedded Swagger UI.
   - Verified via Playwright automation (Screenshots in `screenshots/`).
 
+
+### 4. End-User UI Cleanup & Backend Security Lockdown
+- **End-User Simplification**: Replaced developer jargon with clear citizen-facing language (e.g., 'Fire danger', 'Dry vegetation', 'Spread speed', 'Current weather').
+- **Privacy & Surface Reduction**:
+  - Removed public 24/7 telemetry feed table and Supabase sync button from Home dashboard.
+  - Removed interactive API Docs page (`Docs.tsx`), `/docs` route, and API explorer links.
+  - Removed internal developer tags ('PROD', 'Van Wagner', 'PostGIS', ISO/IEC compliance claims).
+- **Backend Lockdown**:
+  - Disabled Swagger UI (`docs_url=None`), ReDoc (`redoc_url=None`), and OpenAPI schema (`openapi_url=None`).
+  - Removed public telemetry history endpoint (`/api/v1/telemetry/recent`).
+  - Hardened `/health` probe to return clean operational status without leaking DB metadata or `project_ref`.
+
 ## Verification Status
 - [x] Backend edge-case test suite: 8/8 tests passed with 100% success (exit code 0).
 - [x] Coordinate boundary validation (-90 to 90 lat, -180 to 180 lon) returns 422 for out-of-bounds inputs.

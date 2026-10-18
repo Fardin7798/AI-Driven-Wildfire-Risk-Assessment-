@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
 import {
   Search,
   AlertCircle,
@@ -8,10 +7,6 @@ import {
   Sparkles,
   Flame,
   Layers,
-  Database,
-  ExternalLink,
-  CheckCircle2,
-  Clock,
   X,
   Compass,
 } from 'lucide-react'
@@ -19,8 +14,7 @@ import { api } from '../lib/api'
 import type {
   UnifiedSearchResponse,
   GeoJSONFeatureCollection,
-  District,
-  TelemetryLog
+  District
 } from '../types'
 import { RegionMap } from '../components/RegionMap'
 import {
@@ -28,8 +22,7 @@ import {
   WeatherBarCard,
   AirQualityCard,
   ForecastChartCard,
-  EmergencyCard,
-  StateBadge
+  EmergencyCard
 } from '../components/BentoCards'
 import { BentoGrid, BentoGridItem } from '../components/ui/BentoGrid'
 import { FadeUp } from '../components/FadeUp'
@@ -50,30 +43,10 @@ export default function Home() {
   const [districts, setDistricts] = useState<District[]>([])
   const [data, setData] = useState<UnifiedSearchResponse | null>(null)
   const [fires, setFires] = useState<GeoJSONFeatureCollection | undefined>(undefined)
-  const [telemetryLogs, setTelemetryLogs] = useState<TelemetryLog[]>([])
-  const [healthData, setHealthData] = useState<{
-    status: string
-    service: string
-    districts_loaded: number
-    database?: {
-      status: string
-      provider: string
-      project_ref: string
-      regions_in_db: number
-    }
-  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isWakingUp, setIsWakingUp] = useState(false)
   const wakeupTimerRef = useRef<any>(null)
-
-  const fetchTelemetry = () => {
-    api.getRecentTelemetry(6)
-      .then((res) => {
-        if (res?.logs) setTelemetryLogs(res.logs)
-      })
-      .catch(() => {})
-  }
 
   useEffect(() => {
     api.getDistricts()
@@ -84,11 +57,6 @@ export default function Home() {
       .then((geo) => setFires(geo))
       .catch(() => {})
 
-    api.getHealth()
-      .then(setHealthData)
-      .catch(() => {})
-
-    fetchTelemetry()
   }, [])
 
   useEffect(() => {
@@ -109,16 +77,6 @@ export default function Home() {
       return () => clearTimeout(timer)
     }
   }, [query])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        fetchTelemetry()
-      }
-    }, 25000)
-
-    return () => clearInterval(interval)
-  }, [])
 
   const executeSearch = async (targetQuery: string) => {
     if (!targetQuery.trim()) {
@@ -153,11 +111,10 @@ export default function Home() {
           return prev
         })
       }
-      setTimeout(fetchTelemetry, 1800)
     } catch (err: any) {
       clearTimeout(wakeupTimerRef.current)
       setIsWakingUp(false)
-      const msg = err?.message || 'Failed to fetch environmental telemetry from backend'
+      const msg = err?.message || 'Something went wrong. Please try again.'
       setError(msg)
     } finally {
       setLoading(false)
@@ -180,8 +137,6 @@ export default function Home() {
     executeSearch(chip)
   }
 
-  const currentState = error ? 'error' : loading ? 'loading' : !data ? 'empty' : 'populated'
-  const regionCount = healthData?.database?.regions_in_db ?? healthData?.districts_loaded ?? districts.length ?? 39
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased selection:bg-sky-500 selection:text-white">
@@ -195,14 +150,11 @@ export default function Home() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-sm font-bold tracking-tight text-slate-900 sm:text-base">
-                  AERORISK INDIA
+                  AeroRisk India
                 </h1>
-                <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[9px] font-mono font-bold text-sky-700 border border-sky-200">
-                  NATIONAL CONSOLE
-                </span>
               </div>
               <p className="text-[11px] text-slate-500">
-                AI-Driven Wildfire Risk, Satellite Hotspots & Copernicus Air Quality
+                Wildfire risk, air quality and safety tips for your area
               </p>
             </div>
           </div>
@@ -246,9 +198,6 @@ export default function Home() {
             >
               Scan
             </button>
-            <div className="hidden md:flex items-center gap-2 border-l border-slate-200 pl-3">
-              <StateBadge state={currentState} />
-            </div>
           </div>
         </div>
       </header>
@@ -259,7 +208,7 @@ export default function Home() {
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             <span className="mr-1 flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-slate-500 font-bold">
               <Sparkles className="h-3 w-3 text-sky-600" />
-              FOCUS TARGETS:
+              Popular places:
             </span>
             {QUICK_CHIPS.map((chip) => (
               <button
@@ -276,20 +225,6 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="flex items-center gap-4 font-mono text-[10px] text-slate-500">
-            <span className="flex items-center gap-1.5 font-semibold">
-              <Database className="h-3 w-3 text-sky-600" />
-              {regionCount} MONITORED DISTRICTS // NATIONWIDE SPATIAL GRID
-            </span>
-            <span className="hidden sm:inline text-slate-300">|</span>
-            <Link
-              to="/docs"
-              className="hidden sm:flex items-center gap-1 text-slate-600 hover:text-sky-600 transition-colors font-semibold"
-            >
-              <span>API DOCS</span>
-              <ExternalLink className="h-2.5 w-2.5" />
-            </Link>
-          </div>
         </FadeUp>
 
         {/* Cold Start Alert */}
@@ -298,8 +233,8 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-sky-600 border-t-transparent shrink-0" />
               <div>
-                <p className="font-bold text-sky-900">Connecting to Cloud Telemetry Cluster</p>
-                <p className="text-sky-700 text-[11px]">Backend is waking up from idle power-save mode (Render free tier). Syncing satellite streams, please wait ~15 seconds...</p>
+                <p className="font-bold text-sky-900">Loading latest data</p>
+                <p className="text-sky-700 text-[11px]">Fetching fire, weather and air quality for your area. This can take up to 30 seconds the first time.</p>
               </div>
             </div>
           </FadeUp>
@@ -310,7 +245,7 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
               <div>
-                <p className="font-bold">Telemetry Synchronisation Alert</p>
+                <p className="font-bold">Couldn't load data</p>
                 <p className="text-red-700 text-[11px]">{error}</p>
               </div>
             </div>
@@ -319,7 +254,7 @@ export default function Home() {
               className="flex items-center gap-1.5 rounded-xl bg-red-600 px-3.5 py-2 font-bold text-white hover:bg-red-700 transition-all cursor-pointer shadow-sm"
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              <span>Retry Relay</span>
+              <span>Try again</span>
             </button>
           </FadeUp>
         )}
@@ -343,15 +278,15 @@ export default function Home() {
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
             <div className="flex min-h-[300px] flex-col items-center justify-center text-center p-4">
               <Layers className="h-12 w-12 text-slate-400 mb-3" />
-              <h3 className="text-lg font-bold text-slate-900">No District Telemetry Active</h3>
+              <h3 className="text-lg font-bold text-slate-900">Search a place to get started</h3>
               <p className="mt-1 text-xs text-slate-500 max-w-sm">
-                Enter an Indian district name in the search portal or select one of the focus targets above to stream live environmental intelligence.
+                Type any Indian city or district, or pick a popular place above.
               </p>
               <button
                 onClick={() => handleChipClick('Jalgaon / Bhusawal')}
                 className="mt-5 rounded-xl bg-sky-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-sky-700 transition-all cursor-pointer shadow-sm"
               >
-                Focus Jalgaon / Bhusawal
+                Show Jalgaon / Bhusawal
               </button>
             </div>
           </div>
@@ -371,17 +306,17 @@ export default function Home() {
                     </span>
                   </h2>
                   <p className="font-mono text-[10px] text-slate-500">
-                    Eco-Zone: <span className="text-slate-800 font-semibold">{data.location.eco_zone}</span> • Lat: {data.location.latitude.toFixed(4)}°, Lon: {data.location.longitude.toFixed(4)}°
+                    Area type: <span className="text-slate-800 font-semibold">{data.location.eco_zone}</span>
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2.5 text-xs font-mono">
                 <span className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-1 text-slate-700 font-semibold">
-                  Van Wagner FWI: <span className="font-bold text-slate-900">{data.wildfire_assessment.fwi_score}</span>
+                  Fire danger: <span className="font-bold text-slate-900">{data.wildfire_assessment.fwi_score}</span>
                 </span>
                 <span className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-1 text-slate-700 font-semibold">
-                  CPCB AQI: <span className="font-bold text-slate-900">{data.air_quality.cpcb_aqi}</span>
+                  AQI: <span className="font-bold text-slate-900">{data.air_quality.cpcb_aqi}</span>
                 </span>
               </div>
             </FadeUp>
@@ -392,15 +327,15 @@ export default function Home() {
               <BentoGridItem
                 className="lg:col-span-2 min-h-[460px]"
                 spotlightColor="rgba(2, 132, 199, 0.05)"
-                eyebrow="Spatial Fire Risk Perimeter // WebGL Engine"
+                eyebrow="Nearby fires"
                 action={
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[9px] uppercase tracking-wider text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-full flex items-center gap-1.5 font-bold">
                       <i className="h-1.5 w-1.5 rounded-full bg-sky-600 animate-pulse" />
-                      50km Buffer Ring
+                      50 km area
                     </span>
                     <span className="font-mono text-[9px] text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full font-semibold">
-                      NASA VIIRS 375m
+                      NASA satellite
                     </span>
                   </div>
                 }
@@ -417,8 +352,8 @@ export default function Home() {
                   </div>
                 }
                 icon={<Compass className="h-4 w-4 text-sky-600" />}
-                title="Real-Time Spatial Geospatial & Fire Perimeter"
-                description="Interactive WebGL mapping engine rendering active NASA VIIRS thermal anomalies with dynamic 50km spatial buffer risk analysis."
+                title="Fires near you"
+                description="Active fires detected by satellite, with a 50 km circle around your location."
               />
 
               {/* Card 2: Canadian FWI Danger Rating (1 col) */}
@@ -436,97 +371,6 @@ export default function Home() {
               {/* Card 6: NDMA Action Directives & Emergency Hotlines (Full Width, 3 cols) */}
               <EmergencyCard prep={data.community_preparedness} />
 
-              {/* Card 7: National Environmental Surveillance Feed (Full Width, 3 cols) */}
-              <BentoGridItem
-                className="lg:col-span-3"
-                spotlightColor="rgba(2, 132, 199, 0.05)"
-                eyebrow="24/7 Spatial Telemetry // PostGIS Engine"
-                action={
-                  <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">
-                      <span className="relative flex h-2 w-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600"></span>
-                      </span>
-                      Auto-Sync Active
-                    </span>
-                    <button
-                      onClick={fetchTelemetry}
-                      className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-mono text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer font-semibold shadow-2xs"
-                      title="Refresh query audit log from Supabase"
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                      <span>Sync</span>
-                    </button>
-                  </div>
-                }
-                header={
-                  <div className="overflow-x-auto py-1">
-                    {telemetryLogs.length === 0 ? (
-                      <div className="flex items-center justify-center p-8 text-center text-xs text-slate-500 font-mono">
-                        Synchronizing spatial telemetry stream across 39 monitored districts...
-                      </div>
-                    ) : (
-                      <table className="w-full text-left text-xs">
-                        <thead>
-                          <tr className="border-b border-slate-200 font-mono text-[9px] uppercase tracking-wider text-slate-500">
-                            <th className="pb-2 font-semibold">Timestamp (UTC)</th>
-                            <th className="pb-2 font-semibold">District & State</th>
-                            <th className="pb-2 font-semibold">Eco-Zone</th>
-                            <th className="pb-2 font-semibold">Canadian FWI</th>
-                            <th className="pb-2 font-semibold">CPCB AQI</th>
-                            <th className="pb-2 font-semibold text-right">Audit Verification</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
-                          {telemetryLogs.map((log) => {
-                            const badgeStyle =
-                              log.risk_level === 'Extreme' || log.risk_level === 'Very High'
-                                ? 'bg-red-50 text-red-700 border border-red-200'
-                                : log.risk_level === 'High'
-                                ? 'bg-orange-50 text-orange-700 border border-orange-200'
-                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-
-                            return (
-                              <tr key={log.id || log.created_at} className="hover:bg-slate-50 transition-colors">
-                                <td className="py-2.5 text-slate-500 flex items-center gap-1.5">
-                                  <Clock className="h-3 w-3 text-slate-400 shrink-0" />
-                                  <span>{new Date(log.created_at).toLocaleTimeString()}</span>
-                                </td>
-                                <td className="py-2.5 font-sans font-medium text-slate-900">
-                                  <span>{log.district_name}</span>
-                                  <span className="ml-1 text-slate-500 text-[10px]">({log.state})</span>
-                                </td>
-                                <td className="py-2.5 text-slate-500 text-[10px]">{log.eco_zone}</td>
-                                <td className="py-2.5">
-                                  <span
-                                    className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold ${badgeStyle}`}
-                                  >
-                                    {log.fwi_score?.toFixed(1)} • {log.risk_level}
-                                  </span>
-                                </td>
-                                <td className="py-2.5">
-                                  <span className="text-slate-900 font-bold">{log.cpcb_aqi}</span>
-                                  <span className="ml-1 text-slate-500 text-[10px]">({log.aqi_category})</span>
-                                </td>
-                                <td className="py-2.5 text-right">
-                                  <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 font-bold">
-                                    <CheckCircle2 className="h-3 w-3" />
-                                    <span>Verified Stream</span>
-                                  </span>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                }
-                icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
-                title="National Environmental Surveillance Audit Feed"
-                description="Cryptographically verified spatial persistence logs recorded in Supabase PostGIS across all 39 monitored districts."
-              />
             </BentoGrid>
           </div>
         )}

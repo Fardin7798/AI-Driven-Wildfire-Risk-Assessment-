@@ -67,7 +67,7 @@ export function RiskGaugeCard({ risk }: { risk: WildfireAssessment }) {
     <BentoGridItem
       className="lg:col-span-1"
       spotlightColor={spotlightColor}
-      eyebrow="Canadian FWI // Physics Engine"
+      eyebrow="Fire danger"
       action={
         <span
           className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border ${badgeStyle}`}
@@ -105,7 +105,7 @@ export function RiskGaugeCard({ risk }: { risk: WildfireAssessment }) {
           {/* Scientific Sub-indices */}
           <div className="mt-3 grid grid-cols-2 gap-2 w-full">
             <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2.5">
-              <span className="font-mono text-[9px] uppercase tracking-wider text-slate-500 block font-semibold">FFMC (Fuel Dryness)</span>
+              <span className="font-mono text-[9px] uppercase tracking-wider text-slate-500 block font-semibold">Dry vegetation</span>
               <div className="flex items-baseline justify-between mt-1">
                 <span className="font-mono text-base font-bold text-slate-900">{risk?.ffmc ?? '--'}</span>
                 <span className="text-[9px] text-amber-700 font-mono font-bold">
@@ -114,7 +114,7 @@ export function RiskGaugeCard({ risk }: { risk: WildfireAssessment }) {
               </div>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2.5">
-              <span className="font-mono text-[9px] uppercase tracking-wider text-slate-500 block font-semibold">ISI (Spread Rate)</span>
+              <span className="font-mono text-[9px] uppercase tracking-wider text-slate-500 block font-semibold">Spread speed</span>
               <div className="flex items-baseline justify-between mt-1">
                 <span className="font-mono text-base font-bold text-slate-900">{risk?.isi ?? '--'}</span>
                 <span className="text-[9px] text-orange-700 font-mono font-bold">
@@ -126,8 +126,8 @@ export function RiskGaugeCard({ risk }: { risk: WildfireAssessment }) {
         </div>
       }
       icon={<Flame className="h-4 w-4 text-orange-600" />}
-      title="Canadian Forest Fire Weather Index (FWI)"
-      description="Van Wagner (1987) fire danger rating coupling fuel moisture equilibrium, wind spread velocity, and drought buildup."
+      title="Wildfire risk today"
+      description="How likely a fire is to start and spread here, based on heat, dryness and wind."
     />
   )
 }
@@ -136,28 +136,28 @@ export function RiskGaugeCard({ risk }: { risk: WildfireAssessment }) {
 export function WeatherBarCard({ weather }: { weather: WeatherData }) {
   const items = [
     {
-      label: 'Surface Temp',
+      label: 'Temperature',
       val: `${weather?.temperature !== undefined ? weather.temperature.toFixed(1) : '--'}°C`,
       sub: 'Dry-bulb 2m',
       icon: Thermometer,
       accent: 'text-amber-600',
     },
     {
-      label: 'Relative Humidity',
+      label: 'Humidity',
       val: `${weather?.humidity !== undefined ? weather.humidity.toFixed(0) : '--'}%`,
       sub: 'Vapor saturation',
       icon: Droplets,
       accent: 'text-sky-600',
     },
     {
-      label: '10m Wind Velocity',
+      label: 'Wind',
       val: `${weather?.wind_speed !== undefined ? weather.wind_speed.toFixed(1) : '--'} km/h`,
       sub: 'Anemometer 10m',
       icon: Wind,
       accent: 'text-cyan-600',
     },
     {
-      label: 'Precipitation',
+      label: 'Rain',
       val: `${weather?.precipitation !== undefined ? weather.precipitation.toFixed(1) : '0.0'} mm`,
       sub: 'Surface wetting',
       icon: CloudRain,
@@ -169,7 +169,7 @@ export function WeatherBarCard({ weather }: { weather: WeatherData }) {
     <BentoGridItem
       className="lg:col-span-3"
       spotlightColor="rgba(2, 132, 199, 0.05)"
-      eyebrow="Surface Telemetry // Open-Meteo Synoptic Feed"
+      eyebrow="Weather now"
       action={
         <span className="font-mono text-[9px] uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1.5 font-semibold">
           <i className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
@@ -203,8 +203,8 @@ export function WeatherBarCard({ weather }: { weather: WeatherData }) {
         </div>
       }
       icon={<Wind className="h-4 w-4 text-sky-600" />}
-      title="Surface Atmospheric Telemetry"
-      description="Continuous observations calibrated for atmospheric boundary layer stability and fire fuel moisture equilibrium."
+      title="Current weather"
+      description="Live conditions that affect fire risk and air quality."
     />
   )
 }
@@ -244,7 +244,7 @@ export function AirQualityCard({ aqi }: { aqi: AirQualityData }) {
     <BentoGridItem
       className="lg:col-span-1"
       spotlightColor={spotlightColor}
-      eyebrow="Air Quality Index // CPCB Standard"
+      eyebrow="Air quality"
       action={
         <span
           className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border ${badgeColorClass}`}
@@ -305,8 +305,8 @@ export function AirQualityCard({ aqi }: { aqi: AirQualityData }) {
         </div>
       }
       icon={<Activity className="h-4 w-4 text-emerald-600" />}
-      title="CPCB National Air Quality Index"
-      description="Sub-index maximum aggregation calibrated across criteria pollutants against official CPCB standards."
+      title="Air quality (AQI)"
+      description="How clean the air is right now, using India's official AQI scale."
     />
   )
 }
@@ -328,7 +328,7 @@ export function ForecastChartCard({
     <BentoGridItem
       className="lg:col-span-2"
       spotlightColor="rgba(2, 132, 199, 0.05)"
-      eyebrow="Copernicus CAMS 48-Hour Trajectory"
+      eyebrow="Next 48 hours"
       action={
         <div className="flex items-center gap-3 text-[10px] font-mono">
           <span className="flex items-center gap-1.5 text-sky-700 font-semibold">
@@ -387,8 +387,8 @@ export function ForecastChartCard({
         </div>
       }
       icon={<Activity className="h-4 w-4 text-sky-600" />}
-      title="Copernicus CAMS Chemical Trajectory"
-      description="Supercomputer chemical transport simulation estimating particulate matter transport and optical smoke depth."
+      title="Air quality forecast"
+      description="Expected AQI over the next two days, so you can plan time outdoors."
     />
   )
 }
@@ -407,7 +407,7 @@ export function EmergencyCard({ prep }: { prep: CommunityPreparedness }) {
     <BentoGridItem
       className="lg:col-span-3"
       spotlightColor="rgba(2, 132, 199, 0.05)"
-      eyebrow="NDMA Actionable Preparedness // Emergency Directory"
+      eyebrow="Stay safe"
       action={
         <span
           className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border ${
@@ -471,8 +471,8 @@ export function EmergencyCard({ prep }: { prep: CommunityPreparedness }) {
         </div>
       }
       icon={<ShieldCheck className="h-4 w-4 text-indigo-600" />}
-      title="NDMA Action Directives & Speed-Dials"
-      description="Standard operating procedures mapped to National Disaster Management Authority emergency triage framework."
+      title="What to do & emergency numbers"
+      description="Simple safety steps and helpline numbers based on NDMA guidance."
     />
   )
 }
