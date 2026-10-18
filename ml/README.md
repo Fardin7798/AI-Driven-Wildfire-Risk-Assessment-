@@ -57,4 +57,4 @@ ml/
 
 4. **Train Models**:
    - Run `ml/notebooks/02_train_wildfire_kaggle.ipynb` locally or upload `data/processed/` to Kaggle.
-   - Exported artifacts (`wildfire_xgb_v1.json` + `wildfire_v1_metadata.json`) are copied into `backend/models/`.
+   - Exported artifacts (`wildfire_xgb_v1.json` + `wildfire_xgb_v1_metadata.json`) are copied into `backend/models/`.

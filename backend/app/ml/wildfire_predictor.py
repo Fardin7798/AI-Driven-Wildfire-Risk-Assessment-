@@ -3,7 +3,7 @@ from typing import Any
 
 from app.core.logging import logger
 from app.domain.risk_classes import classify_fwi, classify_probability
-from app.ml.loader import model_loader
+from app.ml.loader import ModelLoader, model_loader
 
 
 @dataclass(frozen=True)
@@ -73,13 +73,12 @@ def _rank_fallback_factors(features: dict[str, float]) -> dict[str, Any]:
 
 
 def predict_wildfire_risk(
-    features: dict[str, float], model_version: str | None = None
+    features: dict[str, float],
+    model_version: str | None = None,
+    loader: ModelLoader | None = None,
 ) -> RiskPredictionResult:
-    """
-    Run XGBoost live prediction, or fallback to rule-based Canadian FWI engine
-    if model weights are absent or failed integrity verification.
-    """
-    artifact = model_loader.load_wildfire_model(model_version)
+    active_loader = loader or model_loader
+    artifact = active_loader.load_wildfire_model(model_version)
     fwi_val = float(features.get("fwi", 5.0))
 
     if artifact and artifact.model_obj is not None:

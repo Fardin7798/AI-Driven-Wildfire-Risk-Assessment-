@@ -50,45 +50,49 @@ def test_aqi_forecaster_trajectory():
     assert all("pm25_pred" in f and "aqi_pred" in f and "aqi_category" in f for f in forecasts)
 
 
-def test_wildfire_predictor_real_model_loading():
-    """Verify loading active production model artifact from backend/models."""
-    sample_features = {
-        "temp_max": 38.0,
-        "temp_mean": 30.0,
-        "rh_min": 20.0,
-        "rh_mean": 45.0,
-        "wind_max": 24.0,
-        "precip_sum": 0.0,
-        "et0": 4.5,
-        "soil_moisture": 0.15,
-        "precip_3d": 0.0,
-        "precip_7d": 0.0,
-        "precip_14d": 0.0,
-        "precip_30d": 5.0,
-        "temp_max_7d_mean": 37.0,
-        "rh_min_7d_mean": 22.0,
-        "dry_days_count": 18,
-        "days_since_rain_10mm": 35,
-        "ffmc": 91.5,
-        "dmc": 35.0,
-        "dc": 180.0,
-        "isi": 12.0,
-        "bui": 45.0,
-        "fwi": 25.4,
-        "month": 4,
-        "day_of_year_sin": 0.86,
-        "day_of_year_cos": -0.5,
-        "centroid_lat": 28.6,
-        "centroid_lon": 77.2,
-        "tree_fraction": 0.35,
-        "shrub_fraction": 0.20,
-        "grass_fraction": 0.15,
-        "crop_fraction": 0.20,
-        "built_fraction": 0.10,
-        "fires_prev_7d": 2,
-        "fires_prev_30d": 5,
-        "climatological_fire_freq": 0.08,
+def test_wildfire_predictor_real_model_loading(tmp_path):
+    """Verify loading active model artifact built inside tmp_path at test time."""
+    import hashlib
+    import json
+
+    import numpy as np
+    import xgboost as xgb
+
+    from app.domain.features import FEATURE_NAMES
+    from app.ml.loader import ModelLoader
+
+    version = "test_xgb_v1"
+    model_file = tmp_path / f"{version}.json"
+    meta_file = tmp_path / f"{version}_metadata.json"
+
+    X = np.random.uniform(0.1, 1.0, size=(20, len(FEATURE_NAMES)))
+    y = np.random.choice([0, 1], size=20)
+    clf = xgb.XGBClassifier(n_estimators=3, max_depth=2, random_state=42)
+    clf.fit(X, y)
+    clf.save_model(str(model_file))
+
+    with open(model_file, "rb") as f:
+        sha256 = hashlib.sha256(f.read()).hexdigest()
+
+    meta = {
+        "model_type": "wildfire",
+        "version": version,
+        "feature_list": FEATURE_NAMES,
+        "metrics": {"roc_auc": 0.85},
+        "thresholds": {"moderate": 0.35, "high": 0.60, "extreme": 0.80},
+        "artifact_path": str(model_file),
+        "sha256": sha256,
+        "is_active": True,
     }
-    result = predict_wildfire_risk(sample_features, model_version="wildfire_xgb_v1")
+    with open(meta_file, "w", encoding="utf-8") as f:
+        json.dump(meta, f)
+
+    loader = ModelLoader(model_dir=str(tmp_path))
+    sample_features = dict.fromkeys(FEATURE_NAMES, 0.5)
+    sample_features["fwi"] = 25.4
+
+    result = predict_wildfire_risk(sample_features, model_version=version, loader=loader)
+    assert result.is_fallback is False
+    assert result.model_version == version
     assert 0.0 <= result.probability <= 1.0
     assert result.risk_class in ["Low", "Moderate", "High", "Extreme"]
