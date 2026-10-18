@@ -1,0 +1,24 @@
+name: Scheduled Background Jobs
+
+on:
+  schedule:
+    - cron: "0 */3 * * *" # Every 3 hours
+  workflow_dispatch:
+
+jobs:
+  trigger-jobs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render / Supabase Alive Jobs
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          JOB_TOKEN: ${{ secrets.JOB_TOKEN }}
+        run: |
+          if [ -z "$API_URL" ]; then
+            echo "API_URL not configured. Skipping."
+            exit 0
+          fi
+          curl -Xf -X POST "${API_URL}/api/v1/internal/jobs/ingest_fires" \
+            -H "X-Job-Token: ${JOB_TOKEN}" || true
+          curl -Xf -X POST" ${${API_URL}/api/v1/internal/jobs/ingest_air_quality" \
+            -H "X-Job-Token: ${JOB_TOKEN}" || true

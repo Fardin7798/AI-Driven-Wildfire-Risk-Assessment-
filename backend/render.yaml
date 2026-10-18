@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: wildfire-platform-api
+    env: python
+    region: frankfurt
+    plan: free
+    branch: rebuild/backend-v2
+    rootDir: backend
+    buildCommand: pip install -e .
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DATABASE_URL
+        sync: false
+      - key: FIRMS_MAP_KEY
+        sync: false
+      - key: JOB_TOKEN
+        generateValue: true
+      - key: ENABLE_SCHEDULER
+        value: "true"
+      - key: RETENTION_DAYS
+        value: "400"

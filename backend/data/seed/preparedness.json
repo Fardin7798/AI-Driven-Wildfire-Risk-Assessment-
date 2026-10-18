@@ -1,0 +1,74 @@
+[
+  {
+    "hazard": "wildfire",
+    "stage": "before",
+    "audience": "general_public",
+    "title": "Create a Defensible Buffer Zone",
+    "body": "Clear dry leaves, dead brush, and flammable vegetation within a 10-meter radius around homes and farm buildings. Store firewood and gas cylinders safely away from structures.",
+    "source_url": "https://ndma.gov.in/Resources/awareness/ForestFire",
+    "lang": "en"
+  },
+  {
+    "hazard": "wildfire",
+    "stage": "before",
+    "audience": "rural_farming",
+    "title": "Controlled Agricultural Residue Management",
+    "body": "Do not burn crop stubble or forest undergrowth on windy, dry days. Maintain cleared firebreaks around harvested fields and notify local village panchayats before any controlled land management.",
+    "source_url": "https://ndma.gov.in/Resources/awareness/ForestFire",
+    "lang": "en"
+  },
+  {
+    "hazard": "wildfire",
+    "stage": "during",
+    "audience": "general_public",
+    "title": "Immediate Wildfire Sighting Response",
+    "body": "Call National Emergency 112 or Disaster Helpline 1078 immediately. Close all external windows, doors, and vents to block burning embers. Wear cotton clothing, cover your nose with a damp cloth, and evacuate along pre-planned downhill routes away from smoke.",
+    "source_url": "https://ndma.gov.in/Resources/awareness/ForestFire",
+    "lang": "en"
+  },
+  {
+    "hazard": "wildfire",
+    "stage": "during",
+    "audience": "rural_farming",
+    "title": "Livestock Protection & Evacuation",
+    "body": "Untie livestock from confined sheds and move them to open, plowed fields or water ponds. Never lock animals inside wooden structures when wildfire perimeters approach within 5 km.",
+    "source_url": "https://ndma.gov.in/Resources/awareness/ForestFire",
+    "lang": "en"
+  },
+  {
+    "hazard": "wildfire",
+    "stage": "after",
+    "audience": "general_public",
+    "title": "Safe Re-entry and Hotspot Inspection",
+    "body": "Return to your property only when local district administration issues an all-clear notice. Check roofs, attics, and external perimeters for smoldering embers. Avoid drinking untreated surface water due to ash contamination.",
+    "source_url": "https://ndma.gov.in/Resources/awareness/ForestFire",
+    "lang": "en"
+  },
+  {
+    "hazard": "air_quality",
+    "stage": "before",
+    "audience": "children_elderly",
+    "title": "High Pollution Episode Precaution",
+    "body": "Monitor the daily National AQI forecast. When air quality enters Severe or Very Poor bands, limit early morning and late evening outdoor physical exercise. Ensure required respiratory inhalers and medications are stocked.",
+    "source_url": "https://cpcb.nic.in/National-Air-Quality-Index/",
+    "lang": "en"
+  },
+  {
+    "hazard": "air_quality",
+    "stage": "during",
+    "audience": "general_public",
+    "title": "Indoor Air Filtration & Particle Protection",
+    "body": "Keep windows closed during peak smoke or smog hours. If commuting outside, wear an N95 or equivalent particulate respirator mask. Avoid burning incense, candles, or biomass fuel indoors.",
+    "source_url": "https://cpcb.nic.in/National-Air-Quality-Index/",
+    "lang": "en"
+  },
+  {
+    "hazard": "air_quality",
+    "stage": "after",
+    "audience": "general_public",
+    "title": "Ventilation After Air Clears",
+    "body": "Once wind speed disperses particulate concentrations and AQI drops back to Moderate or Satisfactory, open cross-ventilation windows to flush trapped indoor air. Wet mop floors to trap settled dust without stirring particulates.",
+    "source_url": "https://cpcb.nic.in/National-Air-Quality-Index/",
+    "lang": "en"
+  }
+]

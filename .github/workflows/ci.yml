@@ -1,0 +1,44 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, rebuild/backend-v2]
+  pull_request:
+    branches: [main]
+
+gobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+
+      - name: Run Ruff Linter & Formatter
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Run Mypy Type Checking
+        run: |
+          mypy app
+
+      - name: Run Pytest Test Suite
+        env:
+          ENV: test
+          JOB_TOKEN: test-token
+          ENABLE_SCHEDULER: "false"
+        run: |
+          pytest -v tests/unit

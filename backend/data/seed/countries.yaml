@@ -1,0 +1,34 @@
+countries:
+  IN:
+    country_code: "IN"
+    name: "India"
+    bbox: [68.0, 6.5, 97.5, 37.5] # [west, south, east, north]
+    admin_level: 2 # District level
+    timezone: "Asia/Kolkata"
+    providers:
+      fire: "firms"
+      weather: "open_meteo"
+      air_quality: "open_meteo"
+      air_quality_station: "cpcb"
+    sources:
+      firms_sources:
+        - "VIIRS_NOAA20_NRT"
+        - "VIIRS_NOAA21_NRT"
+        - "MODIS_NRT"
+      weather_variables:
+        - "temperature_2m_max"
+        - "temperature_2m_min"
+        - "temperature_2m_mean"
+        - "relative_humidity_2m_mean"
+        - "relative_humidity_2m_min"
+        - "wind_speed_10m_max"
+        - "precipitation_sum"
+        - "et0_fao_evapotranspiration"
+        - "soil_moisture_0_to_7cm_mean"
+      air_quality_variables:
+        - "pm10"
+        - "pm2_5"
+        - "nitrogen_dioxide"
+        - "sulphur_dioxide"
+        - "carbon_monoxide"
+        - "ozone"

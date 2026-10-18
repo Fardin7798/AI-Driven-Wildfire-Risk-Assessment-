@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: wf_postgis
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wf_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ENV: development
+      DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword@db:5432/postgres
+      JOB_TOKEN: dev-job-token
+      ENABLE_SCHEDULER: "true"
+      ALLOWED_ORIGINS: "*"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+      - ./data:/app/data
+      - ./migrations:/app/migrations
+
+volumes:
+  postgis_data:

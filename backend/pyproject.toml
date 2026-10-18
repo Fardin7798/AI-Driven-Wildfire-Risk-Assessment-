@@ -1,0 +1,67 @@
+[project]
+name = "wildfire-platform-backend"
+version = "2.0.0"
+description = "AI-Driven Wildfire Risk Assessment, Air Quality Monitoring and Community Preparedness Platform"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.8.0",
+    "pydantic-settings>=2.4.0",
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29.0",
+    "geoalchemy2>=0.15.0",
+    "shapely>=2.0.0",
+    "httpx>=0.27.0",
+    "tenacity>=8.5.0",
+    "apscheduler>=3.10.4",
+    "slowapi>=0.1.9",
+    "structlog>=24.2.0",
+    "pyyaml>=6.0.2",
+    "alembic>=1.13.0",
+]
+
+[project.optional-dependencies]
+api = [
+    # Production API runtime
+]
+pipeline = [
+    "pandas>=2.2.0",
+    "pyarrow>=16.0.0",
+    "geopandas>=1.0.0",
+    "rasterio>=1.3.0",
+]
+train = [
+    "xgboost>=2.0.0",
+    "scikit-learn>=1.5.0",
+    "shap>=0.45.0",
+    "prophet>=1.1.5",
+]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "respx>=0.21.0",
+    "ruff>=0.5.0",
+    "mypy>=1.10.0",
+    "types-pyyaml>=6.0.12",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4"]
+ignore = ["E501", "B008"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+warn_return_any = false
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

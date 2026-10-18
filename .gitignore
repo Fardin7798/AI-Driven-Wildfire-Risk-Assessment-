@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables & secrets (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing & Coverage & Typing
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Large Datasets & ML Artifacts (>50MB or raw caches)
+data/raw/
+data/processed/
+ml/artifacts/
+*.parquet
+*.nc
+*.tif
+*.tiff
+*.h5
+*.pkl
+*.joblib
+*.bin
+*.model
+*.weights
+*.tar.gz
+*.zip
+
+# Database / SQLite
+*.sqlite3
+*.db
+
+# Node / Frontend (when added)
+node_modules/
