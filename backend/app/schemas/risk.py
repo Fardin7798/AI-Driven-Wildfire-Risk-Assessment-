@@ -29,7 +29,7 @@ class RiskMapFeatureProperties(BaseModel):
     region_id: int
     district_name: str
     state_name: str
-    date: str
+    date: str = ""
     probability: float
     risk_class: str
     fwi_value: float | None = None
@@ -38,13 +38,13 @@ class RiskMapFeatureProperties(BaseModel):
 
 class RiskMapFeature(BaseModel):
     type: str = "Feature"
-    geometry: dict[str, Any]
+    geometry: dict[str, Any] | None = None
     properties: RiskMapFeatureProperties
 
 
 class RiskMapResponse(BaseModel):
     type: str = "FeatureCollection"
     features: list[RiskMapFeature]
-    date: str
+    date: str = ""
     as_of: dict[str, str]
     disclaimer_short: str

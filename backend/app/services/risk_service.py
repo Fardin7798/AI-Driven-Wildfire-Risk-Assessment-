@@ -104,6 +104,7 @@ async def get_risk_map_geojson(
                     "region_id": r.id,
                     "district_name": r.district_name,
                     "state_name": r.state_name,
+                    "date": t_date.isoformat(),
                     "risk_class": r.risk_class or "Low",
                     "probability": float(r.probability) if r.probability is not None else 0.05,
                     "fwi_value": float(r.fwi_value) if r.fwi_value is not None else 5.0,
