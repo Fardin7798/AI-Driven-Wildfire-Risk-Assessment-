@@ -9,33 +9,10 @@ from sqlalchemy import text
 from app.core.config import settings
 from app.core.logging import logger
 from app.db.models.ingestion import IngestionRun
-from app.db.session import async_session_factory
+from app.db.session import async_session_factory, engine
 
-scheduler = AsyncIOScheduler()
+scheduler = AsyncIOScheduler(timezone="Asia/Kolkata")
 ADVISORY_LOCK_ID = 882199042
-
-
-async def acquire_advisory_lock() -> bool:
-    """Acquire Postgres advisory lock so only one API replica executes background jobs."""
-    try:
-        async with async_session_factory() as session:
-            result = await session.execute(
-                text(f"SELECT pg_try_advisory_lock({ADVISORY_LOCK_ID});")
-            )
-            acquired = result.scalar()
-            return bool(acquired)
-    except Exception as e:
-        logger.warn("advisory_lock_error_defaulting_to_true", error=str(e))
-        return True
-
-
-async def release_advisory_lock() -> None:
-    try:
-        async with async_session_factory() as session:
-            await session.execute(text(f"SELECT pg_advisory_unlock({ADVISORY_LOCK_ID});"))
-            await session.commit()
-    except Exception as e:
-        logger.warn("advisory_unlock_error", error=str(e))
 
 
 def tracked_job(job_name: str):
@@ -44,51 +21,74 @@ def tracked_job(job_name: str):
     def decorator(func: Callable[[], Coroutine[Any, Any, int]]):
         @functools.wraps(func)
         async def wrapper() -> int:
-            has_lock = await acquire_advisory_lock()
-            if not has_lock:
-                logger.info("job_skipped_lock_held_by_another_worker", job=job_name)
-                return 0
-
-            run_id: int | None = None
             rows_written = 0
-            err_msg: str | None = None
-
-            async with async_session_factory() as session:
-                run_entry = IngestionRun(
-                    job_name=job_name,
-                    started_at=datetime.now(UTC),
-                    status="running",
-                    rows_written=0,
-                )
-                session.add(run_entry)
-                await session.commit()
-                run_id = run_entry.id
-
             try:
-                logger.info("job_started", job=job_name)
-                rows_written = await func()
-                status_str = "success"
-                logger.info("job_finished_successfully", job=job_name, rows=rows_written)
-            except Exception as e:
-                status_str = "failed"
-                # Strip any potential secrets or authorization tokens
-                err_msg = (
-                    str(e)[:500]
-                    .replace(settings.FIRMS_MAP_KEY, "***")
-                    .replace(settings.JOB_TOKEN, "***")
-                )
-                logger.error("job_failed", job=job_name, error=err_msg)
-            finally:
-                if run_id:
+                async with engine.connect() as conn:
+                    try:
+                        res = await conn.execute(
+                            text(f"SELECT pg_try_advisory_lock({ADVISORY_LOCK_ID});")
+                        )
+                        has_lock = bool(res.scalar())
+                    except Exception as lock_err:
+                        logger.warn(
+                            "advisory_lock_error_skipping_job", job=job_name, error=str(lock_err)
+                        )
+                        return 0
+
+                    if not has_lock:
+                        logger.info("job_skipped_lock_held_by_another_worker", job=job_name)
+                        return 0
+
+                    run_id: int | None = None
+                    err_msg: str | None = None
+
                     async with async_session_factory() as session:
-                        update_entry = await session.get(IngestionRun, run_id)
-                        if update_entry:
-                            update_entry.finished_at = datetime.now(UTC)
-                            update_entry.status = status_str
-                            update_entry.rows_written = rows_written
-                            update_entry.error = err_msg
-                            await session.commit()
-                await release_advisory_lock()
+                        run_entry = IngestionRun(
+                            job_name=job_name,
+                            started_at=datetime.now(UTC),
+                            status="running",
+                            rows_written=0,
+                        )
+                        session.add(run_entry)
+                        await session.commit()
+                        run_id = run_entry.id
+
+                    try:
+                        logger.info("job_started", job=job_name)
+                        rows_written = await func()
+                        status_str = "success"
+                        logger.info("job_finished_successfully", job=job_name, rows=rows_written)
+                    except Exception as e:
+                        status_str = "failed"
+                        err_str = str(e)[:500]
+                        if settings.FIRMS_MAP_KEY:
+                            err_str = err_str.replace(settings.FIRMS_MAP_KEY, "***")
+                        if settings.JOB_TOKEN:
+                            err_str = err_str.replace(settings.JOB_TOKEN, "***")
+                        if settings.DATAGOVIN_API_KEY:
+                            err_str = err_str.replace(settings.DATAGOVIN_API_KEY, "***")
+                        err_msg = err_str
+                        logger.error("job_failed", job=job_name, error=err_msg)
+                    finally:
+                        if run_id:
+                            async with async_session_factory() as session:
+                                update_entry = await session.get(IngestionRun, run_id)
+                                if update_entry:
+                                    update_entry.finished_at = datetime.now(UTC)
+                                    update_entry.status = status_str
+                                    update_entry.rows_written = rows_written
+                                    update_entry.error = err_msg
+                                    await session.commit()
+                        try:
+                            await conn.execute(
+                                text(f"SELECT pg_advisory_unlock({ADVISORY_LOCK_ID});")
+                            )
+                            await conn.commit()
+                        except Exception as unlock_err:
+                            logger.warn("advisory_unlock_error", error=str(unlock_err))
+            except Exception as outer_err:
+                logger.error("job_connection_error", job=job_name, error=str(outer_err))
+                return 0
 
             return rows_written
 
@@ -120,7 +120,7 @@ def start_scheduler() -> None:
     scheduler.add_job(
         job_ingest_weather,
         "cron",
-        hour=19,
+        hour=0,
         minute=0,
         id="job_ingest_weather",
         replace_existing=True,
@@ -130,15 +130,15 @@ def start_scheduler() -> None:
     scheduler.add_job(
         job_update_fwi_state,
         "cron",
-        hour=19,
-        minute=15,
+        hour=0,
+        minute=45,
         id="job_update_fwi_state",
         replace_existing=True,
     )
 
     # 4. Predict Risk: Daily after FWI at 01:00 IST (19:30 UTC)
     scheduler.add_job(
-        job_predict_risk, "cron", hour=19, minute=30, id="job_predict_risk", replace_existing=True
+        job_predict_risk, "cron", hour=0, minute=0, id="job_predict_risk", replace_existing=True
     )
 
     # 5. Air Quality Ingest: Hourly
@@ -152,16 +152,16 @@ def start_scheduler() -> None:
 
     # 6. AQ Forecast: Daily at 01:15 IST (19:45 UTC)
     scheduler.add_job(
-        job_forecast_aqi, "cron", hour=19, minute=45, id="job_forecast_aqi", replace_existing=True
+        job_forecast_aqi, "cron", hour=0, minute=45, id="job_forecast_aqi", replace_existing=True
     )
 
     # 7. Retention: Weekly on Sunday at 02:00 IST (20:30 UTC Sat)
     scheduler.add_job(
         job_retention,
         "cron",
-        day_of_week="sat",
-        hour=20,
-        minute=30,
+        day_of_week="sun",
+        hour=2,
+        minute=0,
         id="job_retention",
         replace_existing=True,
     )

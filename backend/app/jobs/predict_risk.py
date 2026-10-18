@@ -1,7 +1,8 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
 from sqlalchemy import func, select
 
+from app.core.timeutil import today_ist
 from app.db.models.fire import FireDetection
 from app.db.models.region import Region
 from app.db.models.weather import FWIState, WeatherDaily
@@ -14,7 +15,7 @@ from app.services.risk_service import save_risk_prediction
 
 @tracked_job("predict_risk")
 async def job_predict_risk() -> int:
-    today = date.today()
+    today = today_ist()
     cutoff_30d = today - timedelta(days=30)
     cutoff_7d = today - timedelta(days=7)
     predicted_count = 0

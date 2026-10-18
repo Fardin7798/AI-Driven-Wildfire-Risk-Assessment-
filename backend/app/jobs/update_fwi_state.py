@@ -1,8 +1,9 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
+from app.core.timeutil import today_ist
 from app.db.models.region import Region
 from app.db.models.weather import FWIState, WeatherDaily
 from app.db.session import async_session_factory
@@ -12,7 +13,7 @@ from app.jobs.scheduler import tracked_job
 
 @tracked_job("update_fwi_state")
 async def job_update_fwi_state() -> int:
-    today = date.today()
+    today = today_ist()
     yesterday = today - timedelta(days=1)
     updated_count = 0
 

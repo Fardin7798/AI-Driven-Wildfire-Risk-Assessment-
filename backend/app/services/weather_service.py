@@ -1,10 +1,11 @@
 from collections.abc import Sequence
-from datetime import date, timedelta
+from datetime import timedelta
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.timeutil import today_ist
 from app.db.models.weather import WeatherDaily
 from app.providers.base import RawDailyWeather
 
@@ -12,7 +13,7 @@ from app.providers.base import RawDailyWeather
 async def get_weather_for_region(
     session: AsyncSession, region_id: int, days: int = 7
 ) -> list[WeatherDaily]:
-    start_date = date.today() - timedelta(days=days)
+    start_date = today_ist() - timedelta(days=days)
     query = (
         select(WeatherDaily)
         .where(WeatherDaily.region_id == region_id, WeatherDaily.date >= start_date)

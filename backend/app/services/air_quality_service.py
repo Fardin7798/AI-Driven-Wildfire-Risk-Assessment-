@@ -1,10 +1,9 @@
-from datetime import date
-
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.timeutil import today_ist
 from app.db.models.air_quality import AQForecast, AQObservation
 from app.db.models.region import Region
 from app.providers.base import RawAQObservation
@@ -41,7 +40,7 @@ async def get_air_quality_for_region(session: AsyncSession, region_id: int) -> A
 
 
 async def get_air_quality_forecast(session: AsyncSession, region_id: int) -> list[AQForecast]:
-    today = date.today()
+    today = today_ist()
     query = (
         select(AQForecast)
         .options(selectinload(AQForecast.region))

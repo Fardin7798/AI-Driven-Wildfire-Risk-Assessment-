@@ -3,6 +3,7 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
+from app.core.timeutil import today_ist
 from app.db.models.air_quality import AQForecast, AQObservation
 from app.db.models.region import Region
 from app.db.models.weather import WeatherDaily
@@ -13,7 +14,7 @@ from app.ml.aqi_forecaster import forecast_aqi_trajectory
 
 @tracked_job("forecast_aqi")
 async def job_forecast_aqi() -> int:
-    today = date.today()
+    today = today_ist()
     total_written = 0
 
     async with async_session_factory() as session:

@@ -5,6 +5,7 @@ import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from app.core.logging import logger
+from app.core.timeutil import today_ist
 from app.providers.base import RawDailyWeather, WeatherProvider
 
 
@@ -27,7 +28,7 @@ class NasaPowerWeatherProvider(WeatherProvider):
         self, lat: float, lon: float, past_days: int = 3, forecast_days: int = 3
     ) -> list[RawDailyWeather]:
         # NASA POWER is a climatological / historical dataset, so it serves past days
-        today = date.today()
+        today = today_ist()
         start = today.replace(day=max(1, today.day - past_days))
         return await self.fetch_historical_weather(lat, lon, start, today)
 

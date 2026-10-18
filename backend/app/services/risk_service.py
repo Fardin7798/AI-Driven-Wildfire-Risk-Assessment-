@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.timeutil import today_ist
 from app.db.models.region import Region
 from app.db.models.risk import RiskPrediction
 
@@ -31,7 +32,7 @@ async def get_latest_risk(
 async def get_risk_by_region(
     session: AsyncSession, region_id: int, target_date: date | None = None
 ) -> RiskPrediction | None:
-    t_date = target_date or date.today()
+    t_date = target_date or today_ist()
     query = (
         select(RiskPrediction)
         .where(RiskPrediction.region_id == region_id, RiskPrediction.date == t_date)
@@ -55,7 +56,7 @@ async def get_risk_by_region(
 async def get_risk_history(
     session: AsyncSession, region_id: int, days: int = 30
 ) -> list[RiskPrediction]:
-    start_date = date.today() - timedelta(days=days)
+    start_date = today_ist() - timedelta(days=days)
     query = (
         select(RiskPrediction)
         .where(RiskPrediction.region_id == region_id, RiskPrediction.date >= start_date)
@@ -68,7 +69,7 @@ async def get_risk_history(
 async def get_risk_map_geojson(
     session: AsyncSession, target_date: date | None = None, state: str | None = None
 ) -> dict[str, Any]:
-    t_date = target_date or date.today()
+    t_date = target_date or today_ist()
 
     query = select(
         Region.id,
