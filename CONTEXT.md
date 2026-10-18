@@ -68,7 +68,7 @@ Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Ri
   - [x] Kaggle training notebooks for Wildfire (XGBoost/RF/FWI) and AQI (Prophet)
   - [x] Operational scripts (`load_regions.py`, `compute_landcover.py`, `backfill.py`)
 
-- [ ] **Phase 10: Tests & Verification**
-  - [ ] Unit tests for FWI reference values, NAQI breakpoints, feature leakage, provider parsers
-  - [ ] Integration tests for API endpoints
-  - [ ] Ruff linting & mypy type-check pass
+- [x] **Phase 10: Tests - [ ] **Phase 10: Tests & Verification** Verification**
+  - [x] Unit tests for FWI reference values, NAQI breakpoints, feature leakage, provider parsers
+  - [x] Integration tests for API endpoints
+  - [x] Ruff linting - [ ] Ruff linting & mypy type-check pass mypy type-check pass

@@ -74,3 +74,22 @@ def test_provider_registry_country_config():
     assert weather_prov is not None
     assert weather_fallback is not None
     assert aq_prov is not None
+
+
+def test_cpcb_datagovin_calculation_integration():
+    """Verify that when raw pollutant readings are parsed, CPCB AQI sub-indices correctly match."""
+    from app.domain.aqi import calculate_cpcb_aqi
+
+    # Sample reading resembling Anand Vihar, Delhi during post-monsoon
+    pollutants = {
+        "pm25": 185.0,  # Unhealthy / Very Poor (>120)
+        "pm10": 310.0,  # Very Poor (>250)
+        "no2": 65.0,  # Moderate
+        "so2": 14.0,  # Good
+        "co": 1.8,  # Moderate
+        "o3": 45.0,  # Good
+    }
+    aqi_res = calculate_cpcb_aqi(pollutants)
+    assert aqi_res.aqi >= 300
+    assert aqi_res.category == "Very Poor"
+    assert aqi_res.prominent_pollutant in ["PM25", "PM10"]
