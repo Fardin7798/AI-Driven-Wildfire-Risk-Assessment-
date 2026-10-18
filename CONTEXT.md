@@ -39,7 +39,7 @@ Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Ri
   - [ ] `app/providers/cpcb_datagovin.py`: CPCB via data.gov.in (with `ENABLE_CPCB` flag)
   - [ ] `app/providers/nasa_power.py`: NASA POWER fallback provider
 
-- [ ] **Phase 5: ML Inference Runtime**
+- [x] **Phase 5: ML Inference Runtime**
   - [ ] `app/ml/loader.py`: Artifact loader with SHA256 checksum & feature integrity validation
   - [ ] `app/ml/wildfire_predictor.py`: XGBoost inference engine with FWI fallback
   - [ ] `app/ml/aqi_forecaster.py`: Prophet & seasonal persistence forecaster
