@@ -24,7 +24,7 @@ Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Ri
   - [ ] RLS policies and schema permissions
   - [ ] Alembic migration environment and initial schema migration
 
-- [ ] **Phase 3: Domain Core Logic & Single-Source Feature Engineering**
+- [x] **Phase 3: Domain Core Logic & Single-Source Feature Engineering**
   - [ ] `app/domain/fwi.py`: Full Canadian FWI equations (Van Wagner 1987) with daily carry-over
   - [ ] `app/domain/aqi.py`: Indian NAQI piecewise linear sub-indices & categories
   - [ ] `app/domain/risk_classes.py`: Risk categories & dynamic probability threshold mapping
