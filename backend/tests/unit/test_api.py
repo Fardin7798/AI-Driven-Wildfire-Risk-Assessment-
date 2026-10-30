@@ -104,3 +104,37 @@ def test_internal_job_token_security():
         headers={"X-Job-Token": settings.JOB_TOKEN},
     )
     assert resp_unknown_job.status_code == 404
+
+
+def test_geo_cities_search():
+    import httpx
+    import respx
+
+    with respx.mock(base_url="https://nominatim.openstreetmap.org") as respx_mock:
+        respx_mock.get("/search").mock(
+            return_value=httpx.Response(
+                200,
+                json=[
+                    {
+                        "name": "Varangaon",
+                        "lat": "21.0104777",
+                        "lon": "75.9013224",
+                        "display_name": "Varangaon, Bhusawal, Jalgaon, Maharashtra, 425305, India",
+                        "address": {
+                            "county": "Jalgaon",
+                            "state": "Maharashtra",
+                        },
+                    }
+                ],
+            )
+        )
+        resp = client.get("/api/v1/geo/cities?q=varangaon&limit=5")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["name"] == "Varangaon"
+        assert data[0]["lat"] == 21.0104777
+        assert data[0]["lon"] == 75.9013224
+        assert data[0]["state"] == "Maharashtra"
+        assert data[0]["district"] == "Jalgaon"
+        assert "display_name" in data[0]
