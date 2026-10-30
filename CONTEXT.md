@@ -3,7 +3,7 @@
 ## Project Overview
 Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Risk Assessment, Air Quality Monitoring and Community Preparedness Platform" for India (district-level), country-agnostic.
 
-- **Git Branch**: `rebuild/backend-v2`
+- **Git Branch**: `main`
 - **Target Database**: PostgreSQL 16 + PostGIS 3.4 (Schema: `wf`)
 - **Python Version**: 3.12+
 

@@ -18,7 +18,7 @@ Production-grade backend and ML pipeline for "AI-Driven Wildfire Risk Assessment
 - **ML Pipeline (`ml/`)**: Data acquisition, spatial joining, landcover filtering, dataset generation, validation, and training notebooks.
 
 ## Ground Rules
-- Work exclusively on branch `rebuild/backend-v2`.
+- Work exclusively on branch `main`.
 - Zero hardcoded secrets; all config via `.env`.
 - All tables strictly within `wf` schema; never alter `public` schema.
 - Python 3.12, type hints everywhere, strict linting (`ruff`), and type checking (`mypy`).
