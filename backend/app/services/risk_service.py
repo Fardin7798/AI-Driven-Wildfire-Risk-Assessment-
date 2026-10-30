@@ -45,7 +45,8 @@ async def get_risk_by_region(
     if not record:
         # Fallback to most recent record
         query_fallback = (
-            select(RiskPrediction).options(selectinload(RiskPrediction.region))
+            select(RiskPrediction)
+            .options(selectinload(RiskPrediction.region))
             .where(RiskPrediction.region_id == region_id)
             .order_by(RiskPrediction.date.desc())
             .limit(1)

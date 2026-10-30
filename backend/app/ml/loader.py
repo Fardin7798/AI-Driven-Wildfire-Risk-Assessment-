@@ -59,9 +59,7 @@ class ModelLoader:
             # 2. Verify Feature List
             model_features = metadata.get("feature_list") or metadata.get("features", [])
             if not model_features:
-                logger.error(
-                    "wildfire_model_missing_features", version=ver
-                )
+                logger.error("wildfire_model_missing_features", version=ver)
                 return None
 
             # 3. Load XGBoost Model Object

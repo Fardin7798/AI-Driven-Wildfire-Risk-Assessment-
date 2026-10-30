@@ -35,7 +35,9 @@ def _serialize_risk(pred: RiskPrediction) -> RiskPredictionResponse:
 
     try:
         district_name = (
-            pred.region.district_name if getattr(pred, "region", None) else f"District {pred.region_id}"
+            pred.region.district_name
+            if getattr(pred, "region", None)
+            else f"District {pred.region_id}"
         )
         state_name = pred.region.state_name if getattr(pred, "region", None) else "India"
     except Exception:
