@@ -60,7 +60,7 @@ Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Ri
 - [x] **Phase 8: FastAPI API Layer - [x] **Phase 8: FastAPI API Layer & Internal Jobs Endpoint** Internal Jobs Endpoint**
   - [x] Application factory, lifespan, CORS, rate limiting (`slowapi`), JSON logger (`structlog`)
   - [x] Pydantic v2 schemas for all responses
-  - [x] API v1 endpoints: `/health`, `/regions`, `/risk`, `/fires`, `/air-quality`, `/weather`, `/models`, `/preparedness`, `/meta`, `/internal/jobs`
+  - [x] API v1 endpoints: `/health`, `/regions`, `/risk`, `/fires`, `/air-quality`, `/weather`, `/models`, `/preparedness`, `/meta`, `/internal/jobs`, `/geo/cities`
 
 - [x] **Phase 9: ML Training Pipeline - [x] **Phase 9: ML Training Pipeline & Kaggle Notebooks (`ml/`)** Kaggle Notebooks (`ml/`)**
   - [x] Historical data downloaders with resumable parquet caches
