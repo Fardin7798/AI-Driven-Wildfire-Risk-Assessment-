@@ -18,7 +18,7 @@ OpenAPI Docs: Enabled only in `ENV=development` at `/docs`.
 ### 2. Geographic Regions
 - `GET /regions?country=IN&state=`: List districts with administrative metadata and centroids.
 - `GET /regions/{id}`: District profile including land cover fractions and boundary geometry.
-- `GET /regions/search?q=`: Query districts by name or state prefix.
+- `GET /geo/cities?q=`: Query Indian cities, towns, and settlements directly via OpenStreetMap Nominatim.
 
 ### 3. Wildfire Risk
 - `GET /risk/map?date=&state=`: GeoJSON FeatureCollection with simplified geometries and daily risk categories.

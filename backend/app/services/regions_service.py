@@ -1,4 +1,4 @@
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.region import Region
@@ -27,20 +27,3 @@ async def get_region_by_id(session: AsyncSession, region_id: int) -> Region | No
     query = select(Region).where(Region.id == region_id)
     result = await session.execute(query)
     return result.scalar_one_or_none()
-
-
-async def search_regions(session: AsyncSession, query_str: str, limit: int = 20) -> list[Region]:
-    term = f"%{query_str.lower().strip()}%"
-    stmt = (
-        select(Region)
-        .where(
-            or_(
-                func.lower(Region.district_name).like(term),
-                func.lower(Region.state_name).like(term),
-            )
-        )
-        .order_by(Region.district_name)
-        .limit(limit)
-    )
-    result = await session.execute(stmt)
-    return list(result.scalars().all())
