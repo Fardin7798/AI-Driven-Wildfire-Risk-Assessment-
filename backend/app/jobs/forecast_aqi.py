@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 
 from app.core.timeutil import today_ist
@@ -53,6 +53,14 @@ async def job_forecast_aqi() -> int:
                 current_pm25=current_pm25,
                 current_pm10=current_pm10,
                 weather_forecast=weather_forecast,
+            )
+
+            # Clear existing future forecasts for region to maintain idempotency
+            await session.execute(
+                delete(AQForecast).where(
+                    AQForecast.region_id == region_id,
+                    AQForecast.target_date >= today,
+                )
             )
 
             for item in forecast_items:

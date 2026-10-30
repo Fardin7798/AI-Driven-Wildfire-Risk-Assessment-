@@ -22,8 +22,8 @@ engine = create_async_engine(
     db_url,
     echo=(settings.ENV == "development" and settings.LOG_LEVEL.upper() == "DEBUG"),
     pool_pre_ping=True,
-    pool_size=3,
-    max_overflow=2,
+    pool_size=10,
+    max_overflow=10,
     pool_recycle=300,
     connect_args=connect_args,
 )

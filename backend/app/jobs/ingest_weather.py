@@ -22,7 +22,7 @@ async def job_ingest_weather() -> int:
                 func.ST_X(Region.centroid).label("lon"),
             )
             .where(Region.centroid.isnot(None))
-            .limit(200)
+            .order_by(Region.id.asc())
         )
         regions = (await session.execute(query)).all()
 

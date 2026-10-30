@@ -88,5 +88,59 @@ class ModelLoader:
             logger.error("wildfire_model_load_error", version=ver, error=str(e))
             return None
 
+    def load_aqi_model(self, version: str | None = None) -> ModelArtifact | None:
+        ver = version or settings.ACTIVE_AQI_MODEL
+        if ver in self._cache:
+            return self._cache[ver]
+
+        meta_path = os.path.join(self.model_dir, f"{ver}_metadata.json")
+        model_path = os.path.join(self.model_dir, f"{ver}.json")
+
+        if not os.path.exists(meta_path) or not os.path.exists(model_path):
+            logger.info("aqi_model_artifact_not_found_fallback_active", version=ver)
+            return None
+
+        try:
+            with open(meta_path, encoding="utf-8") as f:
+                metadata = json.load(f)
+
+            expected_sha = metadata.get("sha256")
+            actual_sha = self._compute_sha256(model_path)
+            if expected_sha and expected_sha != actual_sha:
+                logger.error(
+                    "aqi_model_checksum_mismatch", expected=expected_sha, actual=actual_sha
+                )
+                return None
+
+            model_features = metadata.get("feature_list") or metadata.get("features", [])
+            if not model_features:
+                logger.error("aqi_model_missing_features", version=ver)
+                return None
+
+            try:
+                import xgboost as xgb
+
+                model_obj = xgb.Booster()
+                model_obj.load_model(model_path)
+            except Exception as xgb_err:
+                logger.warn("aqi_xgboost_load_failed_using_stub", error=str(xgb_err))
+                model_obj = None
+
+            artifact = ModelArtifact(
+                model_version=ver,
+                metadata=metadata,
+                feature_list=model_features,
+                thresholds=metadata.get("thresholds", {}),
+                metrics=metadata.get("metrics", {}),
+                model_obj=model_obj,
+                is_fallback=(model_obj is None),
+            )
+            self._cache[ver] = artifact
+            return artifact
+
+        except Exception as e:
+            logger.error("aqi_model_load_error", version=ver, error=str(e))
+            return None
+
 
 model_loader = ModelLoader()

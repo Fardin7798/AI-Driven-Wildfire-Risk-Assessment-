@@ -22,36 +22,62 @@ async def job_predict_risk() -> int:
 
     async with async_session_factory() as session:
         regions = (await session.execute(select(Region))).scalars().all()
+        if not regions:
+            return 0
+
+        # 1. Bulk prefetch weather history for past 30 days across all regions
+        w_stmt = (
+            select(WeatherDaily)
+            .where(
+                WeatherDaily.date >= cutoff_30d,
+                WeatherDaily.date <= today,
+            )
+            .order_by(WeatherDaily.region_id, WeatherDaily.date.asc())
+        )
+        all_weather_rows = (await session.execute(w_stmt)).scalars().all()
+        weather_map: dict[int, list[DailyWeatherRecord]] = {}
+        for r in all_weather_rows:
+            rec = DailyWeatherRecord(
+                record_date=r.date,
+                temp_max=r.temp_max or 25.0,
+                temp_mean=r.temp_mean or 20.0,
+                rh_min=r.rh_min or 30.0,
+                rh_mean=r.rh_mean or 50.0,
+                wind_max=r.wind_max or 10.0,
+                precip_sum=r.precip_sum or 0.0,
+                et0=r.et0 or 3.0,
+                soil_moisture=r.soil_moisture or 0.2,
+            )
+            weather_map.setdefault(r.region_id, []).append(rec)
+
+        # 2. Bulk prefetch FWI state for today
+        fwi_stmt = select(FWIState).where(FWIState.date == today)
+        fwi_rows = (await session.execute(fwi_stmt)).scalars().all()
+        fwi_map: dict[int, FWIState] = {row.region_id: row for row in fwi_rows}
+
+        # 3. Bulk aggregate fire counts
+        fires_7d_q = (
+            select(FireDetection.region_id, func.count(FireDetection.id))
+            .where(
+                FireDetection.acq_datetime_utc >= cutoff_7d,
+                FireDetection.acq_datetime_utc < today,
+            )
+            .group_by(FireDetection.region_id)
+        )
+        fires_7d_map = dict((await session.execute(fires_7d_q)).all())
+
+        fires_30d_q = (
+            select(FireDetection.region_id, func.count(FireDetection.id))
+            .where(
+                FireDetection.acq_datetime_utc >= cutoff_30d,
+                FireDetection.acq_datetime_utc < today,
+            )
+            .group_by(FireDetection.region_id)
+        )
+        fires_30d_map = dict((await session.execute(fires_30d_q)).all())
 
         for reg in regions:
-            # 1. Fetch weather history for past 30 days
-            w_query = (
-                select(WeatherDaily)
-                .where(
-                    WeatherDaily.region_id == reg.id,
-                    WeatherDaily.date >= cutoff_30d,
-                    WeatherDaily.date <= today,
-                )
-                .order_by(WeatherDaily.date.asc())
-            )
-            w_rows = (await session.execute(w_query)).scalars().all()
-
-            weather_history = [
-                DailyWeatherRecord(
-                    record_date=r.date,
-                    temp_max=r.temp_max or 25.0,
-                    temp_mean=r.temp_mean or 20.0,
-                    rh_min=r.rh_min or 30.0,
-                    rh_mean=r.rh_mean or 50.0,
-                    wind_max=r.wind_max or 10.0,
-                    precip_sum=r.precip_sum or 0.0,
-                    et0=r.et0 or 3.0,
-                    soil_moisture=r.soil_moisture or 0.2,
-                )
-                for r in w_rows
-            ]
-
-            # Current day weather
+            weather_history = weather_map.get(reg.id, [])
             today_weather = next((w for w in weather_history if w.record_date == today), None)
             if not today_weather:
                 today_weather = DailyWeatherRecord(
@@ -66,9 +92,7 @@ async def job_predict_risk() -> int:
                     soil_moisture=0.15,
                 )
 
-            # 2. Fetch FWI state
-            fwi_stmt = select(FWIState).where(FWIState.region_id == reg.id, FWIState.date == today)
-            fwi_row = (await session.execute(fwi_stmt)).scalar_one_or_none()
+            fwi_row = fwi_map.get(reg.id)
             fwi_dict = {
                 "ffmc": fwi_row.ffmc if fwi_row else 85.0,
                 "dmc": fwi_row.dmc if fwi_row else 6.0,
@@ -78,22 +102,9 @@ async def job_predict_risk() -> int:
                 "fwi": fwi_row.fwi if fwi_row else 5.0,
             }
 
-            # 3. Lagged fire counts (strictly prior to today)
-            fires_7d_q = select(func.count(FireDetection.id)).where(
-                FireDetection.region_id == reg.id,
-                FireDetection.acq_datetime_utc >= cutoff_7d,
-                FireDetection.acq_datetime_utc < today,
-            )
-            fires_prev_7d = (await session.execute(fires_7d_q)).scalar() or 0
+            fires_prev_7d = fires_7d_map.get(reg.id, 0)
+            fires_prev_30d = fires_30d_map.get(reg.id, 0)
 
-            fires_30d_q = select(func.count(FireDetection.id)).where(
-                FireDetection.region_id == reg.id,
-                FireDetection.acq_datetime_utc >= cutoff_30d,
-                FireDetection.acq_datetime_utc < today,
-            )
-            fires_prev_30d = (await session.execute(fires_30d_q)).scalar() or 0
-
-            # 4. Construct features
             lat = reg.centroid_lat or 28.6139
             lon = reg.centroid_lon or 77.2090
             features = extract_features(
@@ -109,10 +120,8 @@ async def job_predict_risk() -> int:
                 climatological_fire_freq=0.01,
             )
 
-            # 5. Predict Risk
             pred = predict_wildfire_risk(features)
 
-            # 6. Save Risk Prediction
             await save_risk_prediction(
                 session=session,
                 region_id=reg.id,

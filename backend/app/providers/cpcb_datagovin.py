@@ -41,66 +41,76 @@ class CPCBDataGovInProvider:
             records: list[dict[str, Any]] = payload.get("records", [])
             now_utc = datetime.now(UTC)
 
+            stations_map: dict[str, dict[str, Any]] = {}
             for rec in records:
-                try:
-                    city = rec.get("city", "")
-                    state = rec.get("state", "")
-                    station = rec.get("station", "")
+                s_name = rec.get("station") or rec.get("id") or "unknown"
+                if s_name not in stations_map:
                     lat_str = rec.get("latitude")
                     lon_str = rec.get("longitude")
-                    lat = float(lat_str) if lat_str else None
-                    lon = float(lon_str) if lon_str else None
-
-                    # Extract pollutants
-                    pollutants = {
-                        "pm25": float(rec["pollutant_avg"])
-                        if rec.get("pollutant_id") == "PM2.5" and rec.get("pollutant_avg")
-                        else None,
-                        "pm10": float(rec["pollutant_avg"])
-                        if rec.get("pollutant_id") == "PM10" and rec.get("pollutant_avg")
-                        else None,
-                        "no2": float(rec["pollutant_avg"])
-                        if rec.get("pollutant_id") == "NO2" and rec.get("pollutant_avg")
-                        else None,
-                        "so2": float(rec["pollutant_avg"])
-                        if rec.get("pollutant_id") == "SO2" and rec.get("pollutant_avg")
-                        else None,
-                        "co": float(rec["pollutant_avg"])
-                        if rec.get("pollutant_id") == "CO" and rec.get("pollutant_avg")
-                        else None,
-                        "o3": float(rec["pollutant_avg"])
-                        if rec.get("pollutant_id") == "OZONE" and rec.get("pollutant_avg")
-                        else None,
-                        "nh3": float(rec["pollutant_avg"])
-                        if rec.get("pollutant_id") == "NH3" and rec.get("pollutant_avg")
-                        else None,
+                    stations_map[s_name] = {
+                        "city": rec.get("city", ""),
+                        "state": rec.get("state", ""),
+                        "station_name": s_name,
+                        "station_external_id": str(rec.get("id", s_name)),
+                        "lat": float(lat_str) if lat_str else None,
+                        "lon": float(lon_str) if lon_str else None,
+                        "pollutants": {
+                            "pm25": None,
+                            "pm10": None,
+                            "no2": None,
+                            "so2": None,
+                            "co": None,
+                            "o3": None,
+                            "nh3": None,
+                        },
                     }
 
-                    aqi_calc = calculate_cpcb_aqi(pollutants)
+                p_id = (rec.get("pollutant_id") or "").upper().replace(".", "")
+                p_avg = rec.get("pollutant_avg")
+                if p_avg is not None:
+                    try:
+                        p_val = float(p_avg)
+                        p_key_map = {
+                            "PM25": "pm25",
+                            "PM10": "pm10",
+                            "NO2": "no2",
+                            "SO2": "so2",
+                            "CO": "co",
+                            "OZONE": "o3",
+                            "O3": "o3",
+                            "NH3": "nh3",
+                        }
+                        if p_id in p_key_map:
+                            stations_map[s_name]["pollutants"][p_key_map[p_id]] = p_val
+                    except (ValueError, TypeError):
+                        pass
 
+            for s_info in stations_map.values():
+                try:
+                    aqi_calc = calculate_cpcb_aqi(s_info["pollutants"])
                     results.append(
                         RawAQObservation(
                             observed_at_utc=now_utc,
-                            pm25=pollutants["pm25"],
-                            pm10=pollutants["pm10"],
-                            no2=pollutants["no2"],
-                            so2=pollutants["so2"],
-                            co=pollutants["co"],
-                            o3=pollutants["o3"],
-                            nh3=pollutants["nh3"],
+                            pm25=s_info["pollutants"]["pm25"],
+                            pm10=s_info["pollutants"]["pm10"],
+                            no2=s_info["pollutants"]["no2"],
+                            so2=s_info["pollutants"]["so2"],
+                            co=s_info["pollutants"]["co"],
+                            o3=s_info["pollutants"]["o3"],
+                            nh3=s_info["pollutants"]["nh3"],
                             aqi=aqi_calc.aqi if aqi_calc.aqi > 0 else None,
                             aqi_category=aqi_calc.category if aqi_calc.aqi > 0 else None,
                             provider="cpcb_datagovin",
-                            station_external_id=rec.get("id", station),
-                            station_name=station,
-                            city=city,
-                            state=state,
-                            lat=lat,
-                            lon=lon,
+                            station_external_id=s_info["station_external_id"],
+                            station_name=s_info["station_name"],
+                            city=s_info["city"],
+                            state=s_info["state"],
+                            lat=s_info["lat"],
+                            lon=s_info["lon"],
                         )
                     )
                 except Exception as row_err:
-                    logger.warn("cpcb_row_parse_error", error=str(row_err))
+                    logger.warn("cpcb_station_parse_error", error=str(row_err))
                     continue
 
         except Exception as e:
