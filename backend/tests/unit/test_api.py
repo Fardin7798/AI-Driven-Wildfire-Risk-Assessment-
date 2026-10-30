@@ -138,3 +138,8 @@ def test_geo_cities_search():
         assert data[0]["state"] == "Maharashtra"
         assert data[0]["district"] == "Jalgaon"
         assert "display_name" in data[0]
+
+
+def test_regions_by_coordinates():
+    resp = client.get("/api/v1/regions/by-coordinates")
+    assert resp.status_code == 422

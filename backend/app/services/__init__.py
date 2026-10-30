@@ -11,6 +11,7 @@ from app.services.fire_service import (
 )
 from app.services.preparedness_service import get_preparedness_items
 from app.services.regions_service import (
+    get_region_by_coordinates,
     get_region_by_id,
     get_regions,
 )
@@ -29,6 +30,7 @@ from app.services.weather_service import (
 
 __all__ = [
     "get_regions",
+    "get_region_by_coordinates",
     "get_region_by_id",
     "get_recent_fires",
     "get_fire_stats",

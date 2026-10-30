@@ -20,7 +20,17 @@ async def get_weather_for_region(
         .order_by(WeatherDaily.date.asc())
     )
     result = await session.execute(query)
-    return list(result.scalars().all())
+    records = list(result.scalars().all())
+    if not records:
+        fallback_query = (
+            select(WeatherDaily)
+            .where(WeatherDaily.region_id == region_id)
+            .order_by(WeatherDaily.date.desc())
+            .limit(days)
+        )
+        fb_res = await session.execute(fallback_query)
+        records = sorted(fb_res.scalars().all(), key=lambda r: r.date)
+    return records
 
 
 async def get_latest_weather_record(session: AsyncSession, region_id: int) -> WeatherDaily | None:

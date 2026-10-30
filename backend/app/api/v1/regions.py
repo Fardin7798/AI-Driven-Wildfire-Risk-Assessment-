@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_db
 from app.schemas.common import PaginatedResponse
 from app.schemas.regions import RegionDetail, RegionSummary
-from app.services.regions_service import get_region_by_id, get_regions
+from app.services.regions_service import get_region_by_coordinates, get_region_by_id, get_regions
 
 router = APIRouter(prefix="/regions", tags=["Regions"])
 
@@ -34,6 +34,22 @@ async def list_regions(
         page_size=page_size,
         has_more=(offset + len(items)) < total,
     )
+
+
+@router.get("/by-coordinates", response_model=RegionSummary)
+async def get_district_by_coordinates(
+    lat: float = Query(..., ge=-90.0, le=90.0),
+    lon: float = Query(..., ge=-180.0, le=180.0),
+    db: AsyncSession = Depends(get_db),
+) -> RegionSummary:
+    """Resolve GPS coordinates to administrative district."""
+    record = await get_region_by_coordinates(session=db, lat=lat, lon=lon)
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No region boundary found enclosing coordinates ({lat}, {lon}).",
+        )
+    return RegionSummary.model_validate(record)
 
 
 @router.get("/{region_id}", response_model=RegionDetail)

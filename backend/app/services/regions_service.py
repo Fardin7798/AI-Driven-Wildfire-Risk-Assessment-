@@ -27,3 +27,18 @@ async def get_region_by_id(session: AsyncSession, region_id: int) -> Region | No
     query = select(Region).where(Region.id == region_id)
     result = await session.execute(query)
     return result.scalar_one_or_none()
+
+
+async def get_region_by_coordinates(session: AsyncSession, lat: float, lon: float) -> Region | None:
+    stmt = (
+        select(Region)
+        .where(
+            func.ST_Contains(
+                Region.geom,
+                func.ST_SetSRID(func.ST_Point(lon, lat), 4326),
+            )
+        )
+        .limit(1)
+    )
+    result = await session.execute(stmt)
+    return result.scalar_one_or_none()

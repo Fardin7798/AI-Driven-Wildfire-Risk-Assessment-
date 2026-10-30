@@ -36,7 +36,30 @@ async def get_air_quality_for_region(session: AsyncSession, region_id: int) -> A
         .limit(1)
     )
     result = await session.execute(query)
-    return result.scalar_one_or_none()
+    record = result.scalar_one_or_none()
+    if record:
+        return record
+
+    reg_query = select(Region).where(Region.id == region_id)
+    reg_res = await session.execute(reg_query)
+    region = reg_res.scalar_one_or_none()
+    if region and region.centroid_lat and region.centroid_lon:
+        try:
+            from app.providers.open_meteo_air import OpenMeteoAirProvider
+
+            provider = OpenMeteoAirProvider()
+            raw_obs_list = await provider.fetch_air_quality(
+                region.centroid_lat, region.centroid_lon
+            )
+            if raw_obs_list:
+                await upsert_aq_observation(session, raw_obs_list[0], region_id=region.id)
+                await session.commit()
+                re_res = await session.execute(query)
+                return re_res.scalar_one_or_none()
+        except Exception:
+            return None
+
+    return None
 
 
 async def get_air_quality_forecast(session: AsyncSession, region_id: int) -> list[AQForecast]:
