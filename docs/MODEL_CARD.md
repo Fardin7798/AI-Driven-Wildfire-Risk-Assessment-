@@ -54,7 +54,7 @@ Thresholds (probability): moderate 0.1356, high 0.3421, extreme 0.5419.
   products, so small systematic biases are expected.
 - Live fire history uses VIIRS NOAA-20 **NRT**; labels use **SP** (reprocessed) data.
 - `fires_prev_30d` needs 30 days of detections in `wf.fire_detections`; run
-  `python scripts/backfill.py --days 35` after a fresh deploy.
+  `POST /api/v1/internal/jobs/backfill_fires` once after a fresh deploy.
 
 ## 3. Retired models
 - `wildfire_xgb_v1` (removed 2026-11-01): trained only on existing fire detections, target

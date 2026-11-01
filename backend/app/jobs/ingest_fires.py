@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import func, text
 from sqlalchemy.dialects.postgresql import insert
@@ -14,6 +14,30 @@ from app.providers.registry import registry
 async def job_ingest_fires() -> int:
     """Daily job: the last 24 h of detections."""
     return await ingest_fire_window(day_range=1)
+
+
+FIRMS_MAX_DAYS_PER_REQUEST = 5
+BACKFILL_DAYS = 35  # covers fires_prev_30d plus a margin
+
+
+@tracked_job("backfill_fires")
+async def job_backfill_fires() -> int:
+    """One-off: load the last BACKFILL_DAYS days so fire-history features are complete."""
+    return await backfill_fire_history(BACKFILL_DAYS)
+
+
+async def backfill_fire_history(days: int) -> int:
+    """Ingest FIRMS detections for the last `days` days in dated 5-day windows (idempotent)."""
+    today = datetime.now(UTC).date()
+    start = today - timedelta(days=days - 1)
+    total = 0
+    while start <= today:
+        span = min(FIRMS_MAX_DAYS_PER_REQUEST, (today - start).days + 1)
+        rows = await ingest_fire_window(day_range=span, start_date=start)
+        logger.info("fire_backfill_window", start=start.isoformat(), days=span, rows=rows)
+        total += rows
+        start += timedelta(days=span)
+    return total
 
 
 async def ingest_fire_window(day_range: int = 1, start_date: date | None = None) -> int:

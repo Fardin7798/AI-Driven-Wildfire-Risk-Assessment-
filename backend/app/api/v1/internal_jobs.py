@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.deps import verify_job_token
 from app.jobs.forecast_aqi import job_forecast_aqi
 from app.jobs.ingest_air_quality import job_ingest_air_quality
-from app.jobs.ingest_fires import job_ingest_fires
+from app.jobs.ingest_fires import job_backfill_fires, job_ingest_fires
 from app.jobs.ingest_weather import job_ingest_weather
 from app.jobs.predict_risk import job_predict_risk
 from app.jobs.retention import job_retention
@@ -20,6 +20,7 @@ JOB_MAPPING = {
     "ingest_air_quality": job_ingest_air_quality,
     "forecast_aqi": job_forecast_aqi,
     "retention": job_retention,
+    "backfill_fires": job_backfill_fires,
 }
 
 

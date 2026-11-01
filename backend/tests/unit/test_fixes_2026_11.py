@@ -29,6 +29,7 @@ JOBS = [
     "ingest_air_quality",
     "forecast_aqi",
     "retention",
+    "backfill_fires",
 ]
 
 
