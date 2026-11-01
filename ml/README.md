@@ -50,6 +50,18 @@ kaggle kernels output shaikhfardin05/wildfire-risk-model-v2-training -p backend/
 ```
 
 ## AQI (next)
-No learned AQI model yet. `download_air_history.py` (Open-Meteo CAMS history) and
-`build_aqi_dataset.py` are the starting point; they will be reviewed and the model trained on Kaggle
-on the same CAMS source the API serves. The old CPCB-station model was removed.
+No learned AQI model yet (training will run on Kaggle). The old CPCB-station model was removed.
+
+1. `download_air_history.py`: hourly Open-Meteo CAMS per district -> `data/raw/cams/<region_id>.csv.gz`
+   (same source the API serves).
+2. `build_aqi_dataset.py`: CPCB daily AQI per district (24-h means of PM2.5/PM10/NO2/SO2, max 8-h
+   mean of CO/O3, >= 16 valid hours per pollutant, `app.domain.aqi.calculate_cpcb_aqi`), features
+   known at end of day t (AQI lags 0-6, pollutant lags 0-2, 7/14-day AQI means, NASA POWER weather
+   t and t-1, calendar, lat/lon), targets AQI t+1..t+3, temporal `split`, plus persistence and
+   seasonal-naive baselines. Incomplete rows are dropped and counted, never filled.
+
+```bash
+python ml/pipeline/build_aqi_dataset.py --regions regions_centroids.csv --gadm gadm41_IND_2.json \
+  --cams data/raw/cams --power data/raw/power_aqi/power_daily.parquet --out-dir data/processed/aqi
+# -> data/processed/aqi/aqi_dataset.parquet, data/processed/aqi/baselines.json (gitignored)
+```
