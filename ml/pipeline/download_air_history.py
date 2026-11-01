@@ -1,117 +1,150 @@
-"""Resumable, throttled Open-Meteo CAMS Air Quality history downloader."""
+"""Download hourly CAMS air-quality history per district centroid from Open-Meteo.
+
+Same source and variables the live API ingests (app/providers/open_meteo_air.py), so a model
+trained on this data sees the same inputs in production. CAMS global history on Open-Meteo starts
+2022-08-01; earlier dates come back as nulls.
+
+Open-Meteo free tier counts a request covering more than two weeks as several calls
+(~85 calls for 3+ years of one location) with limits of 600/minute, 5,000/hour and 10,000/day
+per IP. The script therefore:
+  * downloads one district per request, the full date range at once;
+  * visits districts in a state-stratified order (round-robin over states, seeded shuffle inside
+    each state), so any prefix of the run is a geographically spread sample;
+  * skips districts already on disk (resumable) and stops cleanly on an hourly/daily 429.
+
+Output: one gzip CSV per district, <out-dir>/<region_id>.csv.gz with columns
+time (Asia/Kolkata), pm2_5, pm10, nitrogen_dioxide, sulphur_dioxide, carbon_monoxide, ozone.
+Missing hours stay empty; nothing is filled in.
+
+    python ml/pipeline/download_air_history.py --regions regions_centroids.csv \
+        --start 2022-08-01 --end 2026-10-31 --out-dir data/raw/cams --max-districts 55
+"""
 
 import argparse
-import asyncio
+import csv
+import gzip
+import random
+import sys
+import time
+from collections import defaultdict
 from pathlib import Path
+
 import httpx
-import pandas as pd
 
-CACHE_DIR = Path("data/interim/air_history")
-OPEN_METEO_AQ_URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
-
-AQ_VARS = [
+URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
+VARIABLES = [
     "pm2_5",
     "pm10",
     "nitrogen_dioxide",
     "sulphur_dioxide",
     "carbon_monoxide",
     "ozone",
-    "ammonia",
 ]
 
 
-async def fetch_cams_air_chunk(
-    client: httpx.AsyncClient, lat: float, lon: float, year: int
-) -> pd.DataFrame | None:
-    # CAMS history is reliably available from September 2022 onwards
-    start_date = f"{year}-01-01" if year >= 2023 else "2022-09-01"
-    end_date = f"{year}-12-31"
+def stratified_order(regions: list[dict[str, str]], seed: int) -> list[dict[str, str]]:
+    rng = random.Random(seed)
+    by_state: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for r in regions:
+        by_state[r["state"]].append(r)
+    queues = []
+    for state in sorted(by_state):
+        items = sorted(by_state[state], key=lambda r: int(r["region_id"]))
+        rng.shuffle(items)
+        queues.append(items)
+    ordered: list[dict[str, str]] = []
+    while any(queues):
+        for q in queues:
+            if q:
+                ordered.append(q.pop(0))
+    return ordered
 
+
+def fetch(client: httpx.Client, lat: str, lon: str, start: str, end: str) -> dict | None:
     params = {
         "latitude": lat,
         "longitude": lon,
-        "start_date": start_date,
-        "end_date": end_date,
-        "hourly": AQ_VARS,
+        "hourly": ",".join(VARIABLES),
+        "start_date": start,
+        "end_date": end,
         "timezone": "Asia/Kolkata",
     }
-
-    for attempt in range(5):
+    for attempt in range(1, 4):
         try:
-            resp = await client.get(OPEN_METEO_AQ_URL, params=params, timeout=35.0)
-            if resp.status_code == 200:
-                data = resp.json()
-                hourly = data.get("hourly", {})
-                df = pd.DataFrame(hourly)
-                df["time"] = pd.to_datetime(df["time"])
-                df["date"] = df["time"].dt.date
-
-                # Aggregate hourly to daily means and maximums
-                daily_agg = df.groupby("date").agg({
-                    "pm2_5": ["mean", "max"],
-                    "pm10": ["mean", "max"],
-                    "nitrogen_dioxide": "mean",
-                    "sulphur_dioxide": "mean",
-                    "carbon_monoxide": "mean",
-                    "ozone": "max",
-                    "ammonia": "mean",
-                }).reset_index()
-                # Flatten multiindex columns
-                daily_agg.columns = [
-                    "_".join(c).strip("_") if isinstance(c, tuple) else c
-                    for c in daily_agg.columns
-                ]
-                daily_agg["provider"] = "open_meteo_cams"
-                return daily_agg
-            elif resp.status_code == 429:
-                wait_sec = (attempt + 1) * 15
-                print(f"[RateLimit 429] Open-Meteo AQ throttled. Waiting {wait_sec}s...")
-                await asyncio.sleep(wait_sec)
-            else:
-                print(f"[HTTP {resp.status_code}] Error fetching AQ for {lat},{lon}")
-                await asyncio.sleep(2.0)
-        except Exception as e:
-            print(f"[Network Error] {e}. Attempt {attempt + 1}/5...")
-            await asyncio.sleep(3.0)
-
+            resp = client.get(URL, params=params, timeout=120.0)
+        except httpx.RequestError as e:
+            print(f"  network error ({e}); retry {attempt}/3", flush=True)
+            time.sleep(10 * attempt)
+            continue
+        if resp.status_code == 200:
+            return resp.json()
+        if resp.status_code == 429:
+            reason = resp.text[:200]
+            if "hourly" in reason.lower() or "daily" in reason.lower():
+                print(f"  quota exhausted, stopping: {reason}", flush=True)
+                return None
+            print(f"  minutely limit, waiting 61 s: {reason}", flush=True)
+            time.sleep(61)
+            continue
+        print(f"  HTTP {resp.status_code}: {resp.text[:200]}", flush=True)
+        time.sleep(10 * attempt)
     return None
 
 
-async def download_district_air_history(
-    district_id: int, lat: float, lon: float, years: list[int]
-):
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    async with httpx.AsyncClient() as client:
-        for year in years:
-            if year < 2022:
+def write_csv(path: Path, hourly: dict) -> int:
+    times = hourly.get("time", [])
+    tmp = path.with_suffix(".tmp")
+    with gzip.open(tmp, "wt", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["time", *VARIABLES])
+        for i, t in enumerate(times):
+            row = [t]
+            for v in VARIABLES:
+                series = hourly.get(v) or []
+                val = series[i] if i < len(series) else None
+                row.append("" if val is None else val)
+            w.writerow(row)
+    tmp.rename(path)
+    return len(times)
+
+
+def main() -> int:
+    p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    p.add_argument("--regions", type=Path, required=True, help="CSV: region_id,district,state,lat,lon")
+    p.add_argument("--start", default="2022-08-01")
+    p.add_argument("--end", required=True)
+    p.add_argument("--out-dir", type=Path, default=Path("data/raw/cams"))
+    p.add_argument("--max-districts", type=int, default=55, help="new districts this run")
+    p.add_argument("--pause", type=float, default=12.0, help="seconds between requests")
+    p.add_argument("--seed", type=int, default=42)
+    args = p.parse_args()
+
+    with args.regions.open() as fh:
+        regions = list(csv.DictReader(fh))
+    args.out_dir.mkdir(parents=True, exist_ok=True)
+
+    done = 0
+    with httpx.Client() as client:
+        for r in stratified_order(regions, args.seed):
+            out = args.out_dir / f"{r['region_id']}.csv.gz"
+            if out.exists():
                 continue
-            cache_file = CACHE_DIR / f"district_aq_{district_id}_{year}.parquet"
-            if cache_file.exists():
-                print(f"[Cache Hit] District {district_id} Year {year} already cached.")
-                continue
+            if done >= args.max_districts:
+                break
+            print(f"{r['region_id']} {r['district']} ({r['state']})", flush=True)
+            data = fetch(client, r["lat"], r["lon"], args.start, args.end)
+            if data is None:
+                print(f"stopped after {done} new districts", flush=True)
+                return 2
+            n = write_csv(out, data.get("hourly", {}))
+            done += 1
+            print(f"  {n} hours saved", flush=True)
+            time.sleep(args.pause)
 
-            print(f"Downloading AQ history for District {district_id} Year {year}...")
-            df = await fetch_cams_air_chunk(client, lat, lon, year)
-            if df is not None and not df.empty:
-                df["district_id"] = district_id
-                df.to_parquet(cache_file, index=False)
-                print(f"Saved {len(df)} daily AQ rows to {cache_file}")
-
-            await asyncio.sleep(0.5)
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Download historical atmospheric air quality datasets")
-    parser.add_argument("--start-year", type=int, default=2022)
-    parser.add_argument("--end-year", type=int, default=2025)
-    parser.add_argument("--district-id", type=int, default=1)
-    parser.add_argument("--lat", type=float, default=28.6139)
-    parser.add_argument("--lon", type=float, default=77.2090)
-
-    args = parser.parse_args()
-    years = list(range(args.start_year, args.end_year + 1))
-    asyncio.run(download_district_air_history(args.district_id, args.lat, args.lon, years))
+    total = len(list(args.out_dir.glob("*.csv.gz")))
+    print(f"done: {done} new districts this run, {total}/{len(regions)} on disk", flush=True)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

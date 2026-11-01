@@ -77,9 +77,27 @@ def test_cpcb_naqi_breakpoints():
             "no2": 25.0,  # AQI 31 (Good)
         }
     )
+    assert res is not None
     assert res.aqi == 300
     assert res.category == "Poor"
     assert res.prominent_pollutant == "PM25"
+
+
+def test_cpcb_aqi_requires_three_pollutants_including_pm():
+    """CPCB reports no AQI with fewer than 3 pollutants or without PM2.5/PM10."""
+    assert calculate_cpcb_aqi({"pm25": 80.0, "pm10": 120.0}) is None
+    assert calculate_cpcb_aqi({"no2": 50.0, "so2": 20.0, "o3": 40.0}) is None
+    assert calculate_cpcb_aqi({"pm25": None, "pm10": None, "no2": None}) is None
+
+
+def test_sub_index_between_integer_breakpoints():
+    """Fractional values between CPCB integer rows are not dropped."""
+    assert calculate_sub_index("pm25", 30.4) == 50
+    assert calculate_sub_index("pm25", 30.0) == 50
+    assert calculate_sub_index("pm25", 30.6) == 51
+    assert calculate_sub_index("pm10", 100.5) == 101
+    assert calculate_sub_index("co", 1.04) == 50
+    assert calculate_sub_index("pm25", 600.0) == 500
 
 
 def test_risk_probability_classification():

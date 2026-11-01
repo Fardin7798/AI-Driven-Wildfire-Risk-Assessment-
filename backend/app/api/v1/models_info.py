@@ -45,15 +45,15 @@ async def get_active_models() -> list[ModelVersionResponse]:
             )
         )
 
-    # AQI forecasts are produced by the rule-based persistence + dispersion forecaster
-    # (app/ml/aqi_forecaster.py). No learned AQI model is served, so no metrics are claimed.
+    # AQI forecasts are the persistence baseline (app/ml/aqi_forecaster.py): the latest observed
+    # AQI repeated for days +1..+3. No learned AQI model is served, so no metrics are claimed.
     responses.append(
         ModelVersionResponse(
             model_type="aqi",
             version="aqi_persistence_v1",
             metrics=None,
-            status="rule_based_not_validated",
-            feature_list=["current_aqi", "pm25", "pm10", "wind_max", "precip_sum"],
+            status="persistence_baseline",
+            feature_list=["observed_aqi"],
             thresholds={},
             is_active=True,
         )

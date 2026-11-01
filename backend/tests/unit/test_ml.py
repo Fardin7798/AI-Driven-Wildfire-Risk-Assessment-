@@ -28,26 +28,19 @@ def test_wildfire_predictor_fwi_fallback():
     assert all("factor" in f and "value" in f and "unit" in f for f in factors)
 
 
-def test_aqi_forecaster_trajectory():
-    """Verify 1 to 3 day AQI trajectory with persistence and dispersion logic."""
-    target_date = date(2026, 4, 15)
-    forecasts = forecast_aqi_trajectory(
-        target_date=target_date,
-        current_aqi=180,
-        current_pm25=75.0,
-        current_pm10=150.0,
-        weather_forecast=[
-            {"wind_max": 25.0, "precip_sum": 0.0},  # Day +1: high wind (dispersion)
-            {"wind_max": 10.0, "precip_sum": 10.0},  # Day +2: rain (washout)
-            {"wind_max": 8.0, "precip_sum": 0.0},  # Day +3: calm
-        ],
-    )
+def test_aqi_forecaster_persistence():
+    """Persistence repeats the observed AQI for days +1..+3 with no adjustment."""
+    forecasts = forecast_aqi_trajectory(date(2026, 4, 15), observed_aqi=180, observed_pm25=75.0)
 
-    assert len(forecasts) == 3
-    assert forecasts[0]["horizon_days"] == 1
-    assert forecasts[1]["horizon_days"] == 2
-    assert forecasts[2]["horizon_days"] == 3
-    assert all("pm25_pred" in f and "aqi_pred" in f and "aqi_category" in f for f in forecasts)
+    assert [f["horizon_days"] for f in forecasts] == [1, 2, 3]
+    assert [f["target_date"] for f in forecasts] == ["2026-04-16", "2026-04-17", "2026-04-18"]
+    assert all(f["aqi_pred"] == 180 and f["pm25_pred"] == 75.0 for f in forecasts)
+    assert all(f["aqi_category"] == "Moderate" for f in forecasts)
+
+
+def test_aqi_forecaster_no_observation_no_forecast():
+    """Without an observed AQI nothing is forecast; no default value is invented."""
+    assert forecast_aqi_trajectory(date(2026, 4, 15), observed_aqi=None, observed_pm25=40.0) == []
 
 
 def test_wildfire_predictor_real_model_loading(tmp_path):

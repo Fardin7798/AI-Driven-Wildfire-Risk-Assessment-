@@ -76,20 +76,23 @@ BREAKPOINTS: dict[str, list[tuple[float, float, int, int]]] = {
 
 
 def calculate_sub_index(pollutant: str, conc: float) -> int | None:
-    """Calculate sub-index for a specific pollutant concentration using CPCB piecewise linear formula."""
+    """Sub-index for one pollutant by the CPCB piecewise-linear formula.
+
+    CPCB tables give breakpoints at the reporting precision (PM2.5 0-30, 31-60; CO 1.0, 1.1).
+    A value between two rows (PM2.5 30.4) is rounded to that precision: it belongs to the row
+    whose edge is nearer, with the midpoint going up, and is then clamped to that row.
+    """
     if conc < 0.0 or pollutant not in BREAKPOINTS:
         return None
 
     ranges = BREAKPOINTS[pollutant]
-    for b_low, b_high, i_low, i_high in ranges:
-        if b_low <= conc <= b_high:
-            sub = ((i_high - i_low) / (b_high - b_low)) * (conc - b_low) + i_low
-            return round(sub)
-
-    # Above highest range -> cap at 500
     if conc > ranges[-1][1]:
         return 500
-
+    for i, (b_low, b_high, i_low, i_high) in enumerate(ranges):
+        upper = (b_high + ranges[i + 1][0]) / 2 if i + 1 < len(ranges) else b_high
+        if conc < upper or i + 1 == len(ranges):
+            c = min(max(conc, b_low), b_high)
+            return round(((i_high - i_low) / (b_high - b_low)) * (c - b_low) + i_low)
     return None
 
 
@@ -109,10 +112,13 @@ def get_aqi_category(aqi: int) -> str:
         return "Severe"
 
 
-def calculate_cpcb_aqi(pollutants: dict[str, float | None]) -> AQIResult:
+def calculate_cpcb_aqi(pollutants: dict[str, float | None]) -> AQIResult | None:
     """
-    Calculate composite CPCB National AQI from pollutant dictionary.
+    Composite CPCB National AQI from a pollutant dictionary.
     Keys expected: pm25, pm10, no2, so2, co, o3, nh3 (concentrations in µg/m³, CO in mg/m³).
+
+    CPCB rule: the AQI is reported only when at least three pollutants are available and one of
+    them is PM2.5 or PM10. Otherwise there is no valid AQI and None is returned.
     """
     sub_indices: dict[str, int] = {}
 
@@ -122,8 +128,8 @@ def calculate_cpcb_aqi(pollutants: dict[str, float | None]) -> AQIResult:
             if sub is not None:
                 sub_indices[pol.lower()] = sub
 
-    if not sub_indices:
-        return AQIResult(aqi=0, category="Good", prominent_pollutant="None", sub_indices={})
+    if len(sub_indices) < 3 or not ({"pm25", "pm10"} & sub_indices.keys()):
+        return None
 
     # Composite AQI is the maximum of the sub-indices
     prominent = max(sub_indices, key=sub_indices.get)  # type: ignore[arg-type]

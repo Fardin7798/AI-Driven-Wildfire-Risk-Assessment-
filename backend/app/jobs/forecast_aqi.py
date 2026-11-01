@@ -1,4 +1,5 @@
-from datetime import date
+import logging
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
@@ -6,56 +7,41 @@ from sqlalchemy.dialects.postgresql import insert
 from app.core.timeutil import today_ist
 from app.db.models.air_quality import AQForecast, AQObservation
 from app.db.models.region import Region
-from app.db.models.weather import WeatherDaily
 from app.db.session import async_session_factory
 from app.jobs.scheduler import tracked_job
 from app.ml.aqi_forecaster import forecast_aqi_trajectory
+
+logger = logging.getLogger(__name__)
+
+# An observation older than this is not "current" and is not persisted forward.
+MAX_OBSERVATION_AGE = timedelta(hours=24)
 
 
 @tracked_job("forecast_aqi")
 async def job_forecast_aqi() -> int:
     today = today_ist()
+    cutoff = datetime.now(UTC) - MAX_OBSERVATION_AGE
     total_written = 0
+    skipped = 0
 
     async with async_session_factory() as session:
         regions = (await session.execute(select(Region.id))).scalars().all()
 
         for region_id in regions:
-            # 1. Fetch current AQ observation
-            obs_query = (
-                select(AQObservation)
-                .where(AQObservation.region_id == region_id)
-                .order_by(AQObservation.observed_at_utc.desc())
-                .limit(1)
-            )
-            obs = (await session.execute(obs_query)).scalar_one_or_none()
+            obs = (
+                await session.execute(
+                    select(AQObservation)
+                    .where(
+                        AQObservation.region_id == region_id,
+                        AQObservation.observed_at_utc >= cutoff,
+                        AQObservation.aqi.is_not(None),
+                    )
+                    .order_by(AQObservation.observed_at_utc.desc())
+                    .limit(1)
+                )
+            ).scalar_one_or_none()
 
-            current_aqi = obs.aqi if (obs and obs.aqi) else 120
-            current_pm25 = obs.pm25 if obs else 45.0
-            current_pm10 = obs.pm10 if obs else 85.0
-
-            # 2. Fetch weather forecast for days +1, +2, +3
-            w_query = (
-                select(WeatherDaily)
-                .where(WeatherDaily.region_id == region_id, WeatherDaily.date > today)
-                .order_by(WeatherDaily.date.asc())
-                .limit(3)
-            )
-            w_rows = (await session.execute(w_query)).scalars().all()
-            weather_forecast = [
-                {"wind_max": w.wind_max or 10.0, "precip_sum": w.precip_sum or 0.0} for w in w_rows
-            ]
-
-            # 3. Predict Trajectory
-            forecast_items = forecast_aqi_trajectory(
-                target_date=today,
-                current_aqi=current_aqi,
-                current_pm25=current_pm25,
-                current_pm10=current_pm10,
-                weather_forecast=weather_forecast,
-            )
-
-            # Clear existing future forecasts for region to maintain idempotency
+            # Old forecasts are removed either way, so a district never shows a stale forecast.
             await session.execute(
                 delete(AQForecast).where(
                     AQForecast.region_id == region_id,
@@ -63,20 +49,31 @@ async def job_forecast_aqi() -> int:
                 )
             )
 
-            for item in forecast_items:
-                target_d = date.fromisoformat(item["target_date"])
-                stmt = insert(AQForecast).values(
-                    region_id=region_id,
-                    target_date=target_d,
-                    horizon_days=item["horizon_days"],
-                    pm25_pred=item["pm25_pred"],
-                    aqi_pred=item["aqi_pred"],
-                    aqi_category=item["aqi_category"],
-                    model_version=item["model_version"],
+            items = forecast_aqi_trajectory(
+                target_date=today,
+                observed_aqi=obs.aqi if obs else None,
+                observed_pm25=obs.pm25 if obs else None,
+            )
+            if not items:
+                skipped += 1
+                continue
+
+            for item in items:
+                await session.execute(
+                    insert(AQForecast).values(
+                        region_id=region_id,
+                        target_date=date.fromisoformat(item["target_date"]),
+                        horizon_days=item["horizon_days"],
+                        pm25_pred=item["pm25_pred"],
+                        aqi_pred=item["aqi_pred"],
+                        aqi_category=item["aqi_category"],
+                        model_version=item["model_version"],
+                    )
                 )
-                await session.execute(stmt)
                 total_written += 1
 
         await session.commit()
 
+    if skipped:
+        logger.warning("forecast_aqi: %d regions without a valid AQI in the last 24 h", skipped)
     return total_written

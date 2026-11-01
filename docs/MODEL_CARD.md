@@ -9,7 +9,7 @@ input fall back to Canadian FWI. All metrics below come from the Kaggle training
 | Task | Version served | Type | Validated metrics |
 |---|---|---|---|
 | Wildfire risk | `wildfire_xgb_v2` | XGBoost, district x day (FWI fallback per district) | test 2024, section 2 |
-| AQI 1-3 day forecast | `aqi_persistence_v1` | Rule-based persistence + wind/rain dispersion | none |
+| AQI 1-3 day forecast | `aqi_persistence_v1` | Persistence baseline: latest observed AQI (last 24 h) repeated for days +1..+3; no forecast without an observation | none |
 
 `GET /api/v1/models/current` reports exactly this, read from the deployed artifacts.
 

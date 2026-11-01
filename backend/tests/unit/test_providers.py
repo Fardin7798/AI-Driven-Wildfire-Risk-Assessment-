@@ -90,6 +90,7 @@ def test_cpcb_datagovin_calculation_integration():
         "o3": 45.0,  # Good
     }
     aqi_res = calculate_cpcb_aqi(pollutants)
+    assert aqi_res is not None
     assert aqi_res.aqi >= 300
     assert aqi_res.category == "Very Poor"
     assert aqi_res.prominent_pollutant in ["PM25", "PM10"]
