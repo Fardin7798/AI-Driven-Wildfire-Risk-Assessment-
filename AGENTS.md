@@ -11,14 +11,15 @@ Production-grade backend and ML pipeline for "AI-Driven Wildfire Risk Assessment
   - Indian National AQI (NAQI) piecewise linear sub-index aggregator.
   - Risk class categorization engine.
   - Single Source of Truth `features.py` shared by offline training and live inference without leakage.
-- **ML Runtime (`app/ml/`)**: Model loader, XGBoost inference engine with FWI fallback, Prophet/persistence AQI forecasting.
+- **ML Runtime (`app/ml/`)**: Model loader, XGBoost wildfire inference with FWI fallback and TreeSHAP factors, rule-based persistence AQI forecasting.
 - **Business Services (`app/services/`)**: Async database operations and business logic.
 - **Background Jobs (`app/jobs/`)**: APScheduler with Postgres advisory locking and `X-Job-Token` protected HTTP endpoints.
 - **API (`app/api/`)**: FastAPI, Pydantic v2 schemas, RFC 9457 errors, rate limiting, and structured JSON logs.
-- **ML Pipeline (`ml/`)**: Data acquisition, spatial joining, landcover filtering, dataset generation, validation, and training notebooks.
+- **ML Pipeline (`ml/`)**: FIRMS + NASA POWER downloaders, spatial join to districts, dataset builder, training script and Kaggle kernel (see ml/README.md).
 
 ## Ground Rules
-- Work exclusively on branch `main`.
+- `main` is the owner's branch; automated agents work on branch `backend` and open a PR to main.
+- Never commit synthetic data or hand-written metrics; metrics come only from training output.
 - Zero hardcoded secrets; all config via `.env`.
 - All tables strictly within `wf` schema; never alter `public` schema.
 - Python 3.12, type hints everywhere, strict linting (`ruff`), and type checking (`mypy`).

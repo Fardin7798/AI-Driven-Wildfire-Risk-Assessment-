@@ -49,7 +49,7 @@ DEFAULT_PROBABILITY_THRESHOLDS: dict[str, float] = {
 
 
 def classify_probability(prob: float, thresholds: dict[str, float] | None = None) -> str:
-    """Classify model probability into Low / Moderate / High / Extreme using calibrated thresholds."""
+    """Classify model probability into Low / Moderate / High / Extreme using thresholds chosen on the validation year."""
     th = thresholds or DEFAULT_PROBABILITY_THRESHOLDS
     mod_th = th.get("moderate", 0.25)
     high_th = th.get("high", 0.55)
@@ -66,7 +66,7 @@ def classify_probability(prob: float, thresholds: dict[str, float] | None = None
 
 
 def classify_fwi(fwi: float) -> str:
-    """Rule-based baseline classification based on Canadian FWI scale calibrated for South Asia."""
+    """Rule-based baseline classification based on Canadian FWI danger-class scale."""
     if fwi >= 30.0:
         return "Extreme"
     elif fwi >= 15.0:

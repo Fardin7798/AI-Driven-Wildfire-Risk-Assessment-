@@ -11,7 +11,7 @@ This platform aggregates multiple open scientific datasets for environmental ris
 - **License**: Public Domain (NASA Open Data Policy)
 - **Attribution**: "We acknowledge the use of data and/or imagery from NASA's Fire Information for Resource Management System (FIRMS) (https://earthdata.nasa.gov/firms), part of the NASA Earth Observing System Data and Information System (EOSDIS)."
 - **Live Endpoint**: `https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/{SOURCE}/{west,south,east,north}/{DAY_RANGE}`
-- **Historical Data**: Country Yearly Summary CSVs (India 2019-2025) placed in `data/raw/firms/`.
+- **Historical Data (training)**: VIIRS NOAA-20 standard processing (`VIIRS_NOAA20_SP`), 2019-2024, downloaded with `ml/pipeline/download_firms_history.py`.
 
 ## 2. Open-Meteo Weather API (ERA5 Reanalysis & Forecast)
 - **Source**: Open-Meteo API using ECMWF ERA5 reanalysis and high-resolution numerical weather prediction models.
@@ -32,6 +32,11 @@ This platform aggregates multiple open scientific datasets for environmental ris
 - **License**: Government Open Data License - India (GODL)
 - **Attribution**: "Air quality station monitoring data courtesy of Central Pollution Control Board (CPCB), Ministry of Environment, Forest and Climate Change, published on data.gov.in."
 - **Endpoint**: `https://api.data.gov.in/resource/3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69`
+
+## 4b. NASA POWER (training weather)
+- **Source**: NASA Langley POWER daily API (`T2M_MAX, T2M, RH2M, WS10M_MAX, PRECTOTCORR`) at each district centroid, 2018-09 to 2024.
+- **License**: Public domain (NASA). Attribution: "Data obtained from the NASA Langley Research Center POWER Project."
+- **Downloader**: `ml/pipeline/download_power_history.py`.
 
 ## 5. GADM Database of Global Administrative Areas (v4.1)
 - **Source**: GADM (https://gadm.org) India Level-2 (Districts)

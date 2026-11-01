@@ -5,8 +5,8 @@
 ```mermaid
 graph TD
     subgraph External Data Sources
-        FIRMS[NASA FIRMS Area API<br/>VIIRS NOAA-20/21, MODIS]
-        OM_W[Open-Meteo Weather API<br/>ERA5 Historical + Forecast]
+        FIRMS[NASA FIRMS Area API<br/>VIIRS NOAA-20/21, MODIS (NRT)]
+        OM_W[Open-Meteo Weather API<br/>Daily Forecast]
         OM_AQ[Open-Meteo CAMS Air Quality<br/>Criteria Pollutants + 72h Forecast]
         CPCB[data.gov.in CPCB Real-time<br/>Optional Hourly Station Feed]
         GADM[GADM 4.1<br/>India Level-2 District Polygons]
@@ -28,10 +28,9 @@ graph TD
     end
 
     subgraph Machine Learning Runtime
-        XGB[XGBoost Wildfire Classifier<br/>Native JSON Artifacts]
-        RF_COMP[Random Forest Classifier<br/>Baseline Comparison]
-        PROPHET[Prophet AQI Forecaster<br/>+ Persistence Baseline]
-        SHAP_EXP[SHAP Factor Explainer<br/>Top 3 Dynamic Drivers]
+        XGB[XGBoost Wildfire v2<br/>FWI fallback when no artifact]
+        AQIF[AQI Forecaster<br/>Persistence + dispersion rules]
+        SHAP_EXP[TreeSHAP Explainer<br/>Top 3 Drivers]
     end
 
     subgraph API Presentation Layer
@@ -52,7 +51,7 @@ graph TD
     JOBS --> NAQI_ENG --> DB
 
     DB --> FEAT_ENG --> XGB --> DB
-    DB --> PROPHET --> DB
+    DB --> AQIF --> DB
 
     DB --> FASTAPI
     XGB --> SHAP_EXP --> FASTAPI

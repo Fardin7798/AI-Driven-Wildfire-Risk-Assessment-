@@ -48,9 +48,9 @@ until it comes from a real training run's `wildfire_v2_evaluation.json`.
   derived from detection confidence/FRP, features (brightness, scan, track, bright_t31) are
   measurements of a fire already burning. Leaky and impossible to compute for a district without
   a fire; in production it received zeros and returned 0.0024 for every district.
-- `aqi_xgb_v1` (kept in `backend/models/`, **not served**): trained on CPCB station `city_day.csv`
-  (2015-2020) while live data is CAMS modelled concentrations at district centroids. Not wired
-  until trained on the same source it will be served on.
+- `aqi_xgb_v1` (removed 2026-11-01): trained on CPCB station `city_day.csv` (2015-2020) while live
+  data is CAMS modelled concentrations at district centroids. Will be replaced by a model trained on
+  CAMS history.
 
 ## 4. Limitations
 - Cloud cover and monsoon reduce satellite detections (labels are "detected fire", not "fire").

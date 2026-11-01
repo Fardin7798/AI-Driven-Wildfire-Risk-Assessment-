@@ -49,7 +49,7 @@ kaggle kernels status shaikhfardin05/wildfire-risk-model-v2-training
 kaggle kernels output shaikhfardin05/wildfire-risk-model-v2-training -p backend/models
 ```
 
-## AQI
-`ml/kaggle_aqi/` is the earlier XGBoost run on CPCB `city_day.csv` (2015-2020). Its artifact is
-kept but **not served**: live AQI comes from CAMS at district centroids, a different source.
-See docs/MODEL_CARD.md.
+## AQI (next)
+No learned AQI model yet. `download_air_history.py` (Open-Meteo CAMS history) and
+`build_aqi_dataset.py` are the starting point; they will be reviewed and the model trained on Kaggle
+on the same CAMS source the API serves. The old CPCB-station model was removed.

@@ -22,14 +22,14 @@ OpenAPI Docs: Enabled only in `ENV=development` at `/docs`.
 - `GET /geo/cities?q=`: Query Indian cities, towns, and settlements directly via OpenStreetMap Nominatim.
 
 ### 3. Wildfire Risk
-- `GET /risk/map?date=&state=`: GeoJSON FeatureCollection with simplified geometries and daily risk categories.
+- `GET /risk/map?date=&state=`: GeoJSON FeatureCollection with simplified geometries and daily risk categories; districts without data have `has_prediction: false`.
 - `GET /risk/latest?state=&limit=`: Paginated recent risk assessments across regions.
 - `GET /risk/{region_id}?date=`: Single district risk score, probability, risk class, FWI value, and top 3 SHAP drivers.
 - `GET /risk/{region_id}/history?days=30`: Temporal risk trend and historical fire occurrences.
 
 ### 4. Active Satellite Fires
 - `GET /fires/recent?hours=24&bbox=`: NASA FIRMS thermal detections with confidence, FRP, and satellite source.
-- `GET /fires/stats?days=7`: Aggregate fire count, total radiative power, and high-confidence hotspot breakdown.
+- `GET /fires/stats?days=7`: Fire count, radiative power, high-confidence count, breakdown by source and state, and detections outside any district.
 
 ### 5. Air Quality
 - `GET /air-quality/latest?state=`: Current CPCB NAQI values and prominent pollutants per region.
@@ -40,8 +40,8 @@ OpenAPI Docs: Enabled only in `ENV=development` at `/docs`.
 - `GET /weather/{region_id}?days=7`: Live weather and daily ERA5/forecast metrics (temp, humidity, wind, precipitation).
 
 ### 7. Models & Science
-- `GET /models/current`: Active model versions, training dates, and test set performance benchmarks.
-- `GET /models/comparison`: Side-by-side comparative table: XGBoost vs Random Forest vs Canadian FWI baseline.
+- `GET /models/current`: Models actually served (read from deployed artifacts); metrics only when a real evaluation exists.
+- `GET /models/comparison`: `not_available` until a real evaluation file is deployed; never hand-written numbers.
 
 ### 8. Preparedness & Meta
 - `GET /preparedness?hazard=&stage=&audience=`: Community safety protocols and civil defense speed-dials.

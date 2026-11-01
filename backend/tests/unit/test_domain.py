@@ -83,7 +83,7 @@ def test_cpcb_naqi_breakpoints():
 
 
 def test_risk_probability_classification():
-    """Verify calibrated probability threshold mapping."""
+    """Verify probability threshold mapping."""
     assert classify_probability(0.10) == "Low"
     assert classify_probability(0.35) == "Moderate"
     assert classify_probability(0.60) == "High"
