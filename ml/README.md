@@ -65,3 +65,16 @@ python ml/pipeline/build_aqi_dataset.py --regions regions_centroids.csv --gadm g
   --cams data/raw/cams --power data/raw/power_aqi/power_daily.parquet --out-dir data/processed/aqi
 # -> data/processed/aqi/aqi_dataset.parquet, data/processed/aqi/baselines.json (gitignored)
 ```
+
+### CAMS vs CPCB stations (validation, no training)
+`validate_cams_openaq.py` pairs each CPCB/caaqm PM2.5/PM10 sensor (OpenAQ v3 daily values,
+`download_openaq_cpcb.py`, days with `pct_complete >= 75`) with the CAMS 24-h mean (>= 16 valid
+hours) of the district whose GADM polygon contains it, same IST date. Reports n pairs, bias
+(CAMS - station), MAE and Pearson r per pollutant, overall and by season, plus a sensitivity
+that also drops station artefacts (value <= 0, >= 985 ceiling, pct_complete > 100, >= 5-day
+stuck runs). Nothing is filled.
+
+```bash
+python ml/pipeline/validate_cams_openaq.py --regions regions_centroids.csv --gadm gadm41_IND_2.json \
+  --cams data/raw/cams --openaq data/raw/openaq --out data/processed/aqi/cams_validation.json
+```
