@@ -1,7 +1,7 @@
 import csv
 import io
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
@@ -23,7 +23,12 @@ class FirmsProvider(FireProvider):
         reraise=False,
     )
     async def _fetch_source_csv(
-        self, client: httpx.AsyncClient, source: str, bbox: Sequence[float], day_range: int
+        self,
+        client: httpx.AsyncClient,
+        source: str,
+        bbox: Sequence[float],
+        day_range: int,
+        start_date: date | None = None,
     ) -> str:
         west, south, east, north = bbox
         if not self.map_key:
@@ -34,6 +39,8 @@ class FirmsProvider(FireProvider):
             return resp.text
 
         url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{self.map_key}/{source}/{west},{south},{east},{north}/{day_range}"
+        if start_date is not None:
+            url += f"/{start_date.isoformat()}"
         resp = await client.get(url, timeout=20.0)
         resp.raise_for_status()
         return resp.text
@@ -58,8 +65,11 @@ class FirmsProvider(FireProvider):
                 satellite = str(row.get("satellite", "NOAA-20"))
                 instrument = str(row.get("instrument", "VIIRS"))
 
-                acq_date = row.get("acq_date", "2026-01-01")
-                acq_time = row.get("acq_time", "0000").zfill(4)
+                acq_date = row.get("acq_date")
+                acq_time = row.get("acq_time")
+                if not acq_date or not acq_time:
+                    continue  # a detection without a timestamp cannot be placed in time
+                acq_time = acq_time.zfill(4)
                 dt_str = f"{acq_date} {acq_time[:2]}:{acq_time[2:]}:00"
                 acq_datetime = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=UTC)
 
@@ -84,7 +94,7 @@ class FirmsProvider(FireProvider):
         return results
 
     async def fetch_live_fires(
-        self, bbox: Sequence[float], day_range: int = 1
+        self, bbox: Sequence[float], day_range: int = 1, start_date: date | None = None
     ) -> list[RawFireDetection]:
         all_detections: list[RawFireDetection] = []
         day_range = max(1, min(5, day_range))
@@ -92,7 +102,9 @@ class FirmsProvider(FireProvider):
         async with httpx.AsyncClient(headers={"User-Agent": "WildfireRiskPlatform/2.0"}) as client:
             for src in self.sources:
                 try:
-                    csv_text = await self._fetch_source_csv(client, src, bbox, day_range)
+                    csv_text = await self._fetch_source_csv(
+                        client, src, bbox, day_range, start_date
+                    )
                     if csv_text:
                         parsed = self.parse_firms_csv(csv_text, default_source=src)
                         all_detections.extend(parsed)

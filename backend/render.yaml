@@ -27,7 +27,7 @@ services:
       - key: ALLOWED_ORIGINS
         value: "*"
       - key: FIRMS_SOURCES
-        value: "VIIRS_NOAA20_NRT,VIIRS_SNPP_NRT,MODIS_NRT"
+        value: "VIIRS_NOAA20_NRT,VIIRS_NOAA21_NRT,MODIS_NRT"
       - key: DATAGOVIN_API_KEY
         sync: false
       - key: ENABLE_CPCB

@@ -58,9 +58,13 @@ class RawAQObservation:
 
 class FireProvider(Protocol):
     async def fetch_live_fires(
-        self, bbox: Sequence[float], day_range: int = 1
+        self, bbox: Sequence[float], day_range: int = 1, start_date: date | None = None
     ) -> list[RawFireDetection]:
-        """Fetch active fire thermal detections within bounding box [west, south, east, north]."""
+        """Fetch fire detections in bbox [west, south, east, north].
+
+        Without start_date: the most recent day_range days. With start_date: day_range days
+        starting at start_date (UTC).
+        """
         ...
 
 

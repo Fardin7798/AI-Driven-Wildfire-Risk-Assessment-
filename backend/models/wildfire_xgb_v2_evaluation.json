@@ -1,0 +1,89 @@
+{
+  "model": "wildfire_xgb_v2",
+  "split": {
+    "train": "2019-2022",
+    "validation": "2023",
+    "test": "2024"
+  },
+  "label": "district-day has >=1 VIIRS NOAA-20 SP detection, confidence nominal/high, type 0",
+  "best_iteration": 133,
+  "thresholds_from_validation": {
+    "moderate": 0.1356,
+    "high": 0.3421,
+    "extreme": 0.5419
+  },
+  "validation": {
+    "xgboost": {
+      "roc_auc": 0.911,
+      "pr_auc": 0.7841,
+      "positive_rate": 0.2339,
+      "n": 246740,
+      "threshold": 0.3421,
+      "precision": 0.6826,
+      "recall": 0.7254,
+      "f1": 0.7033,
+      "brier": 0.0962
+    }
+  },
+  "test": {
+    "xgboost": {
+      "roc_auc": 0.9117,
+      "pr_auc": 0.7799,
+      "positive_rate": 0.2331,
+      "n": 247416,
+      "threshold": 0.3421,
+      "precision": 0.6701,
+      "recall": 0.7376,
+      "f1": 0.7022,
+      "brier": 0.0962
+    },
+    "fwi_only": {
+      "roc_auc": 0.7802,
+      "pr_auc": 0.442,
+      "positive_rate": 0.2331,
+      "n": 247416
+    },
+    "climatology": {
+      "roc_auc": 0.879,
+      "pr_auc": 0.6939,
+      "positive_rate": 0.2331,
+      "n": 247416,
+      "brier": 0.1139
+    },
+    "persistence_fires_prev_7d": {
+      "roc_auc": 0.8728,
+      "pr_auc": 0.6856,
+      "positive_rate": 0.2331,
+      "n": 247416
+    }
+  },
+  "feature_importance_gain": {
+    "climatological_fire_freq": 1973.83,
+    "fires_prev_7d": 854.08,
+    "fires_prev_30d": 428.62,
+    "ffmc": 263.07,
+    "consecutive_dry_days": 109.12,
+    "precip_sum": 93.2,
+    "isi": 74.31,
+    "precip_sum_3d": 61.03,
+    "day_of_year_cos": 38.26,
+    "lat": 35.33,
+    "rh_mean": 35.08,
+    "lon": 33.95,
+    "month_sin": 33.77,
+    "fwi": 33.7,
+    "temp_max": 30.14,
+    "month_cos": 27.96,
+    "precip_sum_7d": 25.23,
+    "day_of_year_sin": 24.4,
+    "days_since_rain_gt_10mm": 23.53,
+    "temp_mean": 22.15,
+    "temp_max_mean_7d": 21.35,
+    "wind_max": 18.09,
+    "dc": 16.79,
+    "bui": 16.12,
+    "precip_sum_30d": 14.7,
+    "dmc": 14.34,
+    "precip_sum_14d": 13.98
+  }
+}

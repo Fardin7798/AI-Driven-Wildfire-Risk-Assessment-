@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     DEFAULT_COUNTRY: str = "IN"
 
     MODEL_DIR: str = str(Path(__file__).resolve().parents[2] / "models")
-    ACTIVE_WILDFIRE_MODEL: str = "wildfire_xgb_v2"  # until trained, FWI fallback serves
+    ACTIVE_WILDFIRE_MODEL: str = "wildfire_xgb_v2"
     ACTIVE_AQI_MODEL: str = "aqi_xgb_v2"
 
     OPEN_METEO_WEATHER_URL: str = "https://api.open-meteo.com/v1/forecast"

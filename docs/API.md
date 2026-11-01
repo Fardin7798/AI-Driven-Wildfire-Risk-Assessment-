@@ -41,7 +41,7 @@ OpenAPI Docs: Enabled only in `ENV=development` at `/docs`.
 
 ### 7. Models & Science
 - `GET /models/current`: Models actually served (read from deployed artifacts); metrics only when a real evaluation exists.
-- `GET /models/comparison`: `not_available` until a real evaluation file is deployed; never hand-written numbers.
+- `GET /models/comparison`: Served wildfire model vs FWI, climatology and persistence on test year 2024, read from `models/<model>_evaluation.json`; `not_available` if that file is missing.
 
 ### 8. Preparedness & Meta
 - `GET /preparedness?hazard=&stage=&audience=`: Community safety protocols and civil defense speed-dials.

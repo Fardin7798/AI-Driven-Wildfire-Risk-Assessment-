@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy import func, text
 from sqlalchemy.dialects.postgresql import insert
 
@@ -10,11 +12,19 @@ from app.providers.registry import registry
 
 @tracked_job("ingest_fires")
 async def job_ingest_fires() -> int:
+    """Daily job: the last 24 h of detections."""
+    return await ingest_fire_window(day_range=1)
+
+
+async def ingest_fire_window(day_range: int = 1, start_date: date | None = None) -> int:
+    """Fetch FIRMS detections for a window, upsert them and map them to districts."""
     country_cfg = registry.get_country_config("IN")
     bbox = country_cfg.get("bbox", [68.0, 6.5, 97.5, 37.5])
     fire_provider = registry.get_fire_provider("IN")
 
-    raw_fires = await fire_provider.fetch_live_fires(bbox=bbox, day_range=1)
+    raw_fires = await fire_provider.fetch_live_fires(
+        bbox=bbox, day_range=day_range, start_date=start_date
+    )
     if not raw_fires:
         logger.info("no_active_fires_returned")
         return 0

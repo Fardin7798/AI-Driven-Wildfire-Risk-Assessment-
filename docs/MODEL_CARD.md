@@ -1,19 +1,19 @@
 # Model Card — Indian Wildfire Risk & Air Quality Platform
 
-Status (2026-11-01): **no learned wildfire model is deployed yet.** The API serves the Canadian
-FWI fallback until `wildfire_xgb_v2` is trained and committed. No metric below may be quoted
-until it comes from a real training run's `wildfire_v2_evaluation.json`.
+Status (2026-11-01): `wildfire_xgb_v2` is served for wildfire risk; districts missing any model
+input fall back to Canadian FWI. All metrics below come from the Kaggle training run
+(`shaikhfardin05/wildfire-risk-model-v2-training`, best iteration 133).
 
 ## 1. What is served right now
 
 | Task | Version served | Type | Validated metrics |
 |---|---|---|---|
-| Wildfire risk | `fwi_fallback` | Canadian FWI (Van Wagner 1987) danger classes | none |
+| Wildfire risk | `wildfire_xgb_v2` | XGBoost, district x day (FWI fallback per district) | test 2024, section 2 |
 | AQI 1-3 day forecast | `aqi_persistence_v1` | Rule-based persistence + wind/rain dispersion | none |
 
 `GET /api/v1/models/current` reports exactly this, read from the deployed artifacts.
 
-## 2. Wildfire model v2 (to be trained)
+## 2. Wildfire model v2
 
 - **Question answered**: probability that a district has at least one vegetation fire on day D.
 - **Unit**: district (GADM 4.1 India level 2, 676 districts) x day.
@@ -38,10 +38,23 @@ until it comes from a real training run's `wildfire_v2_evaluation.json`.
   extreme = precision >= 0.80.
 - **Explanations**: top 3 risk-increasing factors from XGBoost TreeSHAP (`pred_contribs`).
 
+### Results (test year 2024, 247,416 district-days, 23.3% positive)
+| Model | ROC-AUC | PR-AUC |
+|---|---|---|
+| **XGBoost v2** | **0.9117** | **0.7799** |
+| Climatology (district-month) | 0.8790 | 0.6939 |
+| Persistence (`fires_prev_7d`) | 0.8728 | 0.6856 |
+| FWI only | 0.7802 | 0.4420 |
+
+At the "high" threshold: F1 0.7022, precision 0.6701, recall 0.7376. Brier score 0.0962.
+Thresholds (probability): moderate 0.1356, high 0.3421, extreme 0.5419.
+
 ### Known training/serving differences
 - Training weather is NASA POWER; live weather is Open-Meteo. Same variables and units, different
   products, so small systematic biases are expected.
 - Live fire history uses VIIRS NOAA-20 **NRT**; labels use **SP** (reprocessed) data.
+- `fires_prev_30d` needs 30 days of detections in `wf.fire_detections`; run
+  `python scripts/backfill.py --days 35` after a fresh deploy.
 
 ## 3. Retired models
 - `wildfire_xgb_v1` (removed 2026-11-01): trained only on existing fire detections, target

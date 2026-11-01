@@ -63,29 +63,38 @@ async def get_active_models() -> list[ModelVersionResponse]:
 
 @router.get("/comparison", response_model=ModelComparisonResponse)
 async def get_model_comparison() -> ModelComparisonResponse:
-    """Benchmark operational models against baseline algorithms across standardized metrics."""
+    """Served wildfire model vs baselines on the held-out test year.
+
+    Numbers come only from the evaluation file the training run wrote next to the artifact
+    (`<model>_evaluation.json`); without it the endpoint says `not_available`.
+    """
     import json
     from pathlib import Path
 
-    paths = [
-        Path("ml/reports/model_comparison.json"),
-        Path(__file__).resolve().parents[4] / "ml" / "reports" / "model_comparison.json",
-        Path(__file__).resolve().parents[3] / "ml" / "reports" / "model_comparison.json",
-    ]
-    for p in paths:
-        if p.exists():
-            try:
-                with open(p, encoding="utf-8") as f:
-                    data = json.load(f)
-                    return ModelComparisonResponse(
-                        status="available",
-                        models=data.get("models", []),
-                        wildfire_comparison=data.get("wildfire_comparison"),
-                        aqi_comparison=data.get("aqi_comparison"),
-                        evaluation_criteria=data.get("evaluation_criteria", []),
-                    )
-            except Exception:
-                pass
+    from app.core.config import settings
+
+    path = Path(settings.MODEL_DIR) / f"{settings.ACTIVE_WILDFIRE_MODEL}_evaluation.json"
+    if path.exists():
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            test = data["test"]
+            return ModelComparisonResponse(
+                status="available",
+                models=[{"name": name, **metrics} for name, metrics in test.items()],
+                wildfire_comparison={
+                    "model": data.get("model"),
+                    "split": data.get("split"),
+                    "label": data.get("label"),
+                    "thresholds": data.get("thresholds_from_validation"),
+                    "test": test,
+                    "validation": data.get("validation"),
+                    "feature_importance_gain": data.get("feature_importance_gain"),
+                },
+                aqi_comparison=None,
+                evaluation_criteria=["roc_auc", "pr_auc", "precision", "recall", "f1", "brier"],
+            )
+        except (OSError, ValueError, KeyError):
+            pass
 
     return ModelComparisonResponse(
         status="not_available",

@@ -167,3 +167,43 @@ async def test_aq_batch_one_request_for_many_points():
     out = await p.fetch_air_quality_batch([(20.9, 75.5), (21.1, 79.0)])
     assert route.call_count == 1
     assert out[0][0].pm25 == 40.0 and out[1][0].pm25 == 10.0
+
+
+def test_models_comparison_reads_real_evaluation():
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    data = TestClient(app).get("/api/v1/models/comparison").json()
+    assert data["status"] == "available"
+    names = {m["name"] for m in data["models"]}
+    assert {"xgboost", "fwi_only", "climatology", "persistence_fires_prev_7d"} <= names
+    test = data["wildfire_comparison"]["test"]
+    assert test["xgboost"]["roc_auc"] > test["climatology"]["roc_auc"]
+
+
+def test_firms_window_url_has_start_date():
+    import asyncio
+    from datetime import date
+
+    import httpx
+
+    from app.providers.firms import FirmsProvider
+
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(str(request.url))
+        return httpx.Response(200, text="latitude,longitude,acq_date,acq_time\n10,77,,\n")
+
+    async def run() -> list:
+        prov = FirmsProvider(map_key="KEY", sources=["VIIRS_NOAA20_NRT"])
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            text = await prov._fetch_source_csv(
+                client, "VIIRS_NOAA20_NRT", [68, 6, 97, 37], 5, date(2026, 10, 1)
+            )
+        return prov.parse_firms_csv(text, "VIIRS_NOAA20_NRT")
+
+    rows = asyncio.run(run())
+    assert seen[0].endswith("/68,6,97,37/5/2026-10-01")
+    assert rows == []  # rows without a timestamp are dropped, never given a fake date
