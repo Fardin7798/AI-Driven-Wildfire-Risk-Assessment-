@@ -20,16 +20,18 @@ class RawFireDetection:
 
 @dataclass(frozen=True)
 class RawDailyWeather:
+    """One day of weather. A value the source did not return stays None (never filled)."""
+
     record_date: date
-    temp_max: float
-    temp_min: float
-    temp_mean: float
-    rh_mean: float
-    rh_min: float
-    wind_max: float
-    precip_sum: float
-    et0: float
-    soil_moisture: float
+    temp_max: float | None
+    temp_min: float | None
+    temp_mean: float | None
+    rh_mean: float | None
+    rh_min: float | None
+    wind_max: float | None
+    precip_sum: float | None
+    et0: float | None
+    soil_moisture: float | None
     provider: str
 
 

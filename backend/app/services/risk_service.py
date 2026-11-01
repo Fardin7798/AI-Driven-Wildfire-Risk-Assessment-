@@ -1,3 +1,4 @@
+import json
 from datetime import date, timedelta
 from typing import Any
 
@@ -9,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.core.timeutil import today_ist
 from app.db.models.region import Region
 from app.db.models.risk import RiskPrediction
+from app.domain.names import humanize_gadm_name, normalize_name_key
 
 
 async def get_latest_risk(
@@ -20,7 +22,10 @@ async def get_latest_risk(
         .options(selectinload(RiskPrediction.region))
     )
     if state:
-        query = query.where(func.lower(Region.state_name) == state.lower().strip())
+        query = query.where(
+            func.regexp_replace(func.lower(Region.state_name), "[^a-z0-9]", "", "g")
+            == normalize_name_key(state)
+        )
 
     query = query.order_by(RiskPrediction.date.desc(), RiskPrediction.probability.desc()).limit(
         limit
@@ -74,42 +79,51 @@ async def get_risk_map_geojson(
 ) -> dict[str, Any]:
     t_date = target_date or today_ist()
 
+    # Latest prediction per region for the date (several model versions may exist for one day).
+    latest = (
+        select(RiskPrediction)
+        .where(RiskPrediction.date == t_date)
+        .distinct(RiskPrediction.region_id)
+        .order_by(RiskPrediction.region_id, RiskPrediction.created_at.desc())
+        .subquery()
+    )
     query = select(
         Region.id,
         Region.district_name,
         Region.state_name,
         func.ST_AsGeoJSON(Region.centroid).label("centroid_geojson"),
-        RiskPrediction.risk_class,
-        RiskPrediction.probability,
-        RiskPrediction.fwi_value,
-        RiskPrediction.model_version,
-    ).outerjoin(
-        RiskPrediction, (RiskPrediction.region_id == Region.id) & (RiskPrediction.date == t_date)
-    )
+        latest.c.risk_class,
+        latest.c.probability,
+        latest.c.fwi_value,
+        latest.c.model_version,
+    ).outerjoin(latest, latest.c.region_id == Region.id)
     if state:
-        query = query.where(func.lower(Region.state_name) == state.lower().strip())
+        query = query.where(
+            func.regexp_replace(func.lower(Region.state_name), "[^a-z0-9]", "", "g")
+            == normalize_name_key(state)
+        )
 
-    result = await session.execute(query)
-    rows = result.all()
-
-    import json
+    rows = (await session.execute(query)).all()
 
     features: list[dict[str, Any]] = []
     for r in rows:
         geom = json.loads(r.centroid_geojson) if r.centroid_geojson else None
+        has_pred = r.risk_class is not None
         features.append(
             {
                 "type": "Feature",
                 "geometry": geom,
                 "properties": {
                     "region_id": r.id,
-                    "district_name": r.district_name,
-                    "state_name": r.state_name,
+                    "district_name": humanize_gadm_name(r.district_name),
+                    "state_name": humanize_gadm_name(r.state_name),
                     "date": t_date.isoformat(),
-                    "risk_class": r.risk_class or "Low",
-                    "probability": float(r.probability) if r.probability is not None else 0.05,
-                    "fwi_value": float(r.fwi_value) if r.fwi_value is not None else 5.0,
-                    "model_version": r.model_version or "fwi_fallback",
+                    # No prediction for this district today -> say so; never a placeholder risk.
+                    "risk_class": r.risk_class if has_pred else None,
+                    "probability": float(r.probability) if has_pred else None,
+                    "fwi_value": float(r.fwi_value) if r.fwi_value is not None else None,
+                    "model_version": r.model_version if has_pred else None,
+                    "has_prediction": has_pred,
                 },
             }
         )
@@ -118,6 +132,7 @@ async def get_risk_map_geojson(
         "type": "FeatureCollection",
         "date": t_date.isoformat(),
         "total": len(features),
+        "with_prediction": sum(1 for f in features if f["properties"]["has_prediction"]),
         "features": features,
     }
 

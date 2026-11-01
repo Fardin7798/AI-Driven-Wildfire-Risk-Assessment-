@@ -1,81 +1,64 @@
-"""Spatial join fires to districts and derive binary daily wildfire ground-truth labels."""
+"""Spatially join FIRMS detections to GADM districts and aggregate per district x day.
+
+Input : yearly parquet files from download_firms_history.py (one sensor, e.g. VIIRS NOAA-20 SP)
+Output: parquet with columns
+    gadm_id, date,
+    n_detections   - all detections with confidence != low   (matches live `fires_prev_*`,
+                     because NRT data has no `type` field to filter on)
+    n_vegetation   - detections with confidence nominal/high AND type == 0
+                     ("presumed vegetation fire"; drives the training label)
+
+Dates are the FIRMS acquisition date (UTC), the same field the live job counts on.
+"""
+
+from __future__ import annotations
 
 import argparse
 from pathlib import Path
+
 import geopandas as gpd
 import pandas as pd
-from shapely.geometry import Point
-
-RAW_FIRMS_DIR = Path("data/raw/firms")
-OUTPUT_LABELS_PATH = Path("data/processed/fire_labels_daily.parquet")
 
 
-def is_nominal_or_high_confidence(row: pd.Series) -> bool:
-    conf = str(row.get("confidence", "")).lower().strip()
-    # VIIRS format: 'n' (nominal), 'h' (high), 'l' (low)
-    if conf in ["n", "h", "nominal", "high"]:
-        return True
-    # MODIS format: 0 to 100 percentage
-    try:
-        conf_num = float(conf)
-        return conf_num >= 30.0
-    except (ValueError, TypeError):
-        pass
-    return False
+def main() -> None:
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument("--firms-dir", type=Path, default=Path("data/raw/firms"))
+    ap.add_argument("--source", default="VIIRS_NOAA20_SP")
+    ap.add_argument("--gadm", type=Path, required=True)
+    ap.add_argument("--out", type=Path, default=Path("data/processed/fire_counts_daily.parquet"))
+    args = ap.parse_args()
 
+    files = sorted(args.firms_dir.glob(f"{args.source}_*.parquet"))
+    if not files:
+        raise SystemExit(f"No {args.source}_*.parquet files in {args.firms_dir}")
 
-def is_vegetation_landcover(row: pd.Series) -> bool:
-    lc = str(row.get("landcover_class", "tree")).lower().strip()
-    return lc in ["tree", "trees", "shrub", "shrubland", "grass", "grassland", "forest", "vegetation"]
+    districts = gpd.read_file(args.gadm)[["GID_2", "geometry"]].rename(columns={"GID_2": "gadm_id"})
+    out_frames = []
+    for f in files:
+        df = pd.read_parquet(f)
+        df["confidence"] = df["confidence"].astype(str).str.lower().str[0]
+        df = df[df["confidence"] != "l"]
+        pts = gpd.GeoDataFrame(
+            df, geometry=gpd.points_from_xy(df["longitude"], df["latitude"]), crs="EPSG:4326"
+        )
+        joined = gpd.sjoin(pts, districts.to_crs("EPSG:4326"), how="inner", predicate="within")
+        joined["is_veg"] = (joined["type"] == 0) if "type" in joined else True
+        agg = (
+            joined.groupby(["gadm_id", "acq_date"])
+            .agg(n_detections=("is_veg", "size"), n_vegetation=("is_veg", "sum"))
+            .reset_index()
+            .rename(columns={"acq_date": "date"})
+        )
+        print(f"{f.name}: {len(df):,} detections -> {len(joined):,} inside districts", flush=True)
+        out_frames.append(agg)
 
-
-def process_fire_labels(
-    firms_df: pd.DataFrame, districts_gdf: gpd.GeoDataFrame
-) -> pd.DataFrame:
-    print(f"Creating spatial points for {len(firms_df)} fire detections...")
-    geometry = [Point(xy) for xy in zip(firms_df["lon"], firms_df["lat"])]
-    fires_gdf = gpd.GeoDataFrame(firms_df, geometry=geometry, crs="EPSG:4326")
-
-    print("Performing spatial join with district geometries...")
-    # sjoin points within district polygons
-    joined = gpd.sjoin(fires_gdf, districts_gdf[["district_id", "state_name", "district_name", "geometry"]], how="inner", predicate="within")
-
-    print(f"Joined {len(joined)} detections within district boundaries.")
-
-    joined["is_confident"] = joined.apply(is_nominal_or_high_confidence, axis=1)
-    joined["is_vegetation"] = joined.apply(is_vegetation_landcover, axis=1)
-
-    # Core target label definition from section 6
-    joined["wildfire_positive"] = joined["is_confident"] & joined["is_vegetation"]
-
-    # Aggregate by district and day
-    joined["date"] = pd.to_datetime(joined["acq_date"]).dt.date
-
-    daily_labels = joined.groupby(["district_id", "date"]).agg(
-        wildfire_label=("wildfire_positive", lambda x: int(any(x))),
-        any_fire_label=("is_confident", lambda x: int(any(x))),
-        fire_count=("lat", "count"),
-        vegetation_fire_count=("wildfire_positive", "sum"),
-        max_frp=("frp", "max"),
-        total_frp=("frp", "sum"),
-    ).reset_index()
-
-    print(f"Aggregated into {len(daily_labels)} district-day fire events.")
-    print(f"Wildfire positive days: {daily_labels['wildfire_label'].sum()} ({daily_labels['wildfire_label'].mean():.2%})")
-    print(f"Any fire positive days: {daily_labels['any_fire_label'].sum()} ({daily_labels['any_fire_label'].mean():.2%})")
-
-    return daily_labels
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Build daily district wildfire ground truth labels")
-    parser.add_argument("--firms-csv", type=Path, help="Path to combined FIRMS CSV")
-    parser.add_argument("--districts-geojson", type=Path, help="Path to districts GeoJSON")
-    parser.add_argument("--output", type=Path, default=OUTPUT_LABELS_PATH)
-
-    args = parser.parse_args()
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    print("Label generation module configured.")
+    out = pd.concat(out_frames, ignore_index=True)
+    out["date"] = pd.to_datetime(out["date"]).dt.date
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    out.to_parquet(args.out, index=False)
+    print(f"wrote {len(out):,} district-day rows -> {args.out}")
 
 
 if __name__ == "__main__":

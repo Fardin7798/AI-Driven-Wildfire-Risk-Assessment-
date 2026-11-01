@@ -6,6 +6,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.fire import FireDetection
+from app.db.models.region import Region
+from app.domain.names import humanize_gadm_name
 
 
 async def get_recent_fires(
@@ -47,11 +49,33 @@ async def get_fire_stats(session: AsyncSession, days: int = 7) -> dict[str, Any]
     )
     high_conf_count = (await session.execute(high_conf_query)).scalar() or 0
 
+    by_source_q = (
+        select(FireDetection.source, func.count(FireDetection.id))
+        .where(FireDetection.acq_datetime_utc >= cutoff)
+        .group_by(FireDetection.source)
+    )
+    by_source = {str(k): int(v) for k, v in (await session.execute(by_source_q)).all()}
+
+    by_state_q = (
+        select(Region.state_name, func.count(FireDetection.id))
+        .join(Region, FireDetection.region_id == Region.id)
+        .where(FireDetection.acq_datetime_utc >= cutoff)
+        .group_by(Region.state_name)
+        .order_by(func.count(FireDetection.id).desc())
+    )
+    by_state = {
+        humanize_gadm_name(k) or str(k): int(v)
+        for k, v in (await session.execute(by_state_q)).all()
+    }
+
     return {
         "period_days": days,
         "total_detections": total_count,
         "high_confidence_count": high_conf_count,
         "total_radiative_power_mw": round(float(total_frp), 2),
+        "by_source": by_source,
+        "by_state": by_state,
+        "outside_districts": total_count - sum(by_state.values()),
     }
 
 

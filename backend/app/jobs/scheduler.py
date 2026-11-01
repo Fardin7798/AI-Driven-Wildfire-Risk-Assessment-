@@ -1,4 +1,5 @@
 import functools
+import zlib
 from collections.abc import Callable, Coroutine
 from datetime import UTC, datetime
 from typing import Any
@@ -12,7 +13,17 @@ from app.db.models.ingestion import IngestionRun
 from app.db.session import async_session_factory, engine
 
 scheduler = AsyncIOScheduler(timezone="Asia/Kolkata")
-ADVISORY_LOCK_ID = 882199042
+ADVISORY_LOCK_NAMESPACE = 8821  # first key of pg_try_advisory_lock(int, int)
+
+
+def job_lock_key(job_name: str) -> int:
+    """Stable per-job advisory lock key.
+
+    Each job gets its OWN lock so two different jobs never block each other; the lock only
+    stops the same job running twice at once (e.g. two Render instances, or a GitHub-Actions
+    trigger overlapping the in-process schedule).
+    """
+    return zlib.crc32(job_name.encode()) & 0x7FFFFFFF
 
 
 def tracked_job(job_name: str):
@@ -22,11 +33,13 @@ def tracked_job(job_name: str):
         @functools.wraps(func)
         async def wrapper() -> int:
             rows_written = 0
+            lock_key = job_lock_key(job_name)
             try:
                 async with engine.connect() as conn:
                     try:
                         res = await conn.execute(
-                            text(f"SELECT pg_try_advisory_lock({ADVISORY_LOCK_ID});")
+                            text("SELECT pg_try_advisory_lock(:ns, :key)"),
+                            {"ns": ADVISORY_LOCK_NAMESPACE, "key": lock_key},
                         )
                         has_lock = bool(res.scalar())
                     except Exception as lock_err:
@@ -81,7 +94,8 @@ def tracked_job(job_name: str):
                                     await session.commit()
                         try:
                             await conn.execute(
-                                text(f"SELECT pg_advisory_unlock({ADVISORY_LOCK_ID});")
+                                text("SELECT pg_advisory_unlock(:ns, :key)"),
+                                {"ns": ADVISORY_LOCK_NAMESPACE, "key": lock_key},
                             )
                             await conn.commit()
                         except Exception as unlock_err:
@@ -111,60 +125,21 @@ def start_scheduler() -> None:
     from app.jobs.retention import job_retention
     from app.jobs.update_fwi_state import job_update_fwi_state
 
-    # 1. Fires: Every 3 hours
-    scheduler.add_job(
-        job_ingest_fires, "interval", hours=3, id="job_ingest_fires", replace_existing=True
-    )
-
-    # 2. Weather: Daily at 00:30 IST (19:00 UTC)
-    scheduler.add_job(
-        job_ingest_weather,
-        "cron",
-        hour=0,
-        minute=0,
-        id="job_ingest_weather",
-        replace_existing=True,
-    )
-
-    # 3. FWI State: Daily after weather at 00:45 IST (19:15 UTC)
-    scheduler.add_job(
-        job_update_fwi_state,
-        "cron",
-        hour=0,
-        minute=45,
-        id="job_update_fwi_state",
-        replace_existing=True,
-    )
-
-    # 4. Predict Risk: Daily after FWI at 01:00 IST (19:30 UTC)
-    scheduler.add_job(
-        job_predict_risk, "cron", hour=0, minute=0, id="job_predict_risk", replace_existing=True
-    )
-
-    # 5. Air Quality Ingest: Hourly
-    scheduler.add_job(
-        job_ingest_air_quality,
-        "interval",
-        hours=1,
-        id="job_ingest_air_quality",
-        replace_existing=True,
-    )
-
-    # 6. AQ Forecast: Daily at 01:15 IST (19:45 UTC)
-    scheduler.add_job(
-        job_forecast_aqi, "cron", hour=0, minute=45, id="job_forecast_aqi", replace_existing=True
-    )
-
-    # 7. Retention: Weekly on Sunday at 02:00 IST (20:30 UTC Sat)
-    scheduler.add_job(
-        job_retention,
-        "cron",
-        day_of_week="sun",
-        hour=2,
-        minute=0,
-        id="job_retention",
-        replace_existing=True,
-    )
+    # Daily chain is staggered so each step reads the previous step's output (all IST):
+    #   00:20 weather -> 00:50 FWI -> 01:10 risk prediction -> 01:30 AQ forecast
+    jobs: list[tuple[Callable[[], Coroutine[Any, Any, int]], str, dict[str, Any]]] = [
+        (job_ingest_fires, "job_ingest_fires", {"hour": "*/3", "minute": 10}),
+        (job_ingest_air_quality, "job_ingest_air_quality", {"hour": "*/6", "minute": 40}),
+        (job_ingest_weather, "job_ingest_weather", {"hour": 0, "minute": 20}),
+        (job_update_fwi_state, "job_update_fwi_state", {"hour": 0, "minute": 50}),
+        (job_predict_risk, "job_predict_risk", {"hour": 1, "minute": 10}),
+        (job_forecast_aqi, "job_forecast_aqi", {"hour": 1, "minute": 30}),
+        (job_retention, "job_retention", {"day_of_week": "sun", "hour": 3, "minute": 0}),
+    ]
+    for func, job_id, cron in jobs:
+        scheduler.add_job(
+            func, "cron", id=job_id, replace_existing=True, misfire_grace_time=900, **cron
+        )
 
     scheduler.start()
     logger.info("apscheduler_started_successfully")

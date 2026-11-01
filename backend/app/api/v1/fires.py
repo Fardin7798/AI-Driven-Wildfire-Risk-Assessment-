@@ -43,5 +43,8 @@ async def get_active_fire_statistics(
         high_confidence_count=stats_dict.get("high_confidence_count", 0),
         high_confidence_fires=stats_dict.get("high_confidence_count", 0),
         total_radiative_power_mw=stats_dict.get("total_radiative_power_mw", 0.0),
+        by_source=stats_dict.get("by_source", {}),
+        by_state=stats_dict.get("by_state", {}),
+        outside_districts=stats_dict.get("outside_districts", 0),
         time_range_hours=days * 24,
     )

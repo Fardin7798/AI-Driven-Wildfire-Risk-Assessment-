@@ -75,8 +75,9 @@ def test_models_current_and_comparison():
     assert "wildfire" in types
 
     for m in models:
-        assert m["status"] in ["active", "awaiting_training"]
-        if m["status"] == "awaiting_training":
+        assert m["status"] in ["active", "fallback_rule_based", "rule_based_not_validated"]
+        if m["status"] != "active":
+            # Nothing that is not a trained, deployed model may claim metrics
             assert m["metrics"] is None
 
     resp_comp = client.get("/api/v1/models/comparison")

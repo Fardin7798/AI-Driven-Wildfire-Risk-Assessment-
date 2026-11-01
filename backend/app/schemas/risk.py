@@ -3,18 +3,25 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.names import ReadableName
+
 
 class TopFactor(BaseModel):
     feature: str
-    impact: float
+    label: str | None = None
+    value: float | None = None
+    unit: str | None = None
+    # TreeSHAP contribution (log-odds) for model predictions; None for FWI-fallback factors
+    impact: float | None = None
+    method: str | None = None
 
 
 class RiskPredictionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     region_id: int
-    district_name: str
-    state_name: str
+    district_name: ReadableName
+    state_name: ReadableName
     date: date
     probability: float
     risk_class: str
@@ -27,13 +34,14 @@ class RiskPredictionResponse(BaseModel):
 
 class RiskMapFeatureProperties(BaseModel):
     region_id: int
-    district_name: str
-    state_name: str
+    district_name: ReadableName
+    state_name: ReadableName
     date: str = ""
-    probability: float
-    risk_class: str
+    probability: float | None = None
+    risk_class: str | None = None
     fwi_value: float | None = None
-    model_version: str
+    model_version: str | None = None
+    has_prediction: bool = True
 
 
 class RiskMapFeature(BaseModel):
@@ -46,5 +54,7 @@ class RiskMapResponse(BaseModel):
     type: str = "FeatureCollection"
     features: list[RiskMapFeature]
     date: str = ""
+    total: int | None = None
+    with_prediction: int | None = None
     as_of: dict[str, str]
     disclaimer_short: str

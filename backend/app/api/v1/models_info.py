@@ -1,71 +1,63 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
 
-from app.api.deps import get_db
-from app.db.models.model_registry import ModelVersion
+from fastapi import APIRouter
+
+from app.ml.loader import model_loader
 from app.schemas.models_info import ModelComparisonResponse, ModelVersionResponse
 
 router = APIRouter(prefix="/models", tags=["Model Registry & Evaluation"])
 
 
 @router.get("/current", response_model=list[ModelVersionResponse])
-async def get_active_models(
-    db: AsyncSession = Depends(get_db),
-) -> list[ModelVersionResponse]:
-    """Retrieve operational ML models actively serving predictions and forecasts."""
-    try:
-        query = select(ModelVersion).where(ModelVersion.is_active.is_(True))
-        result = await db.execute(query)
-        records = list(result.scalars().all())
-    except Exception:
-        records = []
+async def get_active_models() -> list[ModelVersionResponse]:
+    """Models that ACTUALLY serve predictions right now, read from the deployed artifacts.
 
-    if not records:
-        return [
-            ModelVersionResponse(
-                id=None,
-                model_type="wildfire",
-                version="fwi_fallback",
-                trained_at=None,
-                metrics=None,
-                status="awaiting_training",
-                feature_list=[],
-                thresholds={"moderate": 0.35, "high": 0.60, "extreme": 0.80},
-                is_active=True,
-            ),
-            ModelVersionResponse(
-                id=None,
-                model_type="aqi",
-                version="aqi_persistence",
-                trained_at=None,
-                metrics=None,
-                status="awaiting_training",
-                feature_list=[],
-                thresholds={},
-                is_active=True,
-            ),
-        ]
-
+    The answer comes from the files the predictor loads (not from a DB row someone typed), so it
+    cannot drift from what the API is really doing.
+    """
     responses: list[ModelVersionResponse] = []
-    for r in records:
-        f_list: list[str] = (
-            list(r.feature_list.keys())
-            if isinstance(r.feature_list, dict)
-            else list(r.feature_list)
-        )
+
+    wf = model_loader.load_wildfire_model()
+    if wf and wf.model_obj is not None:
+        trained = wf.metadata.get("trained_at")
         responses.append(
             ModelVersionResponse(
-                id=r.id,
-                model_type=r.model_type,
-                version=r.version,
-                trained_at=r.trained_at,
-                metrics=r.metrics,
-                feature_list=f_list,
-                thresholds=r.thresholds,
-                is_active=r.is_active,
+                model_type="wildfire",
+                version=wf.model_version,
+                trained_at=datetime.fromisoformat(trained) if trained else None,
+                metrics=wf.metrics,
+                status="active",
+                feature_list=wf.feature_list,
+                thresholds=wf.thresholds,
+                is_active=True,
             )
         )
+    else:
+        responses.append(
+            ModelVersionResponse(
+                model_type="wildfire",
+                version="fwi_fallback",
+                metrics=None,
+                status="fallback_rule_based",
+                feature_list=["fwi"],
+                thresholds={},
+                is_active=True,
+            )
+        )
+
+    # AQI forecasts are produced by the rule-based persistence + dispersion forecaster
+    # (app/ml/aqi_forecaster.py). No learned AQI model is served, so no metrics are claimed.
+    responses.append(
+        ModelVersionResponse(
+            model_type="aqi",
+            version="aqi_persistence_v1",
+            metrics=None,
+            status="rule_based_not_validated",
+            feature_list=["current_aqi", "pm25", "pm10", "wind_max", "precip_sum"],
+            thresholds={},
+            is_active=True,
+        )
+    )
     return responses
 
 

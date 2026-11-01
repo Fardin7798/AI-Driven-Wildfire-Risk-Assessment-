@@ -20,18 +20,23 @@ router = APIRouter(prefix="/risk", tags=["Wildfire Risk"])
 
 def _serialize_risk(pred: RiskPrediction) -> RiskPredictionResponse:
     factors: list[TopFactor] = []
-    if isinstance(pred.top_factors, dict):
-        for k, v in pred.top_factors.items():
-            try:
-                factors.append(TopFactor(feature=str(k), impact=float(v)))
-            except (ValueError, TypeError):
-                continue
-    elif isinstance(pred.top_factors, list):
-        for item in pred.top_factors:
-            if isinstance(item, dict) and "feature" in item and "impact" in item:
-                factors.append(
-                    TopFactor(feature=str(item["feature"]), impact=float(item["impact"]))
-                )
+    raw = pred.top_factors or {}
+    method = raw.get("method", "fwi_fallback_rules") if isinstance(raw, dict) else None
+    items = raw.get("factors", []) if isinstance(raw, dict) else raw
+    for item in items if isinstance(items, list) else []:
+        if not isinstance(item, dict):
+            continue
+        label = item.get("factor")
+        factors.append(
+            TopFactor(
+                feature=str(item.get("feature") or label or "unknown"),
+                label=label,
+                value=item.get("value"),
+                unit=item.get("unit"),
+                impact=item.get("shap_contribution"),
+                method=method,
+            )
+        )
 
     try:
         district_name = (

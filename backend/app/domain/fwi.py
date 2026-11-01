@@ -226,3 +226,32 @@ def calculate_daily_fwi(
         bui=bui,
         fwi=fwi,
     )
+
+
+# Standard Van Wagner start-up moisture codes, used only when a region has no carry-over state
+# (first run, or a gap longer than FWI_MAX_CARRYOVER_GAP_DAYS).
+FWI_STARTUP = {"ffmc": 85.0, "dmc": 6.0, "dc": 15.0}
+FWI_MAX_CARRYOVER_GAP_DAYS = 3
+
+
+def fwi_inputs(
+    temp_max: float | None,
+    rh_mean: float | None,
+    wind_max_kmh: float | None,
+    precip_mm: float | None,
+) -> dict[str, float] | None:
+    """Map one day of weather to FWI inputs. Identical in training and live inference.
+
+    Uses daily max temperature, daily MEAN relative humidity (the training archive, NASA POWER,
+    has no daily RH minimum), daily max 10 m wind in km/h and 24 h precipitation.
+    Returns None if any input is missing; callers must skip the day rather than invent values.
+    """
+    values = (temp_max, rh_mean, wind_max_kmh, precip_mm)
+    if any(v is None for v in values):
+        return None
+    return {
+        "temp": float(temp_max),  # type: ignore[arg-type]
+        "rh": min(100.0, max(0.0, float(rh_mean))),  # type: ignore[arg-type]
+        "wind": max(0.0, float(wind_max_kmh)),  # type: ignore[arg-type]
+        "rain": max(0.0, float(precip_mm)),  # type: ignore[arg-type]
+    }

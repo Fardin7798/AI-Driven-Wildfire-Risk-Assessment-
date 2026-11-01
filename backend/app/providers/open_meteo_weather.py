@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import date, datetime
 from typing import Any
 
@@ -7,6 +8,18 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 from app.core.config import settings
 from app.core.logging import logger
 from app.providers.base import RawDailyWeather, WeatherProvider
+
+DAILY_VARIABLES = [
+    "temperature_2m_max",
+    "temperature_2m_min",
+    "temperature_2m_mean",
+    "relative_humidity_2m_mean",
+    "relative_humidity_2m_min",
+    "wind_speed_10m_max",
+    "precipitation_sum",
+    "et0_fao_evapotranspiration",
+    "soil_moisture_0_to_7cm_mean",
+]
 
 
 class OpenMeteoWeatherProvider(WeatherProvider):
@@ -25,44 +38,75 @@ class OpenMeteoWeatherProvider(WeatherProvider):
         reraise=True,
     )
     async def _get_json(self, url: str, params: dict[str, Any]) -> dict[str, Any]:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.get(url, params=params)
             if resp.status_code == 429:
                 logger.warn("open_meteo_rate_limited", url=url)
             resp.raise_for_status()
             return resp.json()
 
+    @staticmethod
+    def _value(daily: dict[str, Any], key: str, i: int) -> float | None:
+        """Return the i-th value of a daily series, or None when absent (never a default)."""
+        series = daily.get(key)
+        if not series or i >= len(series) or series[i] is None:
+            return None
+        return float(series[i])
+
     def _parse_daily_dict(
         self, daily: dict[str, Any], provider_name: str = "open_meteo"
     ) -> list[RawDailyWeather]:
         results: list[RawDailyWeather] = []
-        time_list = daily.get("time", [])
-
-        for i, dt_str in enumerate(time_list):
+        for i, dt_str in enumerate(daily.get("time", [])):
             try:
                 rec_date = datetime.strptime(dt_str, "%Y-%m-%d").date()
-                results.append(
-                    RawDailyWeather(
-                        record_date=rec_date,
-                        temp_max=float(daily.get("temperature_2m_max", [0.0])[i] or 0.0),
-                        temp_min=float(daily.get("temperature_2m_min", [0.0])[i] or 0.0),
-                        temp_mean=float(daily.get("temperature_2m_mean", [0.0])[i] or 0.0),
-                        rh_mean=float(daily.get("relative_humidity_2m_mean", [50.0])[i] or 50.0),
-                        rh_min=float(daily.get("relative_humidity_2m_min", [30.0])[i] or 30.0),
-                        wind_max=float(daily.get("wind_speed_10m_max", [10.0])[i] or 10.0),
-                        precip_sum=float(daily.get("precipitation_sum", [0.0])[i] or 0.0),
-                        et0=float(daily.get("et0_fao_evapotranspiration", [3.0])[i] or 3.0),
-                        soil_moisture=float(
-                            daily.get("soil_moisture_0_to_7cm_mean", [0.2])[i] or 0.2
-                        ),
-                        provider=provider_name,
-                    )
-                )
-            except Exception as e:
+            except (TypeError, ValueError) as e:
                 logger.warn("weather_parse_row_error", index=i, error=str(e))
                 continue
-
+            results.append(
+                RawDailyWeather(
+                    record_date=rec_date,
+                    temp_max=self._value(daily, "temperature_2m_max", i),
+                    temp_min=self._value(daily, "temperature_2m_min", i),
+                    temp_mean=self._value(daily, "temperature_2m_mean", i),
+                    rh_mean=self._value(daily, "relative_humidity_2m_mean", i),
+                    rh_min=self._value(daily, "relative_humidity_2m_min", i),
+                    wind_max=self._value(daily, "wind_speed_10m_max", i),
+                    precip_sum=self._value(daily, "precipitation_sum", i),
+                    et0=self._value(daily, "et0_fao_evapotranspiration", i),
+                    soil_moisture=self._value(daily, "soil_moisture_0_to_7cm_mean", i),
+                    provider=provider_name,
+                )
+            )
         return results
+
+    async def fetch_weather_forecast_batch(
+        self,
+        coords: Sequence[tuple[float, float]],
+        past_days: int = 3,
+        forecast_days: int = 3,
+    ) -> list[list[RawDailyWeather]]:
+        """Fetch daily weather for many points in ONE request (Open-Meteo multi-location).
+
+        Returns one list per input coordinate, in the same order.
+        """
+        if not coords:
+            return []
+        params = {
+            "latitude": ",".join(f"{lat:.4f}" for lat, _ in coords),
+            "longitude": ",".join(f"{lon:.4f}" for _, lon in coords),
+            "daily": DAILY_VARIABLES,
+            "past_days": past_days,
+            "forecast_days": forecast_days,
+            "timezone": "auto",
+        }
+        data = await self._get_json(self.forecast_url, params)
+        payloads = data if isinstance(data, list) else [data]
+        if len(payloads) != len(coords):
+            raise ValueError(
+                f"Open-Meteo returned {len(payloads)} locations for {len(coords)} requested"
+            )
+        return [self._parse_daily_dict(p.get("daily", {})) for p in payloads]
 
     async def fetch_weather_forecast(
         self, lat: float, lon: float, past_days: int = 3, forecast_days: int = 3
@@ -70,17 +114,7 @@ class OpenMeteoWeatherProvider(WeatherProvider):
         params = {
             "latitude": round(lat, 4),
             "longitude": round(lon, 4),
-            "daily": [
-                "temperature_2m_max",
-                "temperature_2m_min",
-                "temperature_2m_mean",
-                "relative_humidity_2m_mean",
-                "relative_humidity_2m_min",
-                "wind_speed_10m_max",
-                "precipitation_sum",
-                "et0_fao_evapotranspiration",
-                "soil_moisture_0_to_7cm_mean",
-            ],
+            "daily": DAILY_VARIABLES,
             "past_days": past_days,
             "forecast_days": forecast_days,
             "timezone": "auto",
@@ -97,17 +131,7 @@ class OpenMeteoWeatherProvider(WeatherProvider):
             "longitude": round(lon, 4),
             "start_date": start_date.isoformat(),
             "end_date": end_date.isoformat(),
-            "daily": [
-                "temperature_2m_max",
-                "temperature_2m_min",
-                "temperature_2m_mean",
-                "relative_humidity_2m_mean",
-                "relative_humidity_2m_min",
-                "wind_speed_10m_max",
-                "precipitation_sum",
-                "et0_fao_evapotranspiration",
-                "soil_moisture_0_to_7cm_mean",
-            ],
+            "daily": DAILY_VARIABLES,
             "timezone": "auto",
         }
         data = await self._get_json(self.archive_url, params)

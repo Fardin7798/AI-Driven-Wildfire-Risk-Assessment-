@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 from app.core.timeutil import today_ist
 from app.db.models.air_quality import AQForecast, AQObservation
 from app.db.models.region import Region
+from app.domain.names import normalize_name_key
 from app.providers.base import RawAQObservation
 
 
@@ -20,7 +21,8 @@ async def get_latest_air_quality(
     )
     if state:
         query = query.join(Region, AQObservation.region_id == Region.id).where(
-            func.lower(Region.state_name) == state.lower().strip()
+            func.regexp_replace(func.lower(Region.state_name), "[^a-z0-9]", "", "g")
+            == normalize_name_key(state)
         )
     query = query.limit(limit)
     result = await session.execute(query)

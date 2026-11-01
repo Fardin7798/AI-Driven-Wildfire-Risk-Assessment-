@@ -3,84 +3,88 @@ from datetime import timedelta
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
+from app.core.logging import logger
 from app.core.timeutil import today_ist
 from app.db.models.region import Region
 from app.db.models.weather import FWIState, WeatherDaily
 from app.db.session import async_session_factory
-from app.domain.fwi import calculate_daily_fwi
+from app.domain.fwi import FWI_MAX_CARRYOVER_GAP_DAYS, FWI_STARTUP, calculate_daily_fwi, fwi_inputs
 from app.jobs.scheduler import tracked_job
 
 
 @tracked_job("update_fwi_state")
 async def job_update_fwi_state() -> int:
     today = today_ist()
-    yesterday = today - timedelta(days=1)
+    gap_start = today - timedelta(days=FWI_MAX_CARRYOVER_GAP_DAYS)
     updated_count = 0
+    skipped_no_weather = 0
 
     async with async_session_factory() as session:
-        regions = (await session.execute(select(Region.id))).scalars().all()
+        region_ids = (await session.execute(select(Region.id))).scalars().all()
 
-        for region_id in regions:
-            # 1. Fetch yesterday's carry-over FWI state
-            prev_stmt = select(FWIState).where(
-                FWIState.region_id == region_id, FWIState.date == yesterday
+        prev_rows = (
+            (
+                await session.execute(
+                    select(FWIState)
+                    .where(FWIState.date >= gap_start, FWIState.date < today)
+                    .order_by(FWIState.region_id, FWIState.date.asc())
+                )
             )
-            prev_fwi = (await session.execute(prev_stmt)).scalar_one_or_none()
+            .scalars()
+            .all()
+        )
+        latest_prev: dict[int, FWIState] = {r.region_id: r for r in prev_rows}  # last wins
 
-            prev_ffmc = prev_fwi.ffmc if prev_fwi else 85.0
-            prev_dmc = prev_fwi.dmc if prev_fwi else 6.0
-            prev_dc = prev_fwi.dc if prev_fwi else 15.0
+        weather_rows = (
+            (await session.execute(select(WeatherDaily).where(WeatherDaily.date == today)))
+            .scalars()
+            .all()
+        )
+        weather_today: dict[int, WeatherDaily] = {}
+        for row in weather_rows:
+            # prefer observed/past-day rows over forecast rows for the same date
+            if row.region_id not in weather_today or not row.is_forecast:
+                weather_today[row.region_id] = row
 
-            # 2. Fetch today's weather
-            w_stmt = select(WeatherDaily).where(
-                WeatherDaily.region_id == region_id, WeatherDaily.date == today
-            )
-            w_row = (await session.execute(w_stmt)).scalar_one_or_none()
+        for region_id in region_ids:
+            w = weather_today.get(region_id)
+            inputs = fwi_inputs(w.temp_max, w.rh_mean, w.wind_max, w.precip_sum) if w else None
+            if inputs is None:
+                skipped_no_weather += 1
+                continue
 
-            temp = w_row.temp_max if (w_row and w_row.temp_max is not None) else 28.0
-            rh = w_row.rh_min if (w_row and w_row.rh_min is not None) else 40.0
-            wind = w_row.wind_max if (w_row and w_row.wind_max is not None) else 15.0
-            rain = w_row.precip_sum if (w_row and w_row.precip_sum is not None) else 0.0
-
-            # 3. Roll FWI calculation forward
+            prev = latest_prev.get(region_id)
             res = calculate_daily_fwi(
-                temp=temp,
-                rh=rh,
-                wind=wind,
-                rain=rain,
                 month=today.month,
-                prev_ffmc=prev_ffmc,
-                prev_dmc=prev_dmc,
-                prev_dc=prev_dc,
+                prev_ffmc=prev.ffmc if prev else FWI_STARTUP["ffmc"],
+                prev_dmc=prev.dmc if prev else FWI_STARTUP["dmc"],
+                prev_dc=prev.dc if prev else FWI_STARTUP["dc"],
+                **inputs,
             )
-
+            values = {
+                "ffmc": res.ffmc,
+                "dmc": res.dmc,
+                "dc": res.dc,
+                "isi": res.isi,
+                "bui": res.bui,
+                "fwi": res.fwi,
+            }
             stmt = (
                 insert(FWIState)
-                .values(
-                    region_id=region_id,
-                    date=today,
-                    ffmc=res.ffmc,
-                    dmc=res.dmc,
-                    dc=res.dc,
-                    isi=res.isi,
-                    bui=res.bui,
-                    fwi=res.fwi,
-                )
-                .on_conflict_do_update(
-                    index_elements=["region_id", "date"],
-                    set_={
-                        "ffmc": res.ffmc,
-                        "dmc": res.dmc,
-                        "dc": res.dc,
-                        "isi": res.isi,
-                        "bui": res.bui,
-                        "fwi": res.fwi,
-                    },
-                )
+                .values(region_id=region_id, date=today, **values)
+                .on_conflict_do_update(index_elements=["region_id", "date"], set_=values)
             )
             await session.execute(stmt)
             updated_count += 1
 
         await session.commit()
 
+    if skipped_no_weather:
+        logger.warn(
+            "fwi_regions_skipped_missing_weather", count=skipped_no_weather, date=str(today)
+        )
+    if updated_count == 0:
+        raise RuntimeError(
+            "FWI update wrote 0 rows: no weather for today (run ingest_weather first)"
+        )
     return updated_count

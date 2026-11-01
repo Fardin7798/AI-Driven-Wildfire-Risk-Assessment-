@@ -1,0 +1,15 @@
+{
+  "id": "shaikhfardin05/wildfire-risk-model-v2-training",
+  "title": "Wildfire Risk Model v2 Training",
+  "code_file": "wildfire_v2_training.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "false",
+  "enable_tpu": "false",
+  "enable_internet": "false",
+  "dataset_sources": ["shaikhfardin05/india-district-wildfire-v2"],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

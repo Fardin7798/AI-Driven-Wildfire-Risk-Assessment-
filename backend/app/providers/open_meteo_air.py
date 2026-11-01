@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from typing import Any
 
@@ -8,6 +9,15 @@ from app.core.config import settings
 from app.core.logging import logger
 from app.domain.aqi import calculate_cpcb_aqi
 from app.providers.base import AirQualityProvider, RawAQObservation
+
+POLLUTANTS = [
+    "pm10",
+    "pm2_5",
+    "carbon_monoxide",
+    "nitrogen_dioxide",
+    "sulphur_dioxide",
+    "ozone",
+]
 
 
 class OpenMeteoAirProvider(AirQualityProvider):
@@ -21,7 +31,7 @@ class OpenMeteoAirProvider(AirQualityProvider):
         reraise=True,
     )
     async def _get_json(self, params: dict[str, Any]) -> dict[str, Any]:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.get(self.air_url, params=params)
             resp.raise_for_status()
             return resp.json()
@@ -30,29 +40,16 @@ class OpenMeteoAirProvider(AirQualityProvider):
         params = {
             "latitude": round(lat, 4),
             "longitude": round(lon, 4),
-            "current": [
-                "pm10",
-                "pm2_5",
-                "carbon_monoxide",
-                "nitrogen_dioxide",
-                "sulphur_dioxide",
-                "ozone",
-            ],
-            "hourly": [
-                "pm10",
-                "pm2_5",
-                "carbon_monoxide",
-                "nitrogen_dioxide",
-                "sulphur_dioxide",
-                "ozone",
-            ],
-            "forecast_days": 3,
+            "current": POLLUTANTS,
             "timezone": "UTC",
         }
         data = await self._get_json(params)
-        results: list[RawAQObservation] = []
+        return self._parse_current(data, lat, lon)
 
-        # 1. Parse Current Observation
+    def _parse_current(
+        self, data: dict[str, Any], lat: float, lon: float
+    ) -> list[RawAQObservation]:
+        results: list[RawAQObservation] = []
         current = data.get("current", {})
         if current:
             try:
@@ -99,3 +96,25 @@ class OpenMeteoAirProvider(AirQualityProvider):
                 logger.warn("aqi_current_parse_error", error=str(e))
 
         return results
+
+    async def fetch_air_quality_batch(
+        self, coords: Sequence[tuple[float, float]]
+    ) -> list[list[RawAQObservation]]:
+        """Current CAMS pollutant values for many points in ONE request (multi-location)."""
+        if not coords:
+            return []
+        params = {
+            "latitude": ",".join(f"{lat:.4f}" for lat, _ in coords),
+            "longitude": ",".join(f"{lon:.4f}" for _, lon in coords),
+            "current": POLLUTANTS,
+            "timezone": "UTC",
+        }
+        data = await self._get_json(params)
+        payloads = data if isinstance(data, list) else [data]
+        if len(payloads) != len(coords):
+            raise ValueError(
+                f"Open-Meteo AQ returned {len(payloads)} locations for {len(coords)} requested"
+            )
+        return [
+            self._parse_current(p, lat, lon) for p, (lat, lon) in zip(payloads, coords, strict=True)
+        ]

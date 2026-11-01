@@ -2,13 +2,15 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
+from app.schemas.names import ReadableName
+
 
 class AQObservationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     region_id: int | None = None
-    district_name: str | None = None
-    state_name: str | None = None
+    district_name: ReadableName | None = None
+    state_name: ReadableName | None = None
     observed_at_utc: datetime
     pm25: float | None = None
     pm10: float | None = None
@@ -28,7 +30,7 @@ class AQForecastResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     region_id: int
-    district_name: str | None = None
+    district_name: ReadableName | None = None
     target_date: date
     horizon_days: int
     pm25_pred: float

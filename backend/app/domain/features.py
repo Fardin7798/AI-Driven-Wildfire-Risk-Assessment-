@@ -58,17 +58,60 @@ FEATURE_NAMES: list[str] = [
 ]
 
 
+# Features used by wildfire_xgb_v2. Every one of them can be produced identically from the
+# training archive (NASA POWER + FIRMS SP) and from live data (Open-Meteo + FIRMS NRT).
+# Excluded on purpose: rh_min, et0, soil_moisture (not in the training archive) and the
+# land-cover fractions (wf.regions.landcover is not populated in production yet).
+WILDFIRE_V2_FEATURES: list[str] = [
+    "temp_max",
+    "temp_mean",
+    "rh_mean",
+    "wind_max",
+    "precip_sum",
+    "precip_sum_3d",
+    "precip_sum_7d",
+    "precip_sum_14d",
+    "precip_sum_30d",
+    "temp_max_mean_7d",
+    "consecutive_dry_days",
+    "days_since_rain_gt_10mm",
+    "ffmc",
+    "dmc",
+    "dc",
+    "isi",
+    "bui",
+    "fwi",
+    "month_sin",
+    "month_cos",
+    "day_of_year_sin",
+    "day_of_year_cos",
+    "lat",
+    "lon",
+    "fires_prev_7d",
+    "fires_prev_30d",
+    "climatological_fire_freq",
+]
+
+# Weather history window used for rolling features, in training AND live inference.
+ROLLING_WINDOW_DAYS = 31
+
+
 @dataclass(frozen=True)
 class DailyWeatherRecord:
     record_date: date
     temp_max: float
     temp_mean: float
-    rh_min: float
+    rh_min: float | None
     rh_mean: float
     wind_max: float
     precip_sum: float
-    et0: float
-    soil_moisture: float
+    et0: float | None
+    soil_moisture: float | None
+
+
+def _num(value: float | None) -> float:
+    """Optional weather value as float; missing -> NaN (never a made-up default)."""
+    return float("nan") if value is None else float(value)
 
 
 def compute_cyclical_features(target_date: date) -> dict[str, float]:
@@ -92,17 +135,20 @@ def compute_rolling_weather_features(
     history must be sorted chronologically ascending up to target_date.
     """
     # Enforce strictly no future records
-    valid_history = [r for r in history if r.record_date <= target_date]
+    valid_history = [r for r in history if r.record_date <= target_date][-ROLLING_WINDOW_DAYS:]
     if not valid_history:
+        # No history: every rolling feature is unknown. NaN makes the predictor fall back
+        # instead of scoring invented weather.
+        nan = float("nan")
         return {
-            "precip_sum_3d": 0.0,
-            "precip_sum_7d": 0.0,
-            "precip_sum_14d": 0.0,
-            "precip_sum_30d": 0.0,
-            "temp_max_mean_7d": 25.0,
-            "rh_min_mean_7d": 40.0,
-            "consecutive_dry_days": 0.0,
-            "days_since_rain_gt_10mm": 30.0,
+            "precip_sum_3d": nan,
+            "precip_sum_7d": nan,
+            "precip_sum_14d": nan,
+            "precip_sum_30d": nan,
+            "temp_max_mean_7d": nan,
+            "rh_min_mean_7d": nan,
+            "consecutive_dry_days": nan,
+            "days_since_rain_gt_10mm": nan,
         }
 
     # Reverse to iterate backwards from target_date
@@ -115,7 +161,8 @@ def compute_rolling_weather_features(
 
     recent_7d = rev[:7]
     temp_max_mean_7d = sum(r.temp_max for r in recent_7d) / len(recent_7d)
-    rh_min_mean_7d = sum(r.rh_min for r in recent_7d) / len(recent_7d)
+    rh_min_vals = [r.rh_min for r in recent_7d if r.rh_min is not None]
+    rh_min_mean_7d = sum(rh_min_vals) / len(rh_min_vals) if rh_min_vals else float("nan")
 
     # Consecutive dry days (precip < 1.0 mm)
     dry_days = 0.0
@@ -170,12 +217,12 @@ def extract_features(
     row: dict[str, float] = {
         "temp_max": current_weather.temp_max,
         "temp_mean": current_weather.temp_mean,
-        "rh_min": current_weather.rh_min,
+        "rh_min": _num(current_weather.rh_min),
         "rh_mean": current_weather.rh_mean,
         "wind_max": current_weather.wind_max,
         "precip_sum": current_weather.precip_sum,
-        "et0": current_weather.et0,
-        "soil_moisture": current_weather.soil_moisture,
+        "et0": _num(current_weather.et0),
+        "soil_moisture": _num(current_weather.soil_moisture),
         "precip_sum_3d": rolling["precip_sum_3d"],
         "precip_sum_7d": rolling["precip_sum_7d"],
         "precip_sum_14d": rolling["precip_sum_14d"],
@@ -184,12 +231,12 @@ def extract_features(
         "rh_min_mean_7d": rolling["rh_min_mean_7d"],
         "consecutive_dry_days": rolling["consecutive_dry_days"],
         "days_since_rain_gt_10mm": rolling["days_since_rain_gt_10mm"],
-        "ffmc": fwi_values.get("ffmc", 85.0),
-        "dmc": fwi_values.get("dmc", 6.0),
-        "dc": fwi_values.get("dc", 15.0),
-        "isi": fwi_values.get("isi", 2.0),
-        "bui": fwi_values.get("bui", 8.0),
-        "fwi": fwi_values.get("fwi", 5.0),
+        "ffmc": float(fwi_values["ffmc"]),
+        "dmc": float(fwi_values["dmc"]),
+        "dc": float(fwi_values["dc"]),
+        "isi": float(fwi_values["isi"]),
+        "bui": float(fwi_values["bui"]),
+        "fwi": float(fwi_values["fwi"]),
         "month_sin": cyclical["month_sin"],
         "month_cos": cyclical["month_cos"],
         "day_of_year_sin": cyclical["day_of_year_sin"],

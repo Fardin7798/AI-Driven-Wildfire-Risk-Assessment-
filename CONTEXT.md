@@ -52,12 +52,12 @@ Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Ri
   - [x] `app/services/risk_service.py`
   - [x] `app/services/preparedness_service.py`
 
-- [x] **Phase 7: Scheduled Ingestion - [x] **Phase 7: Scheduled Ingestion & Background Jobs** Background Jobs**
+- [x] **Phase 7: Scheduled Ingestion & Background Jobs**
   - [x] `app/jobs/scheduler.py` (APScheduler + Postgres advisory lock)
   - [x] Job implementations: `ingest_fires`, `ingest_weather`, `update_fwi_state`, `predict_risk`, `ingest_air_quality`, `forecast_aqi`, `retention`
   - [x] Idempotent upserts & `ingestion_runs` tracking
 
-- [x] **Phase 8: FastAPI API Layer - [x] **Phase 8: FastAPI API Layer & Internal Jobs Endpoint** Internal Jobs Endpoint**
+- [x] **Phase 8: FastAPI API Layer & Internal Jobs Endpoint**
   - [x] Application factory, lifespan, CORS, rate limiting (`slowapi`), JSON logger (`structlog`)
   - [x] Pydantic v2 schemas for all responses
   - [x] API v1 endpoints: `/health`, `/regions`, `/risk`, `/fires`, `/air-quality`, `/weather`, `/models`, `/preparedness`, `/meta`, `/internal/jobs`, `/geo/cities`
@@ -79,3 +79,17 @@ Rebuilding the complete backend and ML infrastructure for "AI-Driven Wildfire Ri
   - [x] Fallbacks for weather and air quality active and validated
   - [x] 100% test pass (pytest 20/20, ruff 0 errors, mypy 80/80 files clean)
   - [x] Production deployment live on `main` branch
+
+
+- [~] **Phase 12: Production data fixes & honest model (2026-11-01)**
+  - [x] Per-job advisory locks + staggered daily chain (weather was skipped every night)
+  - [x] Open-Meteo multi-location batching (weather daily, AQ every 6 h) to stop HTTP 429
+  - [x] Removed silent default weather/FWI/risk values; missing data now skips or shows `has_prediction: false`
+  - [x] Predictor falls back to FWI when a model feature is missing (no zero-filling); TreeSHAP top factors
+  - [x] Fire stats by source/state; readable GADM names; state filter tolerant of spaces
+  - [x] `/models/current` reports what is actually served; fabricated comparison numbers removed
+  - [x] Retired leaky `wildfire_xgb_v1` and synthetic-data notebooks
+  - [x] Wildfire v2 pipeline (FIRMS SP + NASA POWER + backend feature code) and Kaggle kernel
+  - [ ] Train `wildfire_xgb_v2` (owner decides where/how) and commit artifacts
+  - [ ] AQI model on the same source it is served on (CAMS) with persistence baseline
+  - [ ] Landcover (WorldCover) into `wf.regions`
