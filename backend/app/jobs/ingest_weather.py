@@ -6,13 +6,13 @@ from app.core.logging import logger
 from app.db.models.region import Region
 from app.db.session import async_session_factory
 from app.jobs.scheduler import tracked_job
+from app.providers.open_meteo_http import BATCH_PAUSE_SECONDS, OpenMeteoQuotaExceeded
 from app.providers.open_meteo_weather import OpenMeteoWeatherProvider
 from app.providers.registry import registry
 from app.services.weather_service import upsert_daily_weather
 
 # Open-Meteo multi-location requests: one HTTP call per batch instead of one per district.
 WEATHER_BATCH_SIZE = 50
-BATCH_PAUSE_SECONDS = 2.0
 
 
 @tracked_job("ingest_weather")
@@ -50,6 +50,9 @@ async def job_ingest_weather() -> int:
                         )
                         for lat, lon in coords
                     ]
+            except OpenMeteoQuotaExceeded as e:
+                logger.error("open_meteo_quota_exceeded_stopping", error=str(e))
+                break
             except Exception as e:
                 failed_batches += 1
                 logger.warn(

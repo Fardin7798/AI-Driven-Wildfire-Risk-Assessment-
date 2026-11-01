@@ -26,6 +26,10 @@ def job_lock_key(job_name: str) -> int:
     return zlib.crc32(job_name.encode()) & 0x7FFFFFFF
 
 
+class JobFailedError(RuntimeError):
+    """A tracked job ran and failed; the ingestion_runs row holds the details."""
+
+
 def tracked_job(job_name: str):
     """Decorator to ensure every job records an ingestion_run row and respects locking."""
 
@@ -33,6 +37,7 @@ def tracked_job(job_name: str):
         @functools.wraps(func)
         async def wrapper() -> int:
             rows_written = 0
+            failure: str | None = None
             lock_key = job_lock_key(job_name)
             try:
                 async with engine.connect() as conn:
@@ -82,6 +87,7 @@ def tracked_job(job_name: str):
                             err_str = err_str.replace(settings.DATAGOVIN_API_KEY, "***")
                         err_msg = err_str
                         logger.error("job_failed", job=job_name, error=err_msg)
+                        failure = err_msg
                     finally:
                         if run_id:
                             async with async_session_factory() as session:
@@ -104,6 +110,9 @@ def tracked_job(job_name: str):
                 logger.error("job_connection_error", job=job_name, error=str(outer_err))
                 return 0
 
+            if failure is not None:
+                # Surface the failure to manual callers (/internal/jobs) instead of "success, 0".
+                raise JobFailedError(f"{job_name}: {failure}")
             return rows_written
 
         return wrapper

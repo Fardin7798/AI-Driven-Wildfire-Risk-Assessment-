@@ -8,13 +8,13 @@ from app.db.models.region import Region
 from app.db.session import async_session_factory
 from app.jobs.scheduler import tracked_job
 from app.providers.open_meteo_air import OpenMeteoAirProvider
+from app.providers.open_meteo_http import BATCH_PAUSE_SECONDS, OpenMeteoQuotaExceeded
 from app.providers.registry import registry
 from app.services.air_quality_service import upsert_aq_observation
 
 # One multi-location request per batch keeps us inside Open-Meteo's free-tier limits
 # (all districts every 6 hours = ~2,700 location-calls/day instead of 16k+/day hourly).
 AQ_BATCH_SIZE = 50
-BATCH_PAUSE_SECONDS = 2.0
 
 
 @tracked_job("ingest_air_quality")
@@ -45,6 +45,9 @@ async def job_ingest_air_quality() -> int:
                     per_region = [
                         await aq_provider.fetch_air_quality(lat=lat, lon=lon) for lat, lon in coords
                     ]
+            except OpenMeteoQuotaExceeded as e:
+                logger.error("open_meteo_quota_exceeded_stopping", error=str(e))
+                break
             except Exception as e:
                 logger.warn(
                     "aq_batch_fetch_failed",

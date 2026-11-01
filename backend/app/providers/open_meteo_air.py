@@ -2,13 +2,11 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from typing import Any
 
-import httpx
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
-
 from app.core.config import settings
 from app.core.logging import logger
 from app.domain.aqi import calculate_cpcb_aqi
 from app.providers.base import AirQualityProvider, RawAQObservation
+from app.providers.open_meteo_http import get_json
 
 POLLUTANTS = [
     "pm10",
@@ -24,17 +22,8 @@ class OpenMeteoAirProvider(AirQualityProvider):
     def __init__(self, air_url: str = settings.OPEN_METEO_AIR_QUALITY_URL):
         self.air_url = air_url
 
-    @retry(
-        retry=retry_if_exception_type((httpx.RequestError, httpx.HTTPStatusError)),
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=2.0, min=2, max=15),
-        reraise=True,
-    )
-    async def _get_json(self, params: dict[str, Any]) -> dict[str, Any]:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.get(self.air_url, params=params)
-            resp.raise_for_status()
-            return resp.json()
+    async def _get_json(self, params: dict[str, Any]) -> Any:
+        return await get_json(self.air_url, params)
 
     async def fetch_air_quality(self, lat: float, lon: float) -> list[RawAQObservation]:
         params = {

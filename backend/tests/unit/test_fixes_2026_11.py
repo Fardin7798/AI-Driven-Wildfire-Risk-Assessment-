@@ -208,3 +208,35 @@ def test_firms_window_url_has_start_date():
     rows = asyncio.run(run())
     assert seen[0].endswith("/68,6,97,37/5/2026-10-01")
     assert rows == []  # rows without a timestamp are dropped, never given a fake date
+
+
+def test_open_meteo_quota_handling(monkeypatch):
+    import asyncio
+
+    import httpx
+    import pytest
+
+    from app.providers import open_meteo_http as om
+
+    replies = iter(
+        [
+            httpx.Response(429, text='{"reason":"Minutely API request limit exceeded"}'),
+            httpx.Response(200, json={"ok": 1}),
+        ]
+    )
+    real_client = httpx.AsyncClient
+
+    def fake_client(*a, **k):
+        k["transport"] = httpx.MockTransport(lambda req: next(replies))
+        return real_client(*a, **k)
+
+    async def no_sleep(_):
+        return None
+
+    monkeypatch.setattr(om.httpx, "AsyncClient", fake_client)
+    monkeypatch.setattr(om.asyncio, "sleep", no_sleep)
+    assert asyncio.run(om.get_json("https://x.test", {})) == {"ok": 1}
+
+    replies = iter([httpx.Response(429, text='{"reason":"Hourly API request limit exceeded"}')])
+    with pytest.raises(om.OpenMeteoQuotaExceeded):
+        asyncio.run(om.get_json("https://x.test", {}))

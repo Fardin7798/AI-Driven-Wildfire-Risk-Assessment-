@@ -2,12 +2,10 @@ from collections.abc import Sequence
 from datetime import date, datetime
 from typing import Any
 
-import httpx
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
-
 from app.core.config import settings
 from app.core.logging import logger
 from app.providers.base import RawDailyWeather, WeatherProvider
+from app.providers.open_meteo_http import get_json
 
 DAILY_VARIABLES = [
     "temperature_2m_max",
@@ -31,19 +29,8 @@ class OpenMeteoWeatherProvider(WeatherProvider):
         self.forecast_url = forecast_url
         self.archive_url = archive_url
 
-    @retry(
-        retry=retry_if_exception_type((httpx.RequestError, httpx.HTTPStatusError)),
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=2.0, min=2, max=15),
-        reraise=True,
-    )
-    async def _get_json(self, url: str, params: dict[str, Any]) -> dict[str, Any]:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.get(url, params=params)
-            if resp.status_code == 429:
-                logger.warn("open_meteo_rate_limited", url=url)
-            resp.raise_for_status()
-            return resp.json()
+    async def _get_json(self, url: str, params: dict[str, Any]) -> Any:
+        return await get_json(url, params)
 
     @staticmethod
     def _value(daily: dict[str, Any], key: str, i: int) -> float | None:
