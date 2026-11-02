@@ -39,7 +39,7 @@ export default function Home() {
 
   return (
     <main style={{ zoom: "var(--z, 1)" } as React.CSSProperties}>
-      <Nav />
+      <Nav active="" />
       <Hero />
       <FiresThisWeek fires={fires} />
       <YourDistrict risk={risk} aq={aq} />
@@ -240,7 +240,7 @@ function WhyToday({ risk }: { risk: Risk | null }) {
         ))}
         <motion.h3 variants={up} custom={4} className="absolute text-[24px] font-semibold leading-[normal]" style={{ left: 72, top: 470 }}>Stay safe</motion.h3>
         {SAFETY.map((c, j) => (
-          <motion.a key={c.stage} href={`#stay-safe-${c.stage}`} variants={up} custom={5 + j} whileHover={{ y: -6, borderColor: "#F9731666" }}
+          <motion.a key={c.stage} href={`/stay-safe?stage=${c.stage}`} variants={up} custom={5 + j} whileHover={{ y: -6, borderColor: "#F9731666" }}
             className="absolute rounded-[16px] border border-line bg-surface" style={{ left: 72 + j * 440, top: 518, width: 416, height: 232 }}>
             <span className="absolute rounded-full" style={{ left: 168, top: 34, width: 80, height: 80, background: radial("#F97316", 0.22) }} />
             <Icon name={c.icon} size={44} color="#F97316" strokeWidth={2} className="absolute" style={{ left: 186, top: 52 }} />

@@ -1,8 +1,9 @@
 const LINKS = [
   { l: "Map", href: "/map" },
-  { l: "Alerts", href: "#" },
-  { l: "Air Quality", href: "#" },
-  { l: "Stay Safe", href: "#" },
+  { l: "Alerts", href: "/alerts" },
+  { l: "Air Quality", href: "/air-quality" },
+  { l: "Stay Safe", href: "/stay-safe" },
+  { l: "About", href: "/about" },
 ];
 
 export function Nav({ active = "Map" }: { active?: string }) {

@@ -359,7 +359,7 @@ function Panel({ risk, aq, place }: { risk: Risk | null; aq: AirQuality | null; 
               </div>
             ))}
           </div>
-          <a href={`#district-${risk.region_id}`} className="mt-[28px] flex h-[52px] items-center justify-center rounded-[14px] bg-ember text-[16px] font-semibold text-white shadow-[0_0_24px_#F9731655] transition hover:brightness-110">
+          <a href={`/district/${risk.region_id}`} className="mt-[28px] flex h-[52px] items-center justify-center rounded-[14px] bg-ember text-[16px] font-semibold text-white shadow-[0_0_24px_#F9731655] transition hover:brightness-110">
             Open full details
           </a>
           <p className="mt-[16px] text-[12px] leading-[16px] text-muted" title={risk.disclaimer_short}>Updated {shortTime(risk.as_of.ist)} · Not an official warning.</p>
