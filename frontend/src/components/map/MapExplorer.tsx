@@ -34,15 +34,22 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
   const [aq, setAq] = useState<AirQuality | null>(null);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+  const [noGL, setNoGL] = useState(false);
 
   // map
   useEffect(() => {
     if (!box.current) return;
-    const map = new maplibregl.Map({
+    let map: MLMap;
+    try {
+      map = new maplibregl.Map({
       container: box.current, style: BASEMAP, bounds: INDIA_BOUNDS,
       fitBoundsOptions: { padding: { top: 120, bottom: 40, left: 40, right: 40 } },
       attributionControl: false, dragRotate: false, pitchWithRotate: false,
     });
+    } catch {
+      setNoGL(true); // no WebGL in this browser
+      return;
+    }
     map.touchZoomRotate.disableRotation();
     map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
     mapRef.current = map;
@@ -122,6 +129,11 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
   return (
     <div className="relative h-full w-full overflow-hidden">
       <div className="absolute inset-0"><div ref={box} style={{ width: "100%", height: "100%" }} /></div>
+      {noGL && (
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[16px] border border-line bg-surface px-6 py-4 text-center text-[15px] text-muted">
+          This browser can&apos;t show the map (WebGL is off). Try Chrome, Edge or Firefox.
+        </div>
+      )}
       {!bare && (
         <>
           {/* Search / Back */}
