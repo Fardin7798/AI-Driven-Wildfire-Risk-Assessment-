@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "copy:maplibre": "mkdir -p public/maplibre && cp node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs public/maplibre/",
+    "predev": "npm run copy:maplibre",
+    "prebuild": "npm run copy:maplibre"
   },
   "dependencies": {
     "framer-motion": "^14.9.0",

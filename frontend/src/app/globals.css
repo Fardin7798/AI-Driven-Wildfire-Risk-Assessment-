@@ -14,7 +14,9 @@
 html, body { background: #0B0D12; color: #fff; }
 body { font-family: var(--font-inter), system-ui, sans-serif; overflow-x: hidden; }
 
-/* The design is drawn on a 1440 x 900 stage; scale it to the viewport width. */
-.stage-root { zoom: var(--z, 1); }
-.stage { position: relative; width: 1440px; height: 900px; margin: 0 auto; }
-.abs { position: absolute; }
+
+
+/* MapLibre attribution in the dark theme */
+.maplibregl-ctrl-attrib.maplibregl-compact { background: #151922E6 !important; color: #9AA3B2; border: 1px solid #262B36; }
+.maplibregl-ctrl-attrib, .maplibregl-ctrl-attrib * { color: #9AA3B2 !important; }
+.maplibregl-ctrl-attrib-button { filter: invert(1) opacity(.6); }
