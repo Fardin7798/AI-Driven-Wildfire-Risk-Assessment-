@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+/* tokens/tokens.json (WildfireRisk tokens v1) */
+@theme inline {
+  --color-bg: #0B0D12;
+  --color-surface: #151922;
+  --color-line: #262B36;
+  --color-muted: #9AA3B2;
+  --color-ember: #F97316;
+  --color-amber: #F59E0B;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+}
+
+html, body { background: #0B0D12; color: #fff; }
+body { font-family: var(--font-inter), system-ui, sans-serif; overflow-x: hidden; }
+
+/* The design is drawn on a 1440 x 900 stage; scale it to the viewport width. */
+.stage-root { zoom: var(--z, 1); }
+.stage { position: relative; width: 1440px; height: 900px; margin: 0 auto; }
+.abs { position: absolute; }
