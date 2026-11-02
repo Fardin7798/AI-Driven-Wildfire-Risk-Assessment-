@@ -67,7 +67,7 @@ export default function DistrictPage() {
       {/* History */}
       <Card className="mt-6" i={2}>
         <div className="flex items-baseline justify-between">
-          <h2 className="text-[24px] font-semibold">Last 14 days</h2>
+          <h2 className="text-[24px] font-semibold">Recent days</h2>
           <span className="text-[13px] text-muted">Chance of wildfire each day</span>
         </div>
         {hist.error ? <p className="mt-4 text-muted">History not available.</p> : !hist.data ? <Skeleton h={200} className="mt-6" /> : (
