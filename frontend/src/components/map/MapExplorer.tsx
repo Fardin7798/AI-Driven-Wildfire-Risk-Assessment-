@@ -20,6 +20,12 @@ const COLOR_EXPR = ["match", ["coalesce", ["get", "risk_class"], "none"],
   "Low", RISK_COLORS.Low, "Moderate", RISK_COLORS.Moderate, "High", RISK_COLORS.High, "Extreme", RISK_COLORS.Extreme, NO_DATA,
 ] as unknown as maplibregl.ExpressionSpecification;
 const PANEL_W = 416, PANEL_GAP = 24;
+const isMobile = () => typeof window !== "undefined" && window.innerWidth < 768;
+function useMobile() {
+  const [m, setM] = useState(isMobile);
+  useEffect(() => { const f = () => setM(isMobile()); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
+  return m;
+}
 
 type Town = { name: string; state: string; district: string; lat: number; lon: number; display_name?: string };
 type Place = { name: string; lat: number; lon: number; shape: GeoJSON.Polygon | GeoJSON.MultiPolygon; real: boolean } | null;
@@ -45,6 +51,7 @@ export default function MapExplorer({ initialId, initialQuery, bare = false }: {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [noGL, setNoGL] = useState(false);
+  const mobile = useMobile();
 
   // map
   useEffect(() => {
@@ -53,7 +60,7 @@ export default function MapExplorer({ initialId, initialQuery, bare = false }: {
     try {
       map = new maplibregl.Map({
       container: box.current, style: BASEMAP, bounds: INDIA_BOUNDS,
-      fitBoundsOptions: { padding: { top: 120, bottom: 40, left: 40, right: 40 } },
+      fitBoundsOptions: { padding: isMobile() ? { top: 140, bottom: 90, left: 16, right: 16 } : { top: 120, bottom: 40, left: 40, right: 40 } },
       attributionControl: false, dragRotate: false, pitchWithRotate: false,
     });
     } catch {
@@ -131,7 +138,7 @@ export default function MapExplorer({ initialId, initialQuery, bare = false }: {
       url.searchParams.delete("d"); window.history.replaceState(null, "", url);
       (map.getSource("boundary") as GeoJSONSource).setData({ type: "FeatureCollection", features: [] });
       setRisk(null); setAq(null);
-      map.fitBounds(INDIA_BOUNDS, { padding: { top: 120, bottom: 40, left: 40, right: 40 }, duration: 1800, essential: true });
+      map.fitBounds(INDIA_BOUNDS, { padding: isMobile() ? { top: 140, bottom: 90, left: 16, right: 16 } : { top: 120, bottom: 40, left: 40, right: 40 }, duration: 1800, essential: true });
       return;
     }
     url.searchParams.set("d", String(sel)); window.history.replaceState(null, "", url);
@@ -150,7 +157,7 @@ export default function MapExplorer({ initialId, initialQuery, bare = false }: {
       map.setPaintProperty("boundary-line", "line-width", town ? 1 : 2.5);
       map.setPaintProperty("boundary-line", "line-opacity", town ? 0.45 : 1);
       map.fitBounds(bbox(town ? place!.shape : reg.geom), {
-        padding: { top: 140, bottom: 80, left: 120, right: PANEL_W + PANEL_GAP + 120 }, duration: 2600, curve: 1.6, essential: true, maxZoom: town ? 13 : 9,
+        padding: isMobile() ? { top: 130, bottom: Math.round(window.innerHeight * 0.55) + 24, left: 32, right: 32 } : { top: 140, bottom: 80, left: 120, right: PANEL_W + PANEL_GAP + 120 }, duration: 2600, curve: 1.6, essential: true, maxZoom: town ? 13 : 9,
       });
     }).catch(() => {});
     return () => { alive = false; };
@@ -227,12 +234,12 @@ export default function MapExplorer({ initialId, initialQuery, bare = false }: {
           <AnimatePresence mode="wait">
             {sel == null ? (
               <motion.div key="search" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                className="absolute" style={{ left: 32, top: 104, width: 400 }}>
+                className="absolute" style={mobile ? { left: 16, right: 16, top: 88 } : { left: 32, top: 104, width: 400 }}>
                 <label className="relative flex h-[56px] items-center rounded-[16px] border border-line bg-surface focus-within:border-ember/60">
                   <input value={q} onChange={(e) => { setQ(e.target.value); setOpen(true); }} placeholder="Search district or town" aria-label="Search district or town"
                     onKeyDown={(e) => { if (e.key !== "Enter") return; if (matches[0]) pick(matches[0].properties.region_id); else if (towns[0]) pickTown(towns[0]); }}
-                    className="h-full w-full bg-transparent pl-[20px] pr-[56px] text-[18px] text-white outline-none placeholder:text-muted" />
-                  <Icon name="search" size={22} color="#9AA3B2" className="absolute" style={{ left: 360, top: 16 }} />
+                    className="h-full w-full bg-transparent pl-[20px] pr-[56px] text-[16px] md:text-[18px] text-white outline-none placeholder:text-muted" />
+                  <Icon name="search" size={22} color="#9AA3B2" className="absolute" style={{ right: 18, top: 16 }} />
                 </label>
                 {open && q.trim().length >= 2 && (
                   <ul className="mt-2 max-h-[420px] overflow-y-auto rounded-[16px] border border-line bg-surface">
@@ -265,7 +272,7 @@ export default function MapExplorer({ initialId, initialQuery, bare = false }: {
             ) : (
               <motion.button key="back" onClick={() => { setPlace(null); setSel(null); }} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }}
                 className="absolute flex h-[40px] items-center gap-[8px] rounded-[20px] border border-line bg-surface/90 pl-[14px] pr-[18px] text-[15px] backdrop-blur-md hover:border-ember/60"
-                style={{ left: 32, top: 104 }}>
+                style={mobile ? { left: 16, top: 88 } : { left: 32, top: 104 }}>
                 <Icon name="arrow-left" size={16} />Back to India
               </motion.button>
             )}
@@ -275,10 +282,11 @@ export default function MapExplorer({ initialId, initialQuery, bare = false }: {
           <AnimatePresence>
             {sel == null && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-                className="absolute rounded-[16px] border border-line bg-surface" style={{ left: 32, bottom: 72, width: 168, padding: 20 }}>
-                <p className="text-[15px] font-semibold leading-[20px]">Risk today</p>
+                className={`absolute rounded-[16px] border border-line bg-surface ${mobile ? "flex items-center gap-[12px]" : ""}`}
+                style={mobile ? { left: 16, bottom: 24, padding: "10px 14px" } : { left: 32, bottom: 72, width: 168, padding: 20 }}>
+                {!mobile && <p className="text-[15px] font-semibold leading-[20px]">Risk today</p>}
                 {["Low", "Moderate", "High", "Extreme"].map((c) => (
-                  <p key={c} className="mt-[8px] flex items-center gap-[10px] text-[15px] leading-[20px]">
+                  <p key={c} className={`${mobile ? "" : "mt-[8px]"} flex items-center gap-[6px] md:gap-[10px] text-[13px] md:text-[15px] leading-[20px]`}>
                     <span className="h-[10px] w-[10px] rounded-full" style={{ background: RISK_COLORS[c], boxShadow: `0 0 8px ${RISK_COLORS[c]}` }} />{c}
                   </p>
                 ))}
@@ -287,12 +295,12 @@ export default function MapExplorer({ initialId, initialQuery, bare = false }: {
           </AnimatePresence>
 
           {/* Zoom */}
-          <div className="absolute flex flex-col overflow-hidden rounded-[12px] border border-line bg-surface"
-            style={{ right: sel == null ? 32 : PANEL_W + PANEL_GAP + 24, bottom: 32, transition: "right .5s" }}>
+          {!(mobile && sel != null) && <div className="absolute flex flex-col overflow-hidden rounded-[12px] border border-line bg-surface"
+            style={mobile ? { right: 16, bottom: 84 } : { right: sel == null ? 32 : PANEL_W + PANEL_GAP + 24, bottom: 32, transition: "right .5s" }}>
             <button aria-label="Zoom in" onClick={() => mapRef.current?.zoomIn()} className="h-[40px] w-[40px] text-[20px] hover:bg-white/5">+</button>
             <span className="h-px bg-line" />
             <button aria-label="Zoom out" onClick={() => mapRef.current?.zoomOut()} className="h-[40px] w-[40px] text-[20px] hover:bg-white/5">−</button>
-          </div>
+          </div>}
 
           {/* Tooltip */}
           {hover && (
@@ -304,7 +312,7 @@ export default function MapExplorer({ initialId, initialQuery, bare = false }: {
 
           {/* Panel */}
           <AnimatePresence>
-            {sel != null && <Panel key={sel} risk={risk} aq={aq} place={place} />}
+            {sel != null && <Panel key={sel} risk={risk} aq={aq} place={place} mobile={mobile} />}
           </AnimatePresence>
 
           {!points && (
@@ -318,15 +326,17 @@ export default function MapExplorer({ initialId, initialQuery, bare = false }: {
   );
 }
 
-function Panel({ risk, aq, place }: { risk: Risk | null; aq: AirQuality | null; place: Place }) {
+function Panel({ risk, aq, place, mobile }: { risk: Risk | null; aq: AirQuality | null; place: Place; mobile: boolean }) {
   const cls = risk?.risk_class;
   const col = (cls && RISK_COLORS[cls]) || NO_DATA;
   const aqCol = (aq?.aqi_category && RISK_COLORS[aq.aqi_category]) || "#F59E0B";
   const fires30 = risk?.top_factors.find((f) => f.feature === "fires_prev_30d")?.value ?? null;
   return (
-    <motion.aside initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0, transition: { duration: 0.7, ease, delay: 0.5 } }} exit={{ opacity: 0, x: 40, transition: { duration: 0.3 } }}
+    <motion.aside initial={mobile ? { opacity: 0, y: 60 } : { opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0, y: 0, transition: { duration: 0.7, ease, delay: 0.5 } }}
+      exit={mobile ? { opacity: 0, y: 60, transition: { duration: 0.3 } } : { opacity: 0, x: 40, transition: { duration: 0.3 } }}
       className="absolute overflow-y-auto rounded-[16px] border border-line bg-surface"
-      style={{ right: PANEL_GAP, top: 96, bottom: PANEL_GAP, width: PANEL_W, padding: 32 }}>
+      style={mobile ? { left: 8, right: 8, bottom: 8, maxHeight: "55vh", padding: 20 } : { right: PANEL_GAP, top: 96, bottom: PANEL_GAP, width: PANEL_W, padding: 32 }}>
+      {mobile && <div className="mx-auto -mt-[8px] mb-[12px] h-[4px] w-[40px] rounded-full bg-line" />}
       {!risk ? (
         <div className="space-y-4">
           <div className="h-[96px] w-[260px] animate-pulse rounded-lg bg-white/5" />
@@ -337,17 +347,17 @@ function Panel({ risk, aq, place }: { risk: Risk | null; aq: AirQuality | null; 
         <>
           {place ? (
             <>
-              <h2 className="text-[40px] font-bold leading-[48px]">{place.name}</h2>
+              <h2 className="text-[30px] font-bold leading-[36px] md:text-[40px] md:leading-[48px]">{place.name}</h2>
               <p className="mt-[6px] text-[16px] leading-[22px] text-muted">in {risk.district_name} district, {risk.state_name}</p>
               <p className="mt-[4px] text-[13px] leading-[18px] text-muted">Forecast is for the whole district.</p>
             </>
           ) : (
-            <h2 className="text-[40px] font-bold leading-[48px]">{risk.district_name},<br />{risk.state_name}</h2>
+            <h2 className="text-[30px] font-bold leading-[36px] md:text-[40px] md:leading-[48px]">{risk.district_name},<br />{risk.state_name}</h2>
           )}
           <span className="mt-[16px] inline-flex h-[32px] items-center rounded-[16px] px-[14px] text-[13px] font-semibold"
             style={{ color: col, background: `${col}24`, border: `1px solid ${col}E6` }}>{RISK_BADGE[cls!] ?? "No forecast yet"}</span>
           <div className="mt-[16px] flex items-center">
-            <span className="text-[88px] font-bold leading-[96px]" style={{ color: col }}><CountUp to={Math.round(risk.probability * 100)} suffix="%" /></span>
+            <span className="text-[64px] font-bold leading-[72px] md:text-[88px] md:leading-[96px]" style={{ color: col }}><CountUp to={Math.round(risk.probability * 100)} suffix="%" /></span>
             <span className="ml-[16px] text-[18px] font-semibold leading-[24px]">chance of<br />wildfire today</span>
           </div>
           <div className="mt-[20px] grid grid-cols-2 gap-[16px]">
@@ -357,7 +367,7 @@ function Panel({ risk, aq, place }: { risk: Risk | null; aq: AirQuality | null; 
             ].map((t) => (
               <div key={t.l} className="relative h-[120px] rounded-[16px] border border-line bg-bg/60">
                 <span className="absolute left-[16px] top-[16px] flex items-center gap-[6px] text-[13px] leading-[normal] text-muted">{t.l}{t.l === "Air quality" && <Beta />}</span>
-                <Icon name={t.i} size={18} color="#9AA3B2" className="absolute left-[134px] top-[16px]" />
+                <Icon name={t.i} size={18} color="#9AA3B2" className="absolute right-[16px] top-[16px]" />
                 <span className="absolute left-[16px] top-[38px] text-[36px] font-bold leading-[44px]" style={{ color: t.c }}><CountUp to={t.v} /></span>
                 <span className={`absolute left-[16px] top-[82px] text-[13px] leading-[normal] ${t.sc === "#9AA3B2" ? "" : "font-semibold"}`} style={{ color: t.sc }}>{t.s}</span>
               </div>

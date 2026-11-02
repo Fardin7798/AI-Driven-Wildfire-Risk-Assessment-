@@ -32,9 +32,9 @@ export default function StaySafePage() {
           </button>
         ))}
       </div>
-      <div className="mt-6 inline-flex rounded-[16px] border border-line bg-surface p-1">
+      <div className="mt-6 flex w-full max-w-[368px] rounded-[16px] border border-line bg-surface p-1">
         {STAGES.map((s) => (
-          <button key={s.k} onClick={() => setStage(s.k)} className="relative h-[44px] w-[120px] text-[15px]">
+          <button key={s.k} onClick={() => setStage(s.k)} className="relative h-[44px] flex-1 text-[15px]">
             {s.k === stage && <motion.span layoutId="stage" className="absolute inset-0 rounded-[12px] bg-ember" transition={{ duration: 0.4, ease }} />}
             <span className="relative">{s.l}</span>
           </button>

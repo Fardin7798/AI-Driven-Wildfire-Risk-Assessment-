@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, type Variants } from "framer-motion";
 import { Nav } from "@/components/Nav";
+import { HomeMobile } from "@/components/HomeMobile";
 import { Icon, type IconName } from "@/components/Icon";
 import { CountUp } from "@/components/CountUp";
 import { NASHIK } from "@/lib/nashik-outline";
@@ -38,12 +39,15 @@ export default function Home() {
   }, []);
 
   return (
-    <main style={{ zoom: "var(--z, 1)" } as React.CSSProperties}>
-      <Nav active="" />
-      <Hero />
-      <FiresThisWeek fires={fires} />
-      <YourDistrict risk={risk} aq={aq} />
-      <WhyToday risk={risk} />
+    <main>
+      <div className="hidden md:block" style={{ zoom: "var(--z, 1)" } as React.CSSProperties}>
+        <Nav active="" />
+        <Hero />
+        <FiresThisWeek fires={fires} />
+        <YourDistrict risk={risk} aq={aq} />
+        <WhyToday risk={risk} />
+      </div>
+      <HomeMobile risk={risk} aq={aq} fires={fires} />
       {err && (
         <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full border border-line bg-surface px-4 py-2 text-[13px] text-muted">
           Some live data could not load. Retrying when you refresh.
