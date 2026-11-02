@@ -20,6 +20,10 @@ Reported overall and by Indian season (season map from build_aqi_dataset): n pai
 n districts, bias (mean CAMS - station), MAE, Pearson r and medians, for the sub-index and for
 the raw µg/m³ concentration.
 
+With --predictions (aqi_pm25_test_predictions.parquet from ml/train/train_aqi_pm25.py), the
+forecasts for each target day are also scored against the station sub-index on the same cleaned
+station days: model, persistence, seasonal-naive and the CAMS target itself, per horizon.
+
 Output: <out> JSON (default data/processed/aqi/cams_validation.json, gitignored).
 """
 
@@ -68,6 +72,25 @@ def group_stats(df: pd.DataFrame) -> dict:
         "sub_index": stats(df["cams_si"].to_numpy(float), df["station_si"].to_numpy(float)),
         "concentration_ug_m3": stats(df["cams"].to_numpy(float), df["station"].to_numpy(float)),
     }
+
+
+def forecasts_vs_station(pairs: pd.DataFrame, preds: pd.DataFrame) -> dict:
+    """Score each forecast against station sub-indices on its target day (cleaned pairs only)."""
+    preds = preds.assign(date=pd.to_datetime(preds["target_date"]).dt.date)
+    out: dict = {}
+    for h, ph in preds.groupby("horizon"):
+        m = pairs.merge(ph, on=["region_id", "date"], how="inner")
+        st = m["station_si"].to_numpy(float)
+        out[f"h{h}"] = {
+            "n_sensors": int(m["sensor_id"].nunique()),
+            "n_districts": int(m["region_id"].nunique()),
+            "date_range": [str(m["date"].min()), str(m["date"].max())],
+            **{
+                k: stats(np.clip(m[k].to_numpy(float), 0, 500), st)
+                for k in ("model", "persistence", "seasonal_naive", "target")
+            },
+        }
+    return out
 
 
 def stuck_mask(d: pd.DataFrame) -> pd.Series:
@@ -120,6 +143,7 @@ def main() -> None:
     ap.add_argument("--regions", type=Path, required=True)
     ap.add_argument("--gadm", type=Path, required=True)
     ap.add_argument("--out", type=Path, default=Path("data/processed/aqi/cams_validation.json"))
+    ap.add_argument("--predictions", type=Path, default=None)
     args = ap.parse_args()
 
     rids = {int(f.name.split(".")[0]) for f in args.cams.glob("*.csv.gz")}
@@ -201,6 +225,8 @@ def main() -> None:
         "overall": group_stats(p),
         "by_season": {k: group_stats(x) for k, x in p.groupby("season")},
     }
+    if args.predictions is not None:
+        report["forecasts_vs_station"] = forecasts_vs_station(p, pd.read_parquet(args.predictions))
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2))

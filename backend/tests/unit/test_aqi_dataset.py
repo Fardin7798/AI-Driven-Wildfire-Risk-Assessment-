@@ -173,3 +173,31 @@ def test_station_exclusion_rules():
     assert list(drop) == [False, True, True, True, True, True, True, True, True, True]
     assert m["stuck_run_ge_5"].sum() == 5
     assert validate.STATION_CEILING == 985.0
+
+
+def test_forecasts_scored_on_target_day():
+    validate = pytest.importorskip("validate_cams_openaq")
+    pairs = pd.DataFrame(
+        {
+            "sensor_id": [1, 1, 1],
+            "region_id": [7, 7, 7],
+            "date": [date(2025, 11, 2), date(2025, 11, 3), date(2025, 11, 4)],
+            "station_si": [100.0, 110.0, 120.0],
+        }
+    )
+    preds = pd.DataFrame(
+        {
+            "region_id": [7, 7, 7],
+            "horizon": [1, 1, 1],
+            "target_date": [date(2025, 11, 2), date(2025, 11, 3), date(2025, 11, 5)],
+            "model": [105.0, 115.0, 0.0],
+            "persistence": [90.0, 100.0, 0.0],
+            "seasonal_naive": [100.0, 110.0, 0.0],
+            "target": [100.0, 110.0, 0.0],
+        }
+    )
+    r = validate.forecasts_vs_station(pairs, preds)["h1"]
+    assert r["model"]["n_pairs"] == 2  # 2025-11-05 has no station day
+    assert r["model"]["bias"] == pytest.approx(5.0)
+    assert r["persistence"]["mae"] == pytest.approx(10.0)
+    assert r["target"]["mae"] == pytest.approx(0.0)
