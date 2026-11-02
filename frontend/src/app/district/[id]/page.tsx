@@ -35,8 +35,8 @@ export default function DistrictPage() {
               <div className="pointer-events-none absolute -right-24 -top-24 h-[320px] w-[320px] rounded-full blur-3xl" style={{ background: `${col}22` }} />
               <Badge color={col}>{RISK_BADGE[r.risk_class] ?? "No forecast yet"}</Badge>
               <div className="mt-4 flex items-end gap-4">
-                <span className="text-[112px] font-bold leading-[1]" style={{ color: col }}><CountUp to={Math.round(r.probability * 100)} suffix="%" /></span>
-                <span className="pb-3 text-[20px] font-semibold leading-[26px]">chance of<br />wildfire today</span>
+                <span className="text-[76px] md:text-[112px] font-bold leading-[1]" style={{ color: col }}><CountUp to={Math.round(r.probability * 100)} suffix="%" /></span>
+                <span className="pb-2 text-[16px] font-semibold leading-[22px] md:pb-3 md:text-[20px] md:leading-[26px]">chance of<br />wildfire today</span>
               </div>
               <a href={`/map?d=${id}`} className="mt-6 inline-flex items-center gap-2 text-[15px] text-muted hover:text-white">
                 <Icon name="arrow-left" size={16} /> See it on the map
@@ -67,8 +67,8 @@ export default function DistrictPage() {
       {/* History */}
       <Card className="mt-6" i={2}>
         <div className="flex items-baseline justify-between">
-          <h2 className="text-[24px] font-semibold">Recent days</h2>
-          <span className="text-[13px] text-muted">Chance of wildfire each day</span>
+          <h2 className="whitespace-nowrap text-[24px] font-semibold">Recent days</h2>
+          <span className="text-right text-[13px] text-muted">Chance of wildfire each day</span>
         </div>
         {hist.error ? <p className="mt-4 text-muted">History not available.</p> : !hist.data ? <Skeleton h={200} className="mt-6" /> : (
           <History rows={[...hist.data].sort((a, b) => a.date.localeCompare(b.date))} />
