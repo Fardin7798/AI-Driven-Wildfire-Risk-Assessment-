@@ -201,7 +201,9 @@ function Tile({ i, x, label, icon, value, sub, vcol, subcol }: { i: number; x: n
   return (
     <motion.div variants={up} custom={i} whileHover={{ y: -4 }}
       className="absolute rounded-[16px] border border-line bg-surface" style={{ left: x, top: 584, width: 272, height: 156 }}>
-      <span className="absolute text-[15px] leading-[normal] text-muted" style={{ left: 24, top: 24 }}>{label}</span>
+      <span className="absolute flex items-center gap-[8px] text-[15px] leading-[normal] text-muted" style={{ left: 24, top: 24 }}>{label}{label === "Air quality" && (
+        <span title="AQI model is still in training; values are provisional" className="rounded-full border border-amber/60 px-[7px] py-[1px] text-[11px] font-semibold uppercase tracking-wide text-amber">Beta</span>
+      )}</span>
       <Icon name={icon} size={22} color="#9AA3B2" className="absolute" style={{ left: 224, top: 22 }} />
       <span className="absolute text-[44px] font-bold leading-[52px]" style={{ left: 24, top: 52, color: vcol }}><CountUp to={value} /></span>
       <span className={`absolute text-[15px] leading-[normal] ${subcol === "#9AA3B2" ? "" : "font-semibold"}`} style={{ left: 24, top: 110, color: subcol }}>{sub}</span>

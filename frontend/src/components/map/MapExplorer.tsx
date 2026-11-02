@@ -12,7 +12,7 @@ import {
   getJSON, shortTime, RISK_COLORS, RISK_BADGE, NO_DATA, FACTOR_LABELS,
   type Risk, type AirQuality, type RiskMap, type Region,
 } from "@/lib/api";
-import { BASEMAP, INDIA_BOUNDS, bbox } from "./geo";
+import { BASEMAP, INDIA_BOUNDS, bbox, circle, townBoundary } from "./geo";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 const COLOR_EXPR = ["match", ["coalesce", ["get", "risk_class"], "none"],
@@ -22,7 +22,7 @@ const PANEL_W = 416, PANEL_GAP = 24;
 const BAR_FRACS = [0.86, 0.66, 0.52];
 
 type Town = { name: string; state: string; district: string; lat: number; lon: number; display_name?: string };
-type Place = { name: string; lat: number; lon: number } | null;
+type Place = { name: string; lat: number; lon: number; shape: GeoJSON.Polygon | GeoJSON.MultiPolygon; real: boolean } | null;
 /** "…, Bhusawal, Jalgaon, Maharashtra, 425307, India" -> "Jalgaon" (the part just before the state) */
 function townDistrict(t: Town) {
   const parts = (t.display_name || "").split(",").map((x) => x.trim());
@@ -81,6 +81,10 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
         "circle-stroke-color": "#0B0D12", "circle-stroke-width": 1,
         "circle-opacity": ["case", ["boolean", ["feature-state", "dim"], false], 0.35, 1],
       } });
+      map.addSource("town", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({ id: "town-fill", type: "fill", source: "town", paint: { "fill-color": "#F97316", "fill-opacity": 0.14 } });
+      map.addLayer({ id: "town-glow", type: "line", source: "town", paint: { "line-color": "#F97316", "line-width": 10, "line-blur": 8, "line-opacity": 0.6 } });
+      map.addLayer({ id: "town-line", type: "line", source: "town", paint: { "line-color": "#FDBA74", "line-width": 2 } });
       map.addLayer({ id: "place-halo", type: "circle", source: "place", paint: { "circle-color": "#F97316", "circle-radius": 18, "circle-blur": 0.8, "circle-opacity": 0.6 } });
       map.addLayer({ id: "place-pin", type: "circle", source: "place", paint: { "circle-color": "#FFFFFF", "circle-radius": 7, "circle-stroke-color": "#F97316", "circle-stroke-width": 3 } });
       map.addLayer({ id: "place-label", type: "symbol", source: "place",
@@ -112,6 +116,10 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
     (map.getSource("place") as GeoJSONSource).setData(place
       ? { type: "Feature", geometry: { type: "Point", coordinates: [place.lon, place.lat] }, properties: { name: place.name } }
       : { type: "FeatureCollection", features: [] });
+    (map.getSource("town") as GeoJSONSource).setData(place
+      ? { type: "Feature", geometry: place.shape, properties: { real: place.real } }
+      : { type: "FeatureCollection", features: [] });
+    if (place) map.setPaintProperty("town-line", "line-dasharray", place.real ? [1, 0] : [2, 1.5]);
   }, [place, ready]);
 
   // selection
@@ -136,12 +144,17 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
       const cls = points?.features.find((f) => f.properties.region_id === sel)?.properties.risk_class;
       const color = (cls && RISK_COLORS[cls]) || NO_DATA;
       (map.getSource("boundary") as GeoJSONSource).setData({ type: "Feature", geometry: reg.geom, properties: { color, stroke: cls === "Moderate" ? "#FBBF24" : color } });
-      map.fitBounds(bbox(reg.geom), {
-        padding: { top: 140, bottom: 80, left: 120, right: PANEL_W + PANEL_GAP + 120 }, duration: 2400, curve: 1.6, essential: true, maxZoom: 9,
+      const town = !!place;
+      map.setPaintProperty("boundary-fill", "fill-opacity", town ? 0.03 : 0.16);
+      map.setPaintProperty("boundary-glow", "line-opacity", town ? 0 : 0.7);
+      map.setPaintProperty("boundary-line", "line-width", town ? 1 : 2.5);
+      map.setPaintProperty("boundary-line", "line-opacity", town ? 0.45 : 1);
+      map.fitBounds(bbox(town ? place!.shape : reg.geom), {
+        padding: { top: 140, bottom: 80, left: 120, right: PANEL_W + PANEL_GAP + 120 }, duration: 2600, curve: 1.6, essential: true, maxZoom: town ? 13 : 9,
       });
     }).catch(() => {});
     return () => { alive = false; };
-  }, [sel, ready, points]);
+  }, [sel, ready, points, place]);
 
   const matches = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -171,8 +184,14 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
   const pick = useCallback((id: number, pl: Place = null) => { setPlace(pl); setSel(id); setQ(""); setOpen(false); setSearchErr(null); }, []);
   const pickTown = useCallback((t: Town) => {
     setResolving(true); setSearchErr(null);
-    getJSON<{ id: number }>(`/regions/by-coordinates?lat=${t.lat}&lon=${t.lon}`)
-      .then((r) => { if (r?.id) pick(r.id, { name: t.name, lat: t.lat, lon: t.lon }); else setSearchErr("This place is outside our districts."); })
+    const dist = townDistrict(t);
+    Promise.all([
+      getJSON<{ id: number }>(`/regions/by-coordinates?lat=${t.lat}&lon=${t.lon}`),
+      townBoundary(`${t.name}, ${dist}, ${t.state}`),
+    ])
+      .then(([r, real]) => {
+        if (r?.id) pick(r.id, { name: t.name, lat: t.lat, lon: t.lon, shape: real ?? circle(t.lon, t.lat), real: !!real });
+        else setSearchErr("This place is outside our districts."); })
       .catch(() => setSearchErr("This place is outside our districts."))
       .finally(() => setResolving(false));
   }, [pick]);
@@ -320,7 +339,7 @@ function Panel({ risk, aq, place }: { risk: Risk | null; aq: AirQuality | null; 
               { l: "Fires nearby", i: "flame" as const, v: fires30, s: "in 30 days", c: "#FFFFFF", sc: "#9AA3B2" },
             ].map((t) => (
               <div key={t.l} className="relative h-[120px] rounded-[16px] border border-line bg-bg/60">
-                <span className="absolute left-[16px] top-[16px] text-[13px] leading-[normal] text-muted">{t.l}</span>
+                <span className="absolute left-[16px] top-[16px] flex items-center gap-[6px] text-[13px] leading-[normal] text-muted">{t.l}{t.l === "Air quality" && <Beta />}</span>
                 <Icon name={t.i} size={18} color="#9AA3B2" className="absolute left-[134px] top-[16px]" />
                 <span className="absolute left-[16px] top-[38px] text-[36px] font-bold leading-[44px]" style={{ color: t.c }}><CountUp to={t.v} /></span>
                 <span className={`absolute left-[16px] top-[82px] text-[13px] leading-[normal] ${t.sc === "#9AA3B2" ? "" : "font-semibold"}`} style={{ color: t.sc }}>{t.s}</span>
@@ -348,4 +367,8 @@ function Panel({ risk, aq, place }: { risk: Risk | null; aq: AirQuality | null; 
       )}
     </motion.aside>
   );
+}
+
+function Beta() {
+  return <span title="AQI model is still in training; values are provisional" className="rounded-full border border-amber/60 px-[6px] py-[1px] text-[10px] font-semibold uppercase tracking-wide text-amber">Beta</span>;
 }
