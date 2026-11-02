@@ -1,4 +1,5 @@
-"""Daily CPCB aggregation, 16-hour rule and no-leakage lags of ml/pipeline/build_aqi_dataset.py."""
+"""PM2.5 sub-index target, 16-hour rule, invalid hours and no-leakage lags of
+ml/pipeline/build_aqi_dataset.py, plus the station QC rules of validate_cams_openaq.py."""
 
 import sys
 from datetime import date
@@ -13,7 +14,7 @@ PIPELINE = Path(__file__).resolve().parents[3] / "ml" / "pipeline"
 sys.path.insert(0, str(PIPELINE))
 import build_aqi_dataset as b  # noqa: E402
 
-from app.domain.aqi import calculate_cpcb_aqi  # noqa: E402
+from app.domain.aqi import calculate_sub_index  # noqa: E402
 
 POLS = ["pm25", "pm10", "no2", "so2", "co", "o3"]
 
@@ -25,14 +26,32 @@ def _hourly(days: int, start: str = "2024-01-01", **const: float) -> "pd.DataFra
     return pd.DataFrame({p: np.full(len(idx), base[p]) for p in POLS}, index=idx)
 
 
-def test_daily_aqi_matches_production_function_with_co_in_mg():
-    d = b.daily_table(_hourly(1, co=1500.0)).iloc[0]
-    expected = calculate_cpcb_aqi(
-        {"pm25": 50.0, "pm10": 80.0, "no2": 20.0, "so2": 10.0, "co": 1.5, "o3": 40.0}
-    )
-    assert expected is not None
-    assert d["aqi"] == expected.aqi
-    assert d["co_8h"] == pytest.approx(1500.0)
+def _cams_file(tmp_path: Path, h: "pd.DataFrame") -> Path:
+    inv = {v: k for k, v in b.POLLUTANTS.items()}
+    df = h.rename(columns=inv)
+    df.insert(0, "time", h.index.strftime("%Y-%m-%dT%H:%M"))
+    f = tmp_path / "1.csv.gz"
+    df.to_csv(f, index=False)
+    return f
+
+
+def test_target_is_pm25_sub_index_only():
+    # O3/PM10/CO far above PM2.5's sub-index must not change the target
+    h = _hourly(1, pm25=75.0, o3=500.0, pm10=550.0, co=30000.0)
+    d = b.daily_table(h).iloc[0]
+    assert d["pm25_si"] == calculate_sub_index("pm25", 75.0) == 149
+    assert "aqi" not in b.daily_table(h).columns
+    assert all(t.startswith("pm25_si_t+") for t in b.TARGETS)
+
+
+def test_pm25_sub_index_uses_24h_mean():
+    h = _hourly(1)
+    v = np.full(24, 20.0)
+    v[:12] = 100.0
+    h["pm25"] = v
+    d = b.daily_table(h).iloc[0]
+    assert d["pm25_mean"] == pytest.approx(60.0)
+    assert d["pm25_si"] == calculate_sub_index("pm25", 60.0)
 
 
 def test_16_hour_minimum_per_pollutant():
@@ -41,39 +60,33 @@ def test_16_hour_minimum_per_pollutant():
     h.iloc[24:32, h.columns.get_loc("pm25")] = np.nan  # day 2: 16 valid hours
     d = b.daily_table(h)
     assert np.isnan(d["pm25_mean"].iloc[0])
+    assert np.isnan(d["pm25_si"].iloc[0])  # no fallback to other pollutants
     assert d["pm25_mean"].iloc[1] == pytest.approx(50.0)
-    # PM10 still present, so day 1 AQI is valid without PM2.5
-    assert not np.isnan(d["aqi"].iloc[0])
 
 
-def test_missing_hour_rows_count_as_missing_and_negatives_invalid():
+def test_missing_hour_rows_count_as_missing():
     h = _hourly(1).iloc[:15]  # only 15 hourly rows exist for the day
-    assert np.isnan(b.daily_table(h)["pm10_mean"].iloc[0])
+    d = b.daily_table(h)
+    assert np.isnan(d["pm25_si"].iloc[0])
+    assert np.isnan(d["pm10_mean"].iloc[0])
+
+
+def test_read_cams_invalidates_negatives_and_pm10_ceiling(tmp_path):
     h = _hourly(1)
-    h.iloc[:9, h.columns.get_loc("o3")] = -1.0
-    assert np.isnan(b.daily_table(h)["o3_8h"].iloc[0])
+    h.iloc[:9, h.columns.get_loc("pm25")] = -1.0  # 15 valid hours left -> day missing
+    h.iloc[:9, h.columns.get_loc("pm10")] = b.CAMS_PM10_CEILING
+    clean, counts = b.read_cams(_cams_file(tmp_path, h))
+    assert counts == {"negative": 9, "pm10_ceiling": 9}
+    assert clean["pm25"].isna().sum() == 9 and clean["pm10"].isna().sum() == 9
+    d = b.daily_table(clean).iloc[0]
+    assert np.isnan(d["pm25_si"]) and np.isnan(d["pm10_mean"])
+    assert d["o3_mean"] == pytest.approx(40.0)
 
 
-def test_aqi_none_without_pm_is_nan():
-    h = _hourly(1)
-    h[["pm25", "pm10"]] = np.nan
-    assert np.isnan(b.daily_table(h)["aqi"].iloc[0])
-
-
-def test_o3_uses_max_within_day_8h_mean():
-    h = _hourly(1)
-    o3 = np.full(24, 40.0)
-    o3[10:18] = 120.0  # one full 8-h window at 120
-    h["o3"] = o3
-    assert b.daily_table(h)["o3_8h"].iloc[0] == pytest.approx(120.0)
-    # 24-h mean is the plain mean
-    assert b.daily_table(h)["o3_mean"].iloc[0] == pytest.approx((16 * 40 + 8 * 120) / 24)
-
-
-def _panel(aqi: list[float]) -> "pd.DataFrame":
-    n = len(aqi)
+def _panel(si: list[float]) -> "pd.DataFrame":
+    n = len(si)
     dates = pd.date_range("2024-01-01", periods=n, freq="D").date
-    p = pd.DataFrame({"region_id": 1, "date": dates, "aqi": aqi, "lat": 20.0, "lon": 75.0})
+    p = pd.DataFrame({"region_id": 1, "date": dates, "pm25_si": si, "lat": 20.0, "lon": 75.0})
     for pol in POLS:
         p[f"{pol}_mean"] = np.arange(n, dtype=float)
     for w in b.WEATHER:
@@ -82,20 +95,22 @@ def _panel(aqi: list[float]) -> "pd.DataFrame":
 
 
 def test_lags_and_targets_and_no_leakage():
-    aqi = [float(100 + i) for i in range(20)]
-    f = b.add_features(_panel(aqi))
+    si = [float(100 + i) for i in range(20)]
+    f = b.add_features(_panel(si))
     t = 15
     row = f.iloc[t]
     for k in range(7):
-        assert row[f"aqi_lag{k}"] == aqi[t - k]
+        assert row[f"pm25_si_lag{k}"] == si[t - k]
     for h in (1, 2, 3):
-        assert row[f"aqi_t+{h}"] == aqi[t + h]
-    assert row["aqi_roll7"] == pytest.approx(np.mean(aqi[t - 6 : t + 1]))
-    assert row["aqi_roll14"] == pytest.approx(np.mean(aqi[t - 13 : t + 1]))
-    assert np.isnan(f.iloc[5]["aqi_roll7"])  # incomplete window is missing, not partial
+        assert row[f"pm25_si_t+{h}"] == si[t + h]
+    assert row["pm25_si_roll7"] == pytest.approx(np.mean(si[t - 6 : t + 1]))
+    assert row["pm25_si_roll14"] == pytest.approx(np.mean(si[t - 13 : t + 1]))
+    assert row["pm25_lag0"] == t and row["pm10_lag2"] == t - 2
+    assert row["temp_max"] == t and row["temp_max_lag1"] == t - 1
+    assert np.isnan(f.iloc[5]["pm25_si_roll7"])  # incomplete window is missing, not partial
 
-    # Changing future days must not change any feature at t
-    future = list(aqi)
+    # Changing every value after day t must not change any feature at t
+    future = list(si)
     for i in range(t + 1, len(future)):
         future[i] = 999.0
     p2 = _panel(future)
@@ -103,14 +118,15 @@ def test_lags_and_targets_and_no_leakage():
     f2 = b.add_features(p2)
     cols = b.feature_columns()
     pd.testing.assert_series_equal(f.iloc[t][cols], f2.iloc[t][cols], check_names=False)
+    assert not set(cols) & set(b.TARGETS)
 
 
 def test_missing_day_is_missing_lag_not_previous_row():
-    aqi = [float(100 + i) for i in range(10)]
-    aqi[4] = np.nan
-    f = b.add_features(_panel(aqi))
-    assert np.isnan(f.iloc[5]["aqi_lag1"])
-    assert f.iloc[5]["aqi_lag2"] == aqi[3]
+    si = [float(100 + i) for i in range(10)]
+    si[4] = np.nan
+    f = b.add_features(_panel(si))
+    assert np.isnan(f.iloc[5]["pm25_si_lag1"])
+    assert f.iloc[5]["pm25_si_lag2"] == si[3]
 
 
 def test_regions_do_not_bleed_into_each_other():
@@ -119,9 +135,9 @@ def test_regions_do_not_bleed_into_each_other():
     c["region_id"] = 2
     f = b.add_features(pd.concat([a, c], ignore_index=True))
     first_b = f[f["region_id"] == 2].iloc[0]
-    assert np.isnan(first_b["aqi_lag1"])
+    assert np.isnan(first_b["pm25_si_lag1"])
     last_a = f[f["region_id"] == 1].iloc[-1]
-    assert np.isnan(last_a["aqi_t+1"])
+    assert np.isnan(last_a["pm25_si_t+1"])
 
 
 def test_split_boundaries():
@@ -130,3 +146,30 @@ def test_split_boundaries():
     )
     assert list(s.iloc[:3]) == ["train", "val", "test"]
     assert pd.isna(s.iloc[3])
+
+
+def test_baselines_persistence_and_seasonal_naive():
+    si = [float(10 * i) for i in range(30)]
+    f = b.add_features(_panel(si)).dropna(subset=b.feature_columns() + b.TARGETS).copy()
+    f["split"] = "test"
+    res = b.baselines(f)
+    # linear series: persistence error = 10*h, seasonal-naive error = 70 for every h
+    for h in (1, 2, 3):
+        assert res["test"]["persistence"][f"h{h}"]["mae"] == pytest.approx(10.0 * h)
+        assert res["test"]["seasonal_naive"][f"h{h}"]["mae"] == pytest.approx(70.0)
+
+
+def test_station_exclusion_rules():
+    validate = pytest.importorskip("validate_cams_openaq")
+    d = pd.DataFrame(
+        {
+            "date": pd.date_range("2024-01-01", periods=10, freq="D").strftime("%Y-%m-%d"),
+            "value": [10.0, 0.0, 985.0, 1200.0, 984.0, 7.0, 7.0, 7.0, 7.0, 7.0],
+            "pct_complete": [80.0, 80.0, 80.0, 80.0, 74.0, 90.0, 90.0, 90.0, 90.0, 90.0],
+        }
+    )
+    m = validate.station_exclusions(d)
+    drop = pd.concat(m, axis=1).any(axis=1)
+    assert list(drop) == [False, True, True, True, True, True, True, True, True, True]
+    assert m["stuck_run_ge_5"].sum() == 5
+    assert validate.STATION_CEILING == 985.0

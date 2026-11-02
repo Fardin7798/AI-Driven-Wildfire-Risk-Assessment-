@@ -1,0 +1,15 @@
+{
+  "id": "shaikhfardin05/aqi-pm25-model-training",
+  "title": "AQI PM25 Model Training",
+  "code_file": "aqi_pm25_training.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "false",
+  "enable_tpu": "false",
+  "enable_internet": "false",
+  "dataset_sources": ["shaikhfardin05/india-district-aqi-pm25"],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

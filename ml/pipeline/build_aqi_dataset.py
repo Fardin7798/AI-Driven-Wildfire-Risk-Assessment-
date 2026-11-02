@@ -1,28 +1,26 @@
-"""Build the district x day AQI forecasting table (targets: CPCB daily AQI at t+1, t+2, t+3).
+"""Build the district x day PM2.5 forecasting table (target: CPCB PM2.5 sub-index at t+1..t+3).
 
-Daily AQI rule (CPCB National AQI, 2014), applied per district per calendar day (Asia/Kolkata):
-  * PM2.5, PM10, NO2, SO2: 24-hour mean of the day's hourly values.
-  * CO, O3: maximum of the 8-hour rolling means. Windows lie inside the calendar day (hours
-    00-07 ... 16-23, 17 windows); a window needs >= 6 of its 8 hours (75%) to count.
-  * A pollutant counts for the day only if it has >= 16 valid hours that day (CPCB minimum);
-    otherwise it is missing for that day. Nothing is filled or interpolated.
-  * Negative hourly concentrations (physically invalid; CAMS emits a few) are treated as
-    invalid hours, not clipped.
-  * The day's AQI is `app.domain.aqi.calculate_cpcb_aqi` on those values (µg/m³, CO converted
-    µg/m³ -> mg/m³), i.e. the same function production uses: None unless >= 3 pollutants are
-    available including PM2.5 or PM10.
+Target rule, applied per district per calendar day (Asia/Kolkata):
+  * Daily PM2.5 = 24-hour mean of the day's hourly CAMS PM2.5, valid only with >= 16 valid hours
+    (CPCB minimum); otherwise the day is missing. Nothing is filled or interpolated.
+  * Target = CPCB PM2.5 sub-index of that daily mean (`app.domain.aqi.calculate_sub_index`, the
+    same function production uses). PM10, NO2, SO2, CO, O3 and weather never enter the target;
+    they are lagged input features only.
+  * Invalid hourly values become missing hours (never clipped): negative concentrations of any
+    pollutant, and CAMS PM10 >= 3270 µg/m³ (the CAMS PM10 ceiling value).
 
 Rows: one per (region_id, date t). Every feature is known at the end of day t:
-  aqi_lag0..6 (aqi of t..t-6), <pollutant>_lag0..2 (24-h means, µg/m³, CO in µg/m³),
-  aqi_roll7 / aqi_roll14 (mean AQI over t-6..t / t-13..t, complete windows only),
-  POWER weather of day t and t-1, doy_sin/doy_cos, month, weekday, lat, lon.
-Lags are calendar lags (a missing day is missing, never the previous available row).
-Targets: aqi_t+1, aqi_t+2, aqi_t+3. Rows with any missing feature or target are dropped and
-counted. Temporal split column `split`: train <= 2024-10-31, val 2024-11-01..2025-10-31,
-test 2025-11-01..2026-10-28.
+  pm25_si_lag0..6 (sub-index of t..t-6), <pollutant>_lag0..2 (24-h means of t..t-2, µg/m³,
+  >= 16 valid hours each), pm25_si_roll7 / pm25_si_roll14 (mean sub-index over t-6..t /
+  t-13..t, complete windows only), POWER weather of day t and t-1, doy_sin/doy_cos, month,
+  weekday, lat, lon. Lags are calendar lags (a missing day is missing, never the previous row).
+Targets: pm25_si_t+1, pm25_si_t+2, pm25_si_t+3. Rows with any missing feature or target are
+dropped and counted. Temporal split column `split`: train <= 2024-10-31,
+val 2024-11-01..2025-10-31, test 2025-11-01..2026-10-28.
 
-Baselines (written to baselines.json): persistence (aqi_t for every horizon) and seasonal-naive
-(aqi_{t+h-7}, i.e. aqi_lag(7-h)); MAE and RMSE per horizon per split.
+Baselines (written to baselines.json): persistence (pm25_si of t for every horizon) and
+seasonal-naive (pm25_si of t+h-7, i.e. pm25_si_lag(7-h)); MAE and RMSE per horizon per split,
+plus test MAE per Indian season.
 
 Inputs:
   --cams     dir of <region_id>.csv.gz hourly CAMS (download_air_history.py); every file is used
@@ -48,9 +46,9 @@ BACKEND = Path(__file__).resolve().parents[2] / "backend"
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
 
-from app.domain.aqi import calculate_cpcb_aqi  # noqa: E402
+from app.domain.aqi import calculate_sub_index  # noqa: E402
 
-# CAMS column -> CPCB key
+# CAMS column -> short key
 POLLUTANTS = {
     "pm2_5": "pm25",
     "pm10": "pm10",
@@ -59,116 +57,104 @@ POLLUTANTS = {
     "carbon_monoxide": "co",
     "ozone": "o3",
 }
-MEAN_24H = ["pm25", "pm10", "no2", "so2"]
-MAX_8H = ["co", "o3"]
 MIN_VALID_HOURS = 16
-MIN_WINDOW_HOURS = 6
+CAMS_PM10_CEILING = 3270.0
 WEATHER = ["temp_max", "temp_mean", "rh_mean", "wind_max", "precip_sum"]
 HORIZONS = (1, 2, 3)
-AQI_LAGS = range(7)
+SI_LAGS = range(7)
 POLLUTANT_LAGS = range(3)
 SPLITS = {
     "train": (date(1900, 1, 1), date(2024, 10, 31)),
     "val": (date(2024, 11, 1), date(2025, 10, 31)),
     "test": (date(2025, 11, 1), date(2026, 10, 28)),
 }
+SEASONS = {
+    12: "winter",
+    1: "winter",
+    2: "winter",
+    3: "pre_monsoon",
+    4: "pre_monsoon",
+    5: "pre_monsoon",
+    6: "monsoon",
+    7: "monsoon",
+    8: "monsoon",
+    9: "monsoon",
+    10: "post_monsoon",
+    11: "post_monsoon",
+}
 
 
 # ---------------------------------------------------------------- daily aggregation
-def _day_matrix(hourly: pd.Series) -> tuple[pd.DatetimeIndex, np.ndarray]:
-    """Reindex an hourly series to whole days and return (days, array[n_days, 24])."""
-    idx = pd.DatetimeIndex(hourly.index)
-    start, end = idx.min().normalize(), idx.max().normalize() + pd.Timedelta(hours=23)
-    full = pd.date_range(start, end, freq="h")
-    s = hourly[~idx.duplicated()].reindex(full)
-    vals = s.to_numpy(dtype=float).copy()
-    vals[vals < 0] = np.nan
-    days = pd.date_range(start, end.normalize(), freq="D")
-    return days, vals.reshape(len(days), 24)
+def invalid_hours(hourly: pd.DataFrame) -> pd.DataFrame:
+    """Boolean frame: hourly values that are physically invalid (negative, PM10 at ceiling)."""
+    bad = hourly < 0
+    bad["pm10"] |= hourly["pm10"] >= CAMS_PM10_CEILING
+    return bad
 
 
 def daily_mean_24h(hourly: pd.Series) -> pd.Series:
-    """24-h mean per calendar day; NaN when fewer than MIN_VALID_HOURS valid hours."""
-    days, m = _day_matrix(hourly)
+    """24-h mean per calendar day; NaN when fewer than MIN_VALID_HOURS valid hours.
+
+    Hours absent from the index and NaN hours are missing. Invalid values must already be NaN.
+    """
+    idx = pd.DatetimeIndex(hourly.index)
+    start, end = idx.min().normalize(), idx.max().normalize() + pd.Timedelta(hours=23)
+    full = pd.date_range(start, end, freq="h")
+    m = hourly[~idx.duplicated()].reindex(full).to_numpy(dtype=float).reshape(-1, 24)
     n = np.isfinite(m).sum(axis=1)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
         mean = np.nanmean(m, axis=1)
     mean[n < MIN_VALID_HOURS] = np.nan
+    days = pd.date_range(start, end.normalize(), freq="D")
     return pd.Series(mean, index=days.date)
 
 
-def daily_max_8h(hourly: pd.Series) -> pd.Series:
-    """Max of within-day 8-h rolling means; NaN when fewer than MIN_VALID_HOURS valid hours."""
-    days, m = _day_matrix(hourly)
-    n = np.isfinite(m).sum(axis=1)
-    win = np.lib.stride_tricks.sliding_window_view(m, 8, axis=1)  # (days, 17, 8)
-    wn = np.isfinite(win).sum(axis=2)
-    wsum = np.nansum(win, axis=2)
-    with np.errstate(invalid="ignore", divide="ignore"):
-        wmean = np.where(wn >= MIN_WINDOW_HOURS, wsum / wn, np.nan)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", RuntimeWarning)
-        mx = np.nanmax(wmean, axis=1)
-    mx[n < MIN_VALID_HOURS] = np.nan
-    return pd.Series(mx, index=days.date)
-
-
-def _aqi(vals: dict[str, float]) -> tuple[float, str | None]:
-    clean = {k: (None if pd.isna(v) else float(v)) for k, v in vals.items()}
-    res = calculate_cpcb_aqi(clean)
-    return (float(res.aqi), res.prominent_pollutant) if res is not None else (np.nan, None)
+def pm25_sub_index(daily_pm25: pd.Series) -> pd.Series:
+    """CPCB PM2.5 sub-index of daily 24-h means; NaN stays NaN."""
+    return daily_pm25.map(lambda v: np.nan if pd.isna(v) else float(calculate_sub_index("pm25", v)))
 
 
 def daily_table(hourly: pd.DataFrame) -> pd.DataFrame:
-    """Hourly CAMS frame (DatetimeIndex, CPCB-key columns, µg/m³) -> daily frame.
-
-    Columns: <p>_mean (24-h mean, all six), co_8h, o3_8h, aqi, prominent. Index: datetime.date.
-    """
+    """Hourly CAMS frame (DatetimeIndex, short-key columns, µg/m³, invalid hours already NaN)
+    -> daily frame with <p>_mean for all six pollutants and pm25_si. Index: datetime.date."""
     out = pd.DataFrame({f"{p}_mean": daily_mean_24h(hourly[p]) for p in POLLUTANTS.values()})
-    for p in MAX_8H:
-        out[f"{p}_8h"] = daily_max_8h(hourly[p])
-    results = [
-        _aqi(
-            {
-                "pm25": r.pm25_mean,
-                "pm10": r.pm10_mean,
-                "no2": r.no2_mean,
-                "so2": r.so2_mean,
-                "co": r.co_8h / 1000.0,  # µg/m³ -> mg/m³ (CPCB CO breakpoints)
-                "o3": r.o3_8h,
-            }
-        )
-        for r in out.itertuples()
-    ]
-    out["aqi"] = [a for a, _ in results]
-    out["prominent"] = [p for _, p in results]
+    out["pm25_si"] = pm25_sub_index(out["pm25_mean"])
     return out
 
 
-def read_cams(path: Path) -> pd.DataFrame:
+def read_cams(path: Path) -> tuple[pd.DataFrame, dict[str, int]]:
+    """Hourly CAMS file -> (frame with invalid hours set to NaN, counts of invalidated hours)."""
     df = pd.read_csv(path)
     df.index = pd.DatetimeIndex(pd.to_datetime(df.pop("time")))
-    return df.rename(columns=POLLUTANTS)[list(POLLUTANTS.values())]
+    df = df.rename(columns=POLLUTANTS)[list(POLLUTANTS.values())]
+    bad = invalid_hours(df)
+    counts = {
+        "negative": int((df < 0).sum().sum()),
+        "pm10_ceiling": int((df["pm10"] >= CAMS_PM10_CEILING).sum()),
+    }
+    return df.mask(bad), counts
 
 
 # ---------------------------------------------------------------- features / targets
 def add_features(panel: pd.DataFrame) -> pd.DataFrame:
     """Add lag/rolling/target/calendar columns to a calendar-complete panel.
 
-    `panel` has one row per (region_id, date) with no gaps in date per region, sorted.
+    `panel` has one row per (region_id, date) with no gaps in date per region.
     Only shifts by +k (past) feed features; shifts by -h feed targets only.
     """
     p = panel.sort_values(["region_id", "date"]).reset_index(drop=True)
     g = p.groupby("region_id", sort=False)
     new: dict[str, pd.Series] = {}
-    for k in AQI_LAGS:
-        new[f"aqi_lag{k}"] = g["aqi"].shift(k)
+    for k in SI_LAGS:
+        new[f"pm25_si_lag{k}"] = g["pm25_si"].shift(k)
     for pol in POLLUTANTS.values():
         for k in POLLUTANT_LAGS:
             new[f"{pol}_lag{k}"] = g[f"{pol}_mean"].shift(k)
     for w in (7, 14):
-        new[f"aqi_roll{w}"] = g["aqi"].transform(lambda s, w=w: s.rolling(w, min_periods=w).mean())
+        new[f"pm25_si_roll{w}"] = g["pm25_si"].transform(
+            lambda s, w=w: s.rolling(w, min_periods=w).mean()
+        )
     for col in WEATHER:
         new[col] = p[col]
         new[f"{col}_lag1"] = g[col].shift(1)
@@ -179,20 +165,20 @@ def add_features(panel: pd.DataFrame) -> pd.DataFrame:
     new["month"] = dt.dt.month
     new["weekday"] = dt.dt.day_of_week
     for h in HORIZONS:
-        new[f"aqi_t+{h}"] = g["aqi"].shift(-h)
+        new[f"pm25_si_t+{h}"] = g["pm25_si"].shift(-h)
     return pd.concat([p[["region_id", "date", "lat", "lon"]], pd.DataFrame(new)], axis=1)
 
 
 def feature_columns() -> list[str]:
-    cols = [f"aqi_lag{k}" for k in AQI_LAGS]
+    cols = [f"pm25_si_lag{k}" for k in SI_LAGS]
     cols += [f"{p}_lag{k}" for p in POLLUTANTS.values() for k in POLLUTANT_LAGS]
-    cols += ["aqi_roll7", "aqi_roll14"]
+    cols += ["pm25_si_roll7", "pm25_si_roll14"]
     cols += [c for w in WEATHER for c in (w, f"{w}_lag1")]
     cols += ["doy_sin", "doy_cos", "month", "weekday", "lat", "lon"]
     return cols
 
 
-TARGETS = [f"aqi_t+{h}" for h in HORIZONS]
+TARGETS = [f"pm25_si_t+{h}" for h in HORIZONS]
 
 
 def assign_split(dates: pd.Series) -> pd.Series:
@@ -203,18 +189,40 @@ def assign_split(dates: pd.Series) -> pd.Series:
 
 
 # ---------------------------------------------------------------- baselines
+BASELINE_COLUMNS = {
+    "persistence": lambda h: "pm25_si_lag0",
+    "seasonal_naive": lambda h: f"pm25_si_lag{7 - h}",
+}
+
+
+def _err(part: pd.DataFrame, name: str, h: int) -> np.ndarray:
+    pred = part[BASELINE_COLUMNS[name](h)].to_numpy(float)
+    return pred - part[f"pm25_si_t+{h}"].to_numpy(float)
+
+
 def baselines(df: pd.DataFrame) -> dict:
+    """MAE/RMSE per split, baseline and horizon; test MAE per season (season of the target day)."""
     res: dict = {}
     for split, part in df.groupby("split"):
         res[split] = {}
-        for h in HORIZONS:
-            y = part[f"aqi_t+{h}"].to_numpy(float)
-            for name, col in (("persistence", "aqi_lag0"), ("seasonal_naive", f"aqi_lag{7 - h}")):
-                e = part[col].to_numpy(float) - y
+        for name in BASELINE_COLUMNS:
+            for h in HORIZONS:
+                e = _err(part, name, h)
                 res[split].setdefault(name, {})[f"h{h}"] = {
                     "mae": round(float(np.mean(np.abs(e))), 3),
                     "rmse": round(float(np.sqrt(np.mean(e**2))), 3),
                 }
+    test = df[df["split"] == "test"]
+    by_season: dict = {}
+    for h in HORIZONS:
+        target_month = (pd.to_datetime(test["date"]) + pd.Timedelta(days=h)).dt.month
+        for season, part in test.groupby(target_month.map(SEASONS)):
+            for name in BASELINE_COLUMNS:
+                by_season.setdefault(name, {}).setdefault(f"h{h}", {})[season] = {
+                    "n": int(len(part)),
+                    "mae": round(float(np.mean(np.abs(_err(part, name, h)))), 3),
+                }
+    res["test_by_season"] = by_season
     return res
 
 
@@ -252,11 +260,12 @@ def main() -> None:
     if not files:
         raise SystemExit(f"no CAMS files in {args.cams}")
     daily_frames = []
-    neg_hours = 0
+    invalidated = {"negative": 0, "pm10_ceiling": 0}
     for f in files:
         rid = int(f.name.split(".")[0])
-        hourly = read_cams(f)
-        neg_hours += int((hourly < 0).sum().sum())
+        hourly, counts = read_cams(f)
+        for k, v in counts.items():
+            invalidated[k] += v
         d = daily_table(hourly)
         d.index.name = "date"
         d = d.reset_index()
@@ -264,19 +273,14 @@ def main() -> None:
         daily_frames.append(d)
     daily = pd.concat(daily_frames, ignore_index=True)
 
-    # daily validity stats (region-days with hourly data started)
     started = daily[daily[[f"{p}_mean" for p in POLLUTANTS.values()]].notna().any(axis=1)]
     day_stats = {
         "region_days_with_any_data": int(len(started)),
-        "region_days_valid_aqi": int(started["aqi"].notna().sum()),
+        "region_days_valid_pm25_si": int(started["pm25_si"].notna().sum()),
         "pollutant_days_below_16h": {
             p: int(started[f"{p}_mean"].isna().sum()) for p in POLLUTANTS.values()
         },
-        "negative_hourly_values_invalidated": neg_hours,
-        "prominent_pollutant_share": {
-            k: round(float(v), 4)
-            for k, v in started["prominent"].value_counts(normalize=True).items()
-        },
+        "invalidated_hourly_values": invalidated,
     }
 
     power = pd.read_parquet(args.power)
@@ -294,9 +298,9 @@ def main() -> None:
     fcols, total = feature_columns(), len(feats)
     in_split = feats[feats["split"].notna()]
     groups = {
-        "target_aqi_missing": TARGETS,
-        "aqi_lag_missing": [f"aqi_lag{k}" for k in AQI_LAGS],
-        "aqi_rolling_missing": ["aqi_roll7", "aqi_roll14"],
+        "target_missing": TARGETS,
+        "pm25_si_lag_missing": [f"pm25_si_lag{k}" for k in SI_LAGS],
+        "pm25_si_rolling_missing": ["pm25_si_roll7", "pm25_si_roll14"],
         "pollutant_lag_missing": [c for c in fcols if c.split("_lag")[0] in POLLUTANTS.values()],
         "weather_missing": [c for c in fcols if c.split("_lag")[0] in WEATHER],
     }
@@ -310,12 +314,12 @@ def main() -> None:
         remaining = remaining[~bad]
     out = remaining.dropna(subset=fcols + TARGETS).copy()
     assert len(out) == len(remaining)
-    for c in [f"aqi_lag{k}" for k in AQI_LAGS] + TARGETS:
+    for c in [f"pm25_si_lag{k}" for k in SI_LAGS] + TARGETS:
         out[c] = out[c].astype("int16")
     out = out[["region_id", "date", "split", *fcols, *TARGETS]].reset_index(drop=True)
 
     report = {
-        "rule": "CPCB daily AQI: 24h mean PM2.5/PM10/NO2/SO2, max 8h mean CO/O3, >=16 valid h",
+        "target": "CPCB PM2.5 sub-index of the daily 24-h mean CAMS PM2.5 (>= 16 valid hours)",
         "n_cams_files": len(files),
         "daily": day_stats,
         "rows": {
@@ -333,9 +337,9 @@ def main() -> None:
                 "districts": int(x["region_id"].nunique()),
                 "date_min": str(x["date"].min()),
                 "date_max": str(x["date"].max()),
-                "aqi_target_h1_min": int(x["aqi_t+1"].min()),
-                "aqi_target_h1_max": int(x["aqi_t+1"].max()),
-                "aqi_target_h1_mean": round(float(x["aqi_t+1"].mean()), 2),
+                "target_h1_min": int(x["pm25_si_t+1"].min()),
+                "target_h1_max": int(x["pm25_si_t+1"].max()),
+                "target_h1_mean": round(float(x["pm25_si_t+1"].mean()), 2),
             }
             for s, x in out.groupby("split")
         },

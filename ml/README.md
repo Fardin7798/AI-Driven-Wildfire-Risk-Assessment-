@@ -49,16 +49,23 @@ kaggle kernels status shaikhfardin05/wildfire-risk-model-v2-training
 kaggle kernels output shaikhfardin05/wildfire-risk-model-v2-training -p backend/models
 ```
 
-## AQI (next)
-No learned AQI model yet (training will run on Kaggle). The old CPCB-station model was removed.
+## AQI: PM2.5 sub-index forecast (district x day, 1-3 days)
+Target: the CPCB **PM2.5 sub-index** of the daily 24-h mean CAMS PM2.5 (>= 16 valid hours). PM10,
+NO2, SO2, CO, O3 and NASA POWER weather are lagged input features only, never part of the target.
+No learned AQI model is served yet; training runs on Kaggle and the result is reviewed first.
 
 1. `download_air_history.py`: hourly Open-Meteo CAMS per district -> `data/raw/cams/<region_id>.csv.gz`
    (same source the API serves).
-2. `build_aqi_dataset.py`: CPCB daily AQI per district (24-h means of PM2.5/PM10/NO2/SO2, max 8-h
-   mean of CO/O3, >= 16 valid hours per pollutant, `app.domain.aqi.calculate_cpcb_aqi`), features
-   known at end of day t (AQI lags 0-6, pollutant lags 0-2, 7/14-day AQI means, NASA POWER weather
-   t and t-1, calendar, lat/lon), targets AQI t+1..t+3, temporal `split`, plus persistence and
-   seasonal-naive baselines. Incomplete rows are dropped and counted, never filled.
+2. `build_aqi_dataset.py`: invalid hours dropped (negative values, CAMS PM10 >= 3270 ceiling), daily
+   24-h means with >= 16 valid hours, PM2.5 sub-index via `app.domain.aqi.calculate_sub_index`;
+   features known at end of day t (sub-index lags 0-6, 7/14-day sub-index means, pollutant 24-h
+   means lags 0-2, NASA POWER weather t and t-1, calendar, lat/lon); targets sub-index t+1..t+3;
+   temporal `split`; persistence and seasonal-naive baselines (per split, test per season).
+   Incomplete rows are dropped and counted, never filled.
+3. `ml/train/train_aqi_pm25.py` (run on Kaggle via `ml/kaggle_aqi_pm25/`): one XGBoost regressor
+   per horizon, grid tuned on val only (train/val rows whose target day crosses the split end are
+   purged), refit on train + val, test evaluated once. Reports MAE/RMSE per horizon, skill vs
+   persistence with a day-block bootstrap interval, per season and per district quartile.
 
 ```bash
 python ml/pipeline/build_aqi_dataset.py --regions regions_centroids.csv --gadm gadm41_IND_2.json \
@@ -66,13 +73,23 @@ python ml/pipeline/build_aqi_dataset.py --regions regions_centroids.csv --gadm g
 # -> data/processed/aqi/aqi_dataset.parquet, data/processed/aqi/baselines.json (gitignored)
 ```
 
+### Kaggle
+Dataset `shaikhfardin05/india-district-aqi-pm25` (private) holds `aqi_dataset.parquet`,
+`baselines.json` and a copy of `train_aqi_pm25.py`.
+
+```bash
+kaggle kernels push -p ml/kaggle_aqi_pm25
+kaggle kernels status shaikhfardin05/aqi-pm25-model-training
+kaggle kernels output shaikhfardin05/aqi-pm25-model-training -p <dir>
+```
+
 ### CAMS vs CPCB stations (validation, no training)
-`validate_cams_openaq.py` pairs each CPCB/caaqm PM2.5/PM10 sensor (OpenAQ v3 daily values,
-`download_openaq_cpcb.py`, days with `pct_complete >= 75`) with the CAMS 24-h mean (>= 16 valid
-hours) of the district whose GADM polygon contains it, same IST date. Reports n pairs, bias
-(CAMS - station), MAE and Pearson r per pollutant, overall and by season, plus a sensitivity
-that also drops station artefacts (value <= 0, >= 985 ceiling, pct_complete > 100, >= 5-day
-stuck runs). Nothing is filled.
+`validate_cams_openaq.py` pairs each CPCB/caaqm PM2.5 sensor (OpenAQ v3 daily values,
+`download_openaq_cpcb.py`) with the CAMS daily PM2.5 of the district whose GADM polygon contains
+it, same IST date, and compares PM2.5 sub-indices (and µg/m³): n pairs, bias (CAMS - station),
+MAE, Pearson r, overall and by season. Station days are excluded when pct_complete < 75, value
+<= 0, value == 985 (analyser ceiling), value > 999, or inside a >= 5-day run of identical values.
+Nothing is filled.
 
 ```bash
 python ml/pipeline/validate_cams_openaq.py --regions regions_centroids.csv --gadm gadm41_IND_2.json \
