@@ -1,6 +1,7 @@
 // Icons from designs/wildfire/assets/icons (24x24 grid, stroke 1.75, round caps).
 const PATHS = {
   search: "M18 11 A7 7 0 1 1 4 11 A7 7 0 1 1 18 11 Z M20.5 20.5 L16 16",
+  pin: "M12 21 C12 21 5 14.5 5 9.5 A7 7 0 0 1 19 9.5 C19 14.5 12 21 12 21 Z M14.5 9.5 A2.5 2.5 0 1 1 9.5 9.5 A2.5 2.5 0 1 1 14.5 9.5 Z",
   "arrow-down": "M12 5 L12 19 M6 13 L12 19 L18 13",
   "arrow-left": "M19 12 L5 12 M11 6 L5 12 L11 18",
   wind: "M3 8 L13 8 A3 3 0 1 0 10 5 M3 12 L18 12 A3 3 0 1 1 15 15 M3 16 L10 16",

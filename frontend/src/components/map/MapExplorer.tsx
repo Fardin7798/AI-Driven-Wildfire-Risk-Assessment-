@@ -124,7 +124,34 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
     return points.features.filter((f) => f.properties.district_name.toLowerCase().includes(s)).slice(0, 6);
   }, [q, points]);
 
-  const pick = useCallback((id: number) => { setSel(id); setQ(""); setOpen(false); }, []);
+  // Towns / cities: backend geocoder, debounced; town -> parent district via /regions/by-coordinates
+  type Town = { name: string; state: string; district: string; lat: number; lon: number };
+  const [towns, setTowns] = useState<Town[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [resolving, setResolving] = useState(false);
+  const [searchErr, setSearchErr] = useState<string | null>(null);
+  useEffect(() => {
+    const s = q.trim();
+    setSearchErr(null);
+    if (s.length < 2) { setTowns([]); setSearching(false); return; }
+    let alive = true; setSearching(true);
+    const t = setTimeout(() => {
+      getJSON<Town[]>(`/geo/cities?q=${encodeURIComponent(s)}`)
+        .then((r) => { if (alive) setTowns((r || []).slice(0, 5)); })
+        .catch(() => { if (alive) setTowns([]); })
+        .finally(() => { if (alive) setSearching(false); });
+    }, 350);
+    return () => { alive = false; clearTimeout(t); };
+  }, [q]);
+
+  const pick = useCallback((id: number) => { setSel(id); setQ(""); setOpen(false); setSearchErr(null); }, []);
+  const pickTown = useCallback((t: Town) => {
+    setResolving(true); setSearchErr(null);
+    getJSON<{ id: number }>(`/regions/by-coordinates?lat=${t.lat}&lon=${t.lon}`)
+      .then((r) => { if (r?.id) pick(r.id); else setSearchErr("This place is outside our districts."); })
+      .catch(() => setSearchErr("This place is outside our districts."))
+      .finally(() => setResolving(false));
+  }, [pick]);
 
   return (
     <div className="relative h-full w-full overflow-hidden">
@@ -142,13 +169,13 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
               <motion.div key="search" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
                 className="absolute" style={{ left: 32, top: 104, width: 400 }}>
                 <label className="relative flex h-[56px] items-center rounded-[16px] border border-line bg-surface focus-within:border-ember/60">
-                  <input value={q} onChange={(e) => { setQ(e.target.value); setOpen(true); }} placeholder="Search your district" aria-label="Search your district"
-                    onKeyDown={(e) => { if (e.key === "Enter" && matches[0]) pick(matches[0].properties.region_id); }}
+                  <input value={q} onChange={(e) => { setQ(e.target.value); setOpen(true); }} placeholder="Search district or town" aria-label="Search district or town"
+                    onKeyDown={(e) => { if (e.key !== "Enter") return; if (matches[0]) pick(matches[0].properties.region_id); else if (towns[0]) pickTown(towns[0]); }}
                     className="h-full w-full bg-transparent pl-[20px] pr-[56px] text-[18px] text-white outline-none placeholder:text-muted" />
                   <Icon name="search" size={22} color="#9AA3B2" className="absolute" style={{ left: 360, top: 16 }} />
                 </label>
-                {open && matches.length > 0 && (
-                  <ul className="mt-2 overflow-hidden rounded-[16px] border border-line bg-surface">
+                {open && q.trim().length >= 2 && (
+                  <ul className="mt-2 max-h-[420px] overflow-y-auto rounded-[16px] border border-line bg-surface">
                     {matches.map((m) => (
                       <li key={m.properties.region_id}>
                         <button onClick={() => pick(m.properties.region_id)} className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-white/5">
@@ -158,6 +185,20 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
                         </button>
                       </li>
                     ))}
+                    {towns.map((t, i) => (
+                      <li key={`t${i}`}>
+                        <button onClick={() => pickTown(t)} disabled={resolving} className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-white/5 disabled:opacity-60">
+                          <Icon name="pin" size={14} color="#9AA3B2" />
+                          <span className="text-[15px]">{t.name}</span>
+                          <span className="truncate text-[13px] text-muted">{[t.district, t.state].filter(Boolean).join(", ")}</span>
+                        </button>
+                      </li>
+                    ))}
+                    {(searching || resolving) && <li className="px-5 py-3 text-[14px] text-muted">{resolving ? "Finding the district…" : "Searching towns…"}</li>}
+                    {searchErr && <li className="px-5 py-3 text-[14px] text-muted">{searchErr}</li>}
+                    {!searching && !resolving && !searchErr && matches.length === 0 && towns.length === 0 && (
+                      <li className="px-5 py-3 text-[14px] text-muted">No district or town found for “{q.trim()}”. Try another spelling.</li>
+                    )}
                   </ul>
                 )}
               </motion.div>
