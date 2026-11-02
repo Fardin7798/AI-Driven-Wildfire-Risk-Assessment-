@@ -55,6 +55,7 @@ export default function Home() {
 
 /* ---------------- 01 Hero ---------------- */
 function Hero() {
+  const [homeQ, setHomeQ] = useState("");
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   // Scroll story: the globe pushes in towards India and fades as the next section arrives.
@@ -83,13 +84,19 @@ function Hero() {
             className="absolute text-[18px] leading-[28px]" style={{ left: 840, top: 438, color: "rgba(255,255,255,0.82)" }}>
             AI forecast for every district in India,<br />updated daily.
           </motion.p>
-          <motion.label variants={up} initial="hidden" animate="show" custom={2}
+          <motion.form variants={up} initial="hidden" animate="show" custom={2}
+            action="/map" method="get" role="search"
+            onSubmit={(e) => { e.preventDefault(); const v = homeQ.trim(); window.location.href = v.length >= 2 ? `/map?q=${encodeURIComponent(v)}` : "/map"; }}
             className="absolute flex items-center rounded-[16px] border border-line bg-surface transition-colors focus-within:border-ember/60"
             style={{ left: 840, top: 528, width: 540, height: 56 }}>
-            <input placeholder="Search your district" aria-label="Search your district"
+            <input name="q" value={homeQ} onChange={(e) => setHomeQ(e.target.value)}
+              placeholder="Search district or town" aria-label="Search district or town" autoComplete="off"
               className="h-full w-full bg-transparent pl-[20px] pr-[60px] text-[18px] text-white outline-none placeholder:text-muted" />
-            <Icon name="search" size={22} color="#9AA3B2" className="absolute" style={{ left: 500, top: 16 }} />
-          </motion.label>
+            <button type="submit" aria-label="Search" className="absolute flex items-center justify-center rounded-[12px] hover:bg-white/10"
+              style={{ left: 488, top: 6, width: 44, height: 44 }}>
+              <Icon name="search" size={22} color="#9AA3B2" />
+            </button>
+          </motion.form>
           <motion.a href="#fires" variants={up} initial="hidden" animate="show" custom={3}
             className="absolute flex items-center" style={{ left: 840, top: 792, height: 40 }}>
             <span className="absolute rounded-full border border-line bg-surface" style={{ left: 0, top: 4, width: 32, height: 32 }} />

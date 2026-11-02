@@ -32,7 +32,7 @@ function townDistrict(t: Town) {
 
 type Hover = { x: number; y: number; name: string; cls: string | null } | null;
 
-export default function MapExplorer({ initialId, bare = false }: { initialId?: number; bare?: boolean }) {
+export default function MapExplorer({ initialId, initialQuery, bare = false }: { initialId?: number; initialQuery?: string; bare?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const [ready, setReady] = useState(false);
@@ -195,6 +195,21 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
       .catch(() => setSearchErr("This place is outside our districts."))
       .finally(() => setResolving(false));
   }, [pick]);
+
+  // Search handed over from Home (/map?q=...): exact district -> fly there, else show suggestions
+  const handoff = useRef(false);
+  useEffect(() => {
+    if (handoff.current || !initialQuery || !points) return;
+    handoff.current = true;
+    const s = initialQuery.trim().toLowerCase();
+    const url = new URL(window.location.href); url.searchParams.delete("q"); window.history.replaceState(null, "", url);
+    const all = points.features.filter((f) => f.properties.district_name.toLowerCase().includes(s));
+    const exact = all.find((f) => f.properties.district_name.toLowerCase() === s) ?? (all.length === 1 ? all[0] : undefined);
+    queueMicrotask(() => {
+      if (exact) pick(exact.properties.region_id);
+      else { setQ(initialQuery); setOpen(true); }
+    });
+  }, [initialQuery, points, pick]);
 
   return (
     <div className="relative h-full w-full overflow-hidden">
