@@ -51,7 +51,7 @@ kaggle kernels output shaikhfardin05/wildfire-risk-model-v2-training -p backend/
 
 ## AQI: PM2.5 sub-index forecast at CPCB stations (1-3 days)
 Target: the CPCB **PM2.5 sub-index of measured CPCB station PM2.5** (OpenAQ v3 daily values), at
-t+1..t+3. CAMS pollutants and NASA POWER weather are input features only. No learned AQI model is
+t+1..t+3. CAMS pollutants and Open-Meteo weather are input features only. No learned AQI model is
 served yet; training runs on Kaggle and the result is reviewed first.
 
 1. `download_air_history.py`: hourly Open-Meteo CAMS per district -> `data/raw/cams/<region_id>.csv.gz`
@@ -66,8 +66,12 @@ served yet; training runs on Kaggle and the result is reviewed first.
 4. `build_aqi_station_dataset.py`: stations in districts with CAMS data; OpenAQ location copies
    within 300 m are merged into one station (no double counting; overlapping sensor days are
    averaged and counted). One row per station-day; features from days <= t only (station lags and
-   trailing means, station PM10, station-minus-CAMS bias, district CAMS lags, POWER weather t/t-1,
-   calendar, station lat/lon); missing stays NaN. Targets t+1..t+3; `ref_cams_si_t+h` is a
+   trailing means, station PM10, station-minus-CAMS bias, district CAMS lags, Open-Meteo weather
+   t/t-1, calendar, district-centroid lat/lon); missing stays NaN. Weather comes from
+   `download_weather_history.py` (Open-Meteo Historical Forecast API, district centroid, IST
+   days), whose values equal what the live Forecast API returns with `past_days` (checked, max
+   diff 0.0), so day-t weather exists at forecast time. Centroid lat/lon is used because most
+   districts have no station. Targets t+1..t+3; `ref_cams_si_t+h` is a
    comparison column, never a feature.
 5. `ml/train/train_aqi_station.py` (Kaggle, `ml/kaggle_aqi_station/`): XGBoost per horizon, two
    variants (`with_station`, `no_station` = no station-derived inputs). Grid tuned on val
@@ -79,12 +83,16 @@ served yet; training runs on Kaggle and the result is reviewed first.
    Runs on Kaggle GPU T4 x2: every XGBoost fit runs in two worker processes on `cuda:0` and
    `cuda:1` (results collected in a fixed order, so they do not depend on the worker); the CPU
    only loads data and computes baselines and metrics. `--dry-run --devices cpu,cpu` checks the
-   wiring locally with 3-tree models.
+   wiring locally with 3-tree models. `--variants no_station` trains only model B (run v3; its
+   test year was already scored by run v2, which the outputs disclose).
 
 ```bash
+python ml/pipeline/download_weather_history.py --regions regions_centroids.csv \
+  --region-ids <training district ids> --start 2022-07-25 --end 2026-10-28 \
+  --out-dir data/raw/openmeteo_weather
 python ml/pipeline/build_aqi_station_dataset.py --regions regions_centroids.csv \
   --gadm gadm41_IND_2.json --cams data/raw/cams --openaq data/raw/openaq \
-  --power data/raw/power_aqi/power_daily.parquet --out-dir data/processed/aqi_station
+  --weather data/raw/openmeteo_weather --out-dir data/processed/aqi_station
 # -> aqi_station_dataset.parquet, stations.csv, build_report.json (gitignored)
 ```
 

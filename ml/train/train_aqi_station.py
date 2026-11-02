@@ -33,6 +33,10 @@ its XGBoost booster really runs on its device before any fit. The main process o
 computes baselines and metrics. Tasks are collected in a fixed order, so results do not depend on
 which worker ran a task (both workers are the same GPU model with the same seed).
 
+--variants selects which variants are tuned, scored and saved (default both). Run v3 trains only
+no_station (model A is out of scope) and its test year was already scored once by run v2, so its
+evaluation and metadata carry TEST_DISCLOSURE.
+
 --dry-run checks the wiring: real XGBoost with DRY_TREES trees, the first DRY_CONFIGS grid configs,
 on whatever device is given (e.g. --devices cpu,cpu locally). Its output is not a result.
 """
@@ -55,7 +59,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-VERSION = "aqi_station_xgb_v1"
+VERSION = "aqi_station_xgb_v3"
+TEST_DISCLOSURE = (
+    "second look at the test period: 2025-11-01..2026-10-28 was already scored by run v2 "
+    "(aqi_station_xgb_v1: NASA POWER weather, station lat/lon). v3 changes the inputs (Open-Meteo "
+    "Historical Forecast weather, district-centroid lat/lon) after v2's test results were seen; "
+    "protocol, grid, splits and seed are unchanged. Its test numbers are not an untouched test."
+)
+VARIANTS = ("with_station", "no_station")
 HORIZONS = (1, 2, 3)
 TARGETS = {h: f"pm25_si_t+{h}" for h in HORIZONS}
 REFERENCE = {h: f"ref_cams_si_t+{h}" for h in HORIZONS}
@@ -218,9 +229,13 @@ def load_dataset(path: Path) -> pd.DataFrame:
     return df
 
 
-def variant_features(df: pd.DataFrame) -> dict[str, list[str]]:
+def variant_features(df: pd.DataFrame, names: tuple[str, ...] = VARIANTS) -> dict[str, list[str]]:
     feats_a = feature_columns(df)
-    return {"with_station": feats_a, "no_station": [c for c in feats_a if not station_feature(c)]}
+    every = {"with_station": feats_a, "no_station": [c for c in feats_a if not station_feature(c)]}
+    unknown = set(names) - set(every)
+    if unknown or not names:
+        raise ValueError(f"unknown or empty variants: {sorted(unknown)}")
+    return {n: every[n] for n in VARIANTS if n in names}
 
 
 def tuning_rows(df: pd.DataFrame, h: int) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -239,12 +254,12 @@ def grid_configs(dry: bool) -> list[dict]:
 _W: dict = {}  # per worker process: df, feats, device, dry
 
 
-def _init_worker(dataset: Path, devices: mp.Queue, dry: bool) -> None:
+def _init_worker(dataset: Path, devices: mp.Queue, dry: bool, names: tuple[str, ...]) -> None:
     import xgboost as xgb
 
     device = devices.get()
     df = load_dataset(dataset)
-    _W.update(df=df, feats=variant_features(df), device=device, dry=dry)
+    _W.update(df=df, feats=variant_features(df, names), device=device, dry=dry)
     probe = xgb.XGBRegressor(n_estimators=1, tree_method="hist", device=device)
     probe.fit(np.arange(16.0).reshape(-1, 1), np.arange(16.0))
     used = json.loads(probe.get_booster().save_config())["learner"]["generic_param"]["device"]
@@ -333,15 +348,17 @@ def main() -> None:
     ap.add_argument("--v1-predictions", type=Path, default=None)
     ap.add_argument("--out-dir", type=Path, required=True)
     ap.add_argument("--devices", default=",".join(DEVICES), help="one worker per device")
+    ap.add_argument("--variants", default=",".join(VARIANTS), help="variants to train")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
     dry, devices = args.dry_run, args.devices.split(",")
+    names = tuple(args.variants.split(","))
     args.out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     timing: dict[str, float] = {}
 
     df = load_dataset(args.dataset)
-    variants = variant_features(df)
+    variants = variant_features(df, names)
     checks = leakage_checks(df)
 
     pre_test = df[df["date"] < TEST[0]]
@@ -350,7 +367,9 @@ def main() -> None:
 
     evaluation: dict = {
         "version": VERSION,
+        "test_disclosure": TEST_DISCLOSURE,
         "dry_run": dry,
+        "variants": list(variants),
         "protocol": {
             "train_target_day_lte": str(TRAIN_END),
             "val_days": [str(VAL[0]), str(VAL[1])],
@@ -371,7 +390,8 @@ def main() -> None:
         "spatial_cv_no_station": {},
         "test": {},
     }
-    meta: dict = {"version": VERSION, "features": variants, "models": {}}
+    meta: dict = {"version": VERSION, "test_disclosure": TEST_DISCLOSURE, "features": variants}
+    meta["models"] = {}
     test = df[(df["date"] >= TEST[0]) & (df["date"] <= TEST[1])]
     tmonth = pd.to_datetime(test["date"]).dt.to_period("M")
     months = month_starts(TEST[0], TEST[1])
@@ -381,7 +401,10 @@ def main() -> None:
     for d in devices:
         queue.put(d)
     with ProcessPoolExecutor(
-        len(devices), mp_context=ctx, initializer=_init_worker, initargs=(args.dataset, queue, dry)
+        len(devices),
+        mp_context=ctx,
+        initializer=_init_worker,
+        initargs=(args.dataset, queue, dry, names),
     ) as pool:
         # ---- 1: tuning (test rows are not touched); results kept in grid order
         configs = grid_configs(dry)
@@ -432,7 +455,7 @@ def main() -> None:
         from sklearn.model_selection import GroupKFold
 
         cv_f: dict[int, list] = {}
-        for h in HORIZONS:
+        for h in HORIZONS if "no_station" in variants else ():
             rows = fit_rows(df, h, TEST[0])
             cv_f[h] = []
             folds = GroupKFold(n_splits=N_SPATIAL_FOLDS).split(rows, groups=rows["region_id"])
@@ -466,11 +489,11 @@ def main() -> None:
         timing["test_refits_done"] = round(time.time() - t0, 1)
         cv_pred: dict[int, pd.Series] = {}
         cv_folds: dict[int, list] = {}
-        for h in HORIZONS:
+        for h, tasks in cv_f.items():
             rows = fit_rows(df, h, TEST[0])
             cv_pred[h] = pd.Series(np.nan, index=rows.index)
             cv_folds[h] = []
-            for k, pred_idx, fut in cv_f[h]:
+            for k, pred_idx, fut in tasks:
                 cv_pred[h].loc[pred_idx] = fut.result()
                 part = df.loc[pred_idx]
                 cv_folds[h].append(
@@ -510,8 +533,7 @@ def main() -> None:
                 "date": test["date"],
                 "horizon": h,
                 "target": test[TARGETS[h]],
-                "with_station": preds[("with_station", h)],
-                "no_station": preds[("no_station", h)],
+                **{name: preds[(name, h)] for name in variants},
                 "persistence": test["st_si_lag0"],
                 "seasonal_naive": test[f"st_si_lag{7 - h}"],
                 "cams_t": test["cams_pm25_si_lag0"],
@@ -525,34 +547,33 @@ def main() -> None:
         p["season"] = target_day(p, h).dt.month.map(SEASONS)
         p["quartile"] = p["station_id"].map(quart).fillna("no_pre_test_history")
         frames.append(p)
-        a_cands = ["with_station", "no_station", "persistence", "seasonal_naive", "cams_t"]
-        b_cands = ["no_station", "cams_t", "cams_target_day_ref"]
-        if v1 is not None:
-            b_cands.append("cams_model_v1")
-        evaluation["test"][f"h{h}"] = {
-            "all_rows_with_target": {c: metrics_present(p, c) for c in a_cands + b_cands[2:]},
-            "table_with_station": score_table(
+        base = ["persistence", "seasonal_naive", "cams_t"]
+        refs = ["cams_target_day_ref"] + (["cams_model_v1"] if v1 is not None else [])
+        block: dict = {
+            "all_rows_with_target": {c: metrics_present(p, c) for c in [*variants, *base, *refs]}
+        }
+        if "with_station" in variants:
+            b_in = ["no_station"] if "no_station" in variants else []
+            block["table_with_station"] = score_table(
                 p,
-                a_cands,
-                [
-                    ("with_station", "persistence"),
-                    ("with_station", "seasonal_naive"),
-                    ("with_station", "no_station"),
-                ],
-            ),
-            "table_no_station": score_table(
+                ["with_station", *b_in, *base],
+                [("with_station", "persistence"), ("with_station", "seasonal_naive")]
+                + [("with_station", b) for b in b_in],
+            )
+        if "no_station" in variants:
+            block["table_no_station"] = score_table(
                 p,
-                b_cands,
+                ["no_station", "cams_t", *refs],
                 [("no_station", "cams_t")]
                 + ([("no_station", "cams_model_v1")] if v1 is not None else []),
-            ),
-        }
+            )
+        evaluation["test"][f"h{h}"] = block
     pd.concat(frames, ignore_index=True).to_parquet(
         args.out_dir / "aqi_station_test_predictions.parquet", index=False
     )
 
     # ---- spatial CV of the no-station model (pre-test rows only)
-    for h in HORIZONS:
+    for h in cv_f:
         rows = fit_rows(df, h, TEST[0])
         p = pd.DataFrame(
             {
@@ -590,6 +611,7 @@ def main() -> None:
         h: {
             t: evaluation["test"][h][t].get("overall", {})
             for t in ("table_with_station", "table_no_station")
+            if t in evaluation["test"][h]
         }
         for h in evaluation["test"]
     }

@@ -1,4 +1,4 @@
-"""Shared readers and cleaning rules for the AQI pipeline (CAMS, CPCB stations, NASA POWER).
+"""Shared readers and cleaning rules for the AQI pipeline (CAMS, CPCB stations, weather).
 
 CAMS (Open-Meteo, hourly, Asia/Kolkata, one file per district `data/raw/cams/<region_id>.csv.gz`):
   * Invalid hourly values become missing hours (never clipped): negative concentrations of any
@@ -17,7 +17,6 @@ District ids: region_id = GADM 4.1 level-2 feature index + 1; names are checked 
 
 from __future__ import annotations
 
-import json
 import sys
 import warnings
 from datetime import date
@@ -195,18 +194,4 @@ def assign_split(dates: pd.Series) -> pd.Series:
     out = pd.Series(pd.NA, index=dates.index, dtype="object")
     for name, (lo, hi) in SPLITS.items():
         out[(dates >= lo) & (dates <= hi)] = name
-    return out
-
-
-def region_gadm_map(regions: pd.DataFrame, gadm_path: Path) -> dict[int, str]:
-    """region_id -> GID_2. regions_centroids.csv numbers GADM features in file order (1-based,
-    the order load_regions.py inserts them). GADM has duplicate state/district names (e.g. two
-    "Anjaw"), so names cannot be the key; they are only checked against the ordinal match."""
-    feats = json.loads(gadm_path.read_text())["features"]
-    out = {}
-    for r in regions.itertuples():
-        pr = feats[int(r.region_id) - 1]["properties"]
-        if (pr["NAME_1"], pr["NAME_2"]) != (r.state, r.district):
-            raise ValueError(f"region {r.region_id} {r.state}/{r.district} != GADM {pr['GID_2']}")
-        out[int(r.region_id)] = pr["GID_2"]
     return out

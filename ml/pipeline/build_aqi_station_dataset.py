@@ -17,8 +17,13 @@ only days <= t; missing inputs stay NaN (XGBoost handles them); nothing is fille
   bias_*   station minus CAMS sub-index (lag0, 7-day mean)
   cams_*   district CAMS: PM2.5 sub-index lags 0-6 and 7/14-day means (>= 5/10 valid days),
            24-h means of PM2.5/PM10/NO2/SO2/CO/O3 lags 0-2 (>= 16 valid hours)
-  weather  NASA POWER district weather of day t and t-1
-  calendar doy_sin, doy_cos, month, weekday; static: station lat, lon
+  weather  district weather of day t and t-1 (temp_max, temp_mean, rh_mean, wind_max km/h,
+           precip_sum): Open-Meteo Historical Forecast API daily values at the district centroid,
+           IST days (download_weather_history.py). The live Forecast API (past_days) returns the
+           same values for yesterday, so the feature exists at forecast time. A day the archive
+           has no value for stays NaN.
+  calendar doy_sin, doy_cos, month, weekday; static: district centroid lat, lon
+           (regions_centroids.csv; the only location that exists for every district at serving)
 Lags are calendar lags (a missing day is missing, never the previous row).
 Targets: pm25_si_t+{1,2,3} (station). Reference column (never a feature): ref_cams_si_t+{h},
 the CAMS district sub-index on the target day, for the "raw CAMS" comparison only.
@@ -48,7 +53,6 @@ from aqi_sources import (  # noqa: E402
     match_sensors,
     pm25_sub_index,
     read_cams,
-    region_gadm_map,
 )
 
 STATION_RADIUS_M = 300.0
@@ -163,10 +167,30 @@ def station_features(panel: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([p[["station_id", "date"]], pd.DataFrame(new)], axis=1)
 
 
-def combine(st: pd.DataFrame, dist: pd.DataFrame, stations: pd.DataFrame) -> pd.DataFrame:
+def read_weather(weather_dir: Path, region_ids) -> pd.DataFrame:
+    """Daily district weather files (download_weather_history.py) -> (region_id, date, WEATHER).
+    Every requested district must have a file; empty values stay NaN."""
+    frames = []
+    for rid in sorted(int(r) for r in region_ids):
+        f = weather_dir / f"{rid}.csv"
+        if not f.exists():
+            raise FileNotFoundError(f"no weather file for region {rid}: {f}")
+        w = pd.read_csv(f)
+        w["date"] = pd.to_datetime(w["date"]).dt.date
+        frames.append(w[["date", *WEATHER]].assign(region_id=rid))
+    out = pd.concat(frames, ignore_index=True)
+    if out.duplicated(["region_id", "date"]).any():
+        raise ValueError("duplicate (region_id, date) in weather files")
+    return out[["region_id", "date", *WEATHER]]
+
+
+def combine(
+    st: pd.DataFrame, dist: pd.DataFrame, stations: pd.DataFrame, centroids: pd.DataFrame
+) -> pd.DataFrame:
     """Join station and district features on (district of the station, day t); add bias,
-    calendar and static columns."""
+    calendar and static columns (lat/lon = centroid of the station's district)."""
     meta = stations.set_index("station_id")
+    cen = centroids.set_index("region_id")
     st = st.assign(region_id=st["station_id"].map(meta["region_id"]).astype(int))
     df = st.merge(dist, on=["region_id", "date"], how="left")
     df["bias_si_lag0"] = df["st_si_lag0"] - df["cams_pm25_si_lag0"]
@@ -177,8 +201,8 @@ def combine(st: pd.DataFrame, dist: pd.DataFrame, stations: pd.DataFrame) -> pd.
     df["doy_cos"] = np.cos(2 * np.pi * doy / 365.25)
     df["month"] = dt.dt.month
     df["weekday"] = dt.dt.day_of_week
-    df["lat"] = df["station_id"].map(meta["lat"])
-    df["lon"] = df["station_id"].map(meta["lon"])
+    df["lat"] = df["region_id"].map(cen["lat"])
+    df["lon"] = df["region_id"].map(cen["lon"])
     return df
 
 
@@ -199,14 +223,13 @@ def main() -> None:
     )
     ap.add_argument("--cams", type=Path, default=Path("data/raw/cams"))
     ap.add_argument("--openaq", type=Path, default=Path("data/raw/openaq"))
-    ap.add_argument("--power", type=Path, default=Path("data/raw/power_aqi/power_daily.parquet"))
+    ap.add_argument("--weather", type=Path, default=Path("data/raw/openmeteo_weather"))
     ap.add_argument("--regions", type=Path, required=True)
     ap.add_argument("--gadm", type=Path, required=True)
     ap.add_argument("--out-dir", type=Path, default=Path("data/processed/aqi_station"))
     args = ap.parse_args()
 
     regions = pd.read_csv(args.regions)
-    gmap = region_gadm_map(regions, args.gadm)
     rids = {int(f.name.split(".")[0]) for f in args.cams.glob("*.csv.gz")}
     if not rids:
         raise SystemExit(f"no CAMS files in {args.cams}")
@@ -274,7 +297,7 @@ def main() -> None:
         .reset_index()
     )
 
-    # --- district panel: CAMS daily + POWER
+    # --- district panel: CAMS daily + Open-Meteo weather
     frames = []
     for rid in sorted(st_meta["region_id"].unique()):
         hourly, _ = read_cams(args.cams / f"{rid}.csv.gz")
@@ -282,14 +305,14 @@ def main() -> None:
         d.index.name = "date"
         frames.append(d.reset_index().assign(region_id=int(rid)))
     dpanel = pd.concat(frames, ignore_index=True)
-    power = pd.read_parquet(args.power)
-    power["date"] = pd.to_datetime(power["date"]).dt.date
-    inv = {v: k for k, v in gmap.items()}
-    power = power[power["gadm_id"].isin({gmap[r] for r in dpanel["region_id"].unique()})].copy()
-    power["region_id"] = power.pop("gadm_id").map(inv)
-    dpanel = dpanel.merge(power, on=["region_id", "date"], how="left")
+    # outer join + calendar reindex: weather days before the first CAMS day (CAMS starts
+    # 2022-08-01) still feed the t-1 weather lag; CAMS on those days stays NaN.
+    weather = read_weather(args.weather, dpanel["region_id"].unique())
+    dpanel = calendar_panel(
+        dpanel.merge(weather, on=["region_id", "date"], how="outer"), "region_id"
+    )
 
-    df = combine(station_features(spanel), district_features(dpanel), st_meta)
+    df = combine(station_features(spanel), district_features(dpanel), st_meta, regions)
     df["split"] = assign_split(df["date"])
     candidates = df[df["split"].notna()]
     out = candidates[candidates[TARGETS].notna().any(axis=1)].copy()
@@ -298,6 +321,10 @@ def main() -> None:
 
     report = {
         "target": "CPCB PM2.5 sub-index of cleaned CPCB station daily PM2.5 (OpenAQ v3), t+1..t+3",
+        "weather": "Open-Meteo Historical Forecast API daily (best match), district centroid, "
+        "Asia/Kolkata days: temperature_2m_max/mean, relative_humidity_2m_mean, "
+        "wind_speed_10m_max (km/h), precipitation_sum; day t and t-1",
+        "location_features": "district centroid lat/lon (regions_centroids.csv)",
         "station_radius_m": STATION_RADIUS_M,
         "pm25_sensors_in_cams_districts": int((sensors["parameter"] == "pm25").sum()),
         "pm25_locations": int(len(loc2st)),

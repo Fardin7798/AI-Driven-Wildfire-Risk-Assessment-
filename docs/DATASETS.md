@@ -33,10 +33,17 @@ This platform aggregates multiple open scientific datasets for environmental ris
 - **Attribution**: "Air quality station monitoring data courtesy of Central Pollution Control Board (CPCB), Ministry of Environment, Forest and Climate Change, published on data.gov.in."
 - **Endpoint**: `https://api.data.gov.in/resource/3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69`
 
-## 4b. NASA POWER (training weather)
-- **Source**: NASA Langley POWER daily API (`T2M_MAX, T2M, RH2M, WS10M_MAX, PRECTOTCORR`) at each district centroid, 2018-09 to 2024.
+## 4b. NASA POWER (wildfire training weather)
+- **Source**: NASA Langley POWER daily API (`T2M_MAX, T2M, RH2M, WS10M_MAX, PRECTOTCORR`) at each district centroid, 2018-09 to 2024. Used by the wildfire pipeline only; the AQI station model does not use it (POWER lags ~3 days, so day-t weather is not live at forecast time).
 - **License**: Public domain (NASA). Attribution: "Data obtained from the NASA Langley Research Center POWER Project."
 - **Downloader**: `ml/pipeline/download_power_history.py`.
+
+## 4c. Open-Meteo Historical Forecast API (AQI station model weather)
+- **Source**: archived Open-Meteo forecasts (first hours of each model run stitched, default "best match"), daily `temperature_2m_max, temperature_2m_mean, relative_humidity_2m_mean, wind_speed_10m_max (km/h), precipitation_sum`, `timezone=Asia/Kolkata`, at each training district centroid, 2022-07-25 to 2026-10-28.
+- **Why**: the live Forecast API (`past_days`) returns the same values for yesterday without delay. Checked 2026-11-02 with real requests: 8 districts x 92 past days x 5 variables, Forecast API `past_days` vs Historical Forecast API, max abs diff 0.0.
+- **License**: Open-Meteo CC BY 4.0. Attribution: "Weather data by Open-Meteo.com".
+- **Endpoint**: `https://historical-forecast-api.open-meteo.com/v1/forecast`; downloader `ml/pipeline/download_weather_history.py`.
+- Target-day forecasts (t+1..t+3) are not used: issued-at-t forecasts (Previous Runs API) are archived only from January 2024 for most models, after the 2022-08 training start.
 
 ## 5. GADM Database of Global Administrative Areas (v4.1)
 - **Source**: GADM (https://gadm.org) India Level-2 (Districts)

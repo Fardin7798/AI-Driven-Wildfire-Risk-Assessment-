@@ -173,10 +173,13 @@ def _district_panel(n: int, region_id: int = 9, start: str = "2025-02-20") -> "p
 
 
 _META = pd.DataFrame({"station_id": [5], "region_id": [9], "lat": [21.0], "lon": [75.5]})
+_CENTROIDS = pd.DataFrame({"region_id": [8, 9], "lat": [19.9, 20.4], "lon": [73.7, 75.9]})
 
 
 def _features(si: list[float], dist: "pd.DataFrame") -> "pd.DataFrame":
-    return bs.combine(bs.station_features(_station_panel(si)), bs.district_features(dist), _META)
+    return bs.combine(
+        bs.station_features(_station_panel(si)), bs.district_features(dist), _META, _CENTROIDS
+    )
 
 
 def test_station_features_targets_and_no_leakage():
@@ -202,7 +205,7 @@ def test_station_features_targets_and_no_leakage():
     d2.loc[later, [*[f"{p}_mean" for p in POLS], "pm25_si", *b.WEATHER]] = -5.0
     p2 = _station_panel(future)
     p2.loc[t + 1 :, "st_pm10"] = -5.0
-    f2 = bs.combine(bs.station_features(p2), bs.district_features(d2), _META)
+    f2 = bs.combine(bs.station_features(p2), bs.district_features(d2), _META, _CENTROIDS)
     cols = bs.feature_columns(f)
     pd.testing.assert_series_equal(f.iloc[t][cols], f2.iloc[t][cols], check_names=False)
     assert not set(cols) & set(bs.TARGETS) and not set(cols) & set(bs.REFERENCE)
@@ -214,7 +217,8 @@ def test_alignment_station_to_its_district_and_day():
     f = _features(si, dist)
     row = f.iloc[20]
     offset = (pd.Timestamp(row["date"]) - pd.Timestamp("2025-02-20")).days
-    assert row["region_id"] == 9 and (row["lat"], row["lon"]) == (21.0, 75.5)
+    # location features are the district centroid (exists at serving), not the station coords
+    assert row["region_id"] == 9 and (row["lat"], row["lon"]) == (20.4, 75.9)
     assert row["cams_pm25_si_lag0"] == 1000 + offset
     assert row["cams_pm25_si_lag6"] == 1000 + offset - 6
     assert row["cams_no2_lag2"] == offset - 2 and row["temp_max_lag1"] == offset - 1
@@ -224,7 +228,10 @@ def test_alignment_station_to_its_district_and_day():
     assert f.iloc[0]["cams_pm25_si_lag6"] == 1000 + 9 - 6
     # a station in a district without CAMS rows gets NaN, never another district's values
     g = bs.combine(
-        bs.station_features(_station_panel(si)), bs.district_features(_district_panel(60, 8)), _META
+        bs.station_features(_station_panel(si)),
+        bs.district_features(_district_panel(60, 8)),
+        _META,
+        _CENTROIDS,
     )
     assert g["cams_pm25_si_lag0"].isna().all()
 
@@ -236,6 +243,20 @@ def test_missing_station_day_is_missing_lag_not_previous_row():
     assert np.isnan(f.iloc[25]["st_si_lag1"]) and f.iloc[25]["st_si_lag2"] == si[23]
     assert f.iloc[25]["st_nvalid7"] == 6
     assert np.isnan(f.iloc[23]["pm25_si_t+1"])
+
+
+def test_read_weather_keeps_nulls_and_requires_every_district(tmp_path):
+    (tmp_path / "9.csv").write_text(
+        "date,temp_max,temp_mean,rh_mean,wind_max,precip_sum\n"
+        "2025-01-01,30.1,24.0,55,12.3,0.0\n"
+        "2025-01-02,,24.5,60,10.0,1.2\n"
+    )
+    w = bs.read_weather(tmp_path, [9])
+    assert list(w.columns) == ["region_id", "date", *b.WEATHER]
+    assert w["date"].tolist() == [date(2025, 1, 1), date(2025, 1, 2)]
+    assert w.loc[0, "wind_max"] == 12.3 and np.isnan(w.loc[1, "temp_max"])  # never filled
+    with pytest.raises(FileNotFoundError):
+        bs.read_weather(tmp_path, [9, 10])
 
 
 def test_calendar_panel_fills_gaps_with_missing_rows():
@@ -299,6 +320,19 @@ def test_pm25_sub_index_cpcb_breakpoints():
     known = {0: 0, 30: 50, 31: 51, 45: 75, 60: 100, 61: 101, 75: 149, 90: 200, 91: 201}
     known |= {120: 300, 121: 301, 250: 400, 251: 401, 300: 420, 500: 500, 750: 500}
     assert {c: calculate_sub_index("pm25", float(c)) for c in known} == known
+
+
+def test_variant_selection():
+    f = _features([float(100 + i) for i in range(40)], _district_panel(60))
+    f["split"] = "val"
+    assert list(tr.variant_features(f)) == ["with_station", "no_station"]
+    only_b = tr.variant_features(f, ("no_station",))
+    assert list(only_b) == ["no_station"] and not any(
+        tr.station_feature(c) for c in only_b["no_station"]
+    )
+    with pytest.raises(ValueError):
+        tr.variant_features(f, ("model_c",))
+    assert "second look" in tr.TEST_DISCLOSURE
 
 
 def test_grid_selection_and_edges():
