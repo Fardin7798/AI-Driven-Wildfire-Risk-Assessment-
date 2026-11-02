@@ -11,6 +11,7 @@ import { CountUp } from "@/components/CountUp";
 import {
   getJSON, shortTime, RISK_COLORS, RISK_BADGE, NO_DATA, FACTOR_LABELS,
   type Risk, type AirQuality, type RiskMap, type Region,
+  factorFracs,
 } from "@/lib/api";
 import { BASEMAP, INDIA_BOUNDS, bbox, circle, townBoundary } from "./geo";
 
@@ -19,7 +20,6 @@ const COLOR_EXPR = ["match", ["coalesce", ["get", "risk_class"], "none"],
   "Low", RISK_COLORS.Low, "Moderate", RISK_COLORS.Moderate, "High", RISK_COLORS.High, "Extreme", RISK_COLORS.Extreme, NO_DATA,
 ] as unknown as maplibregl.ExpressionSpecification;
 const PANEL_W = 416, PANEL_GAP = 24;
-const BAR_FRACS = [0.86, 0.66, 0.52];
 
 type Town = { name: string; state: string; district: string; lat: number; lon: number; display_name?: string };
 type Place = { name: string; lat: number; lon: number; shape: GeoJSON.Polygon | GeoJSON.MultiPolygon; real: boolean } | null;
@@ -365,11 +365,11 @@ function Panel({ risk, aq, place }: { risk: Risk | null; aq: AirQuality | null; 
           </div>
           <h3 className="mt-[28px] text-[24px] font-semibold leading-[32px]">Why today?</h3>
           <div className="mt-[12px] space-y-[14px]">
-            {risk.top_factors.slice(0, 3).map((f, j) => (
+            {risk.top_factors.slice(0, 3).map((f, j, arr) => (
               <div key={f.feature}>
                 <p className="text-[15px] font-semibold leading-[20px]">{FACTOR_LABELS[f.feature] ?? f.label}</p>
                 <div className="mt-[8px] h-[8px] rounded-full bg-line">
-                  <motion.div className="h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${BAR_FRACS[j] * 100}%` }}
+                  <motion.div className="h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${factorFracs(arr)[j] * 100}%` }}
                     transition={{ duration: 1.1, ease, delay: 0.9 + j * 0.12 }}
                     style={{ background: "linear-gradient(90deg, #C2410C, #F97316)", boxShadow: "0 0 12px #F9731699" }} />
                 </div>

@@ -7,7 +7,7 @@ import { Icon, type IconName } from "@/components/Icon";
 import { CountUp } from "@/components/CountUp";
 import { NASHIK } from "@/lib/nashik-outline";
 import {
-  getJSON, shortTime, fmt, RISK_COLORS, RISK_BADGE, NO_DATA, FACTOR_LABELS,
+  getJSON, factorFracs, shortTime, fmt, RISK_COLORS, RISK_BADGE, NO_DATA, FACTOR_LABELS,
   type Risk, type AirQuality, type FireStats,
 } from "@/lib/api";
 
@@ -219,7 +219,6 @@ function Tile({ i, x, label, icon, value, sub, vcol, subcol }: { i: number; x: n
 }
 
 /* ---------------- 04 Why today + Stay safe ---------------- */
-const BAR_FRACS = [0.86, 0.66, 0.52]; // rank-based lengths, as in the approved design
 const SAFETY: { title: string; icon: IconName; stage: string }[] = [
   { title: "Before a fire", icon: "shield-house", stage: "before" },
   { title: "During a fire", icon: "flame", stage: "during" },
@@ -228,6 +227,7 @@ const SAFETY: { title: string; icon: IconName; stage: string }[] = [
 
 function WhyToday({ risk }: { risk: Risk | null }) {
   const factors = risk?.top_factors.slice(0, 3) ?? [];
+  const fracs = factorFracs(factors);
   return (
     <section className="relative overflow-hidden">
       <motion.div className="relative mx-auto h-[900px] w-[1440px]" initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.35 }}>
@@ -239,7 +239,7 @@ function WhyToday({ risk }: { risk: Risk | null }) {
           <div key={f.feature} className="absolute rounded-[24px] border border-line bg-surface" style={{ left: 72, top: 248 + j * 64, width: 1296, height: 48 }}>
             <motion.div className="absolute left-0 top-0 h-full rounded-[24px]"
               style={{ background: "linear-gradient(90deg, #C2410CF2 0%, #F97316BF 100%)", border: "1.5px solid #FB923C", boxShadow: "0 0 24px #F9731699, 0 0 6px #F9731655" }}
-              variants={{ hidden: { width: 0 }, show: { width: Math.round(1296 * BAR_FRACS[j]), transition: { duration: 1.2, ease, delay: 0.3 + j * 0.15 } } }} />
+              variants={{ hidden: { width: 0 }, show: { width: Math.round(1296 * fracs[j]), transition: { duration: 1.2, ease, delay: 0.3 + j * 0.15 } } }} />
             <motion.span variants={up} custom={2 + j} className="absolute whitespace-nowrap text-[16px] font-semibold leading-[normal]" style={{ left: 24, top: 14 }}>
               {FACTOR_LABELS[f.feature] ?? f.label}
             </motion.span>

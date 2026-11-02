@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { CountUp } from "@/components/CountUp";
 import { PageShell, Card, Skeleton, Waking, ErrorNote, Badge, useApi, ease } from "@/components/ui";
-import { RISK_COLORS, RISK_BADGE, NO_DATA, FACTOR_LABELS, shortTime, type Risk } from "@/lib/api";
+import { RISK_COLORS, RISK_BADGE, NO_DATA, FACTOR_LABELS, factorFracs, shortTime, type Risk } from "@/lib/api";
 
 type Hist = Risk & { date: string };
 type Weather = { date: string; temp_max: number | null; temp_min: number | null; rh_mean: number | null; wind_max: number | null; precip_sum: number | null; is_forecast: boolean };
@@ -49,11 +49,11 @@ export default function DistrictPage() {
           <h2 className="text-[24px] font-semibold">Why today?</h2>
           {!r ? <Skeleton h={160} className="mt-4" /> : (
             <div className="mt-5 space-y-5">
-              {r.top_factors.slice(0, 3).map((f, j) => (
+              {r.top_factors.slice(0, 3).map((f, j, arr) => (
                 <div key={f.feature}>
                   <p className="text-[16px]">{FACTOR_LABELS[f.feature] ?? f.label}</p>
                   <div className="mt-2 h-[8px] w-full rounded-full bg-white/5">
-                    <motion.div className="h-full rounded-full bg-ember" initial={{ width: 0 }} animate={{ width: `${[86, 66, 52][j]}%` }} transition={{ duration: 1.1, ease, delay: 0.2 + j * 0.12 }}
+                    <motion.div className="h-full rounded-full bg-ember" initial={{ width: 0 }} animate={{ width: `${factorFracs(arr)[j] * 100}%` }} transition={{ duration: 1.1, ease, delay: 0.2 + j * 0.12 }}
                       style={{ boxShadow: "0 0 10px #F9731688" }} />
                   </div>
                 </div>
