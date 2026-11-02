@@ -196,20 +196,22 @@ export default function MapExplorer({ initialId, initialQuery, bare = false }: {
       .finally(() => setResolving(false));
   }, [pick]);
 
-  // Search handed over from Home (/map?q=...): exact district -> fly there, else show suggestions
+  // Search handed over from Home (/map?q=...): same as pressing Enter in the map search.
+  // First district match -> fly there; otherwise first town from the geocoder; nothing -> show the search with the message.
   const handoff = useRef(false);
   useEffect(() => {
     if (handoff.current || !initialQuery || !points) return;
     handoff.current = true;
-    const s = initialQuery.trim().toLowerCase();
+    const text = initialQuery.trim();
+    const s = text.toLowerCase();
     const url = new URL(window.location.href); url.searchParams.delete("q"); window.history.replaceState(null, "", url);
     const all = points.features.filter((f) => f.properties.district_name.toLowerCase().includes(s));
-    const exact = all.find((f) => f.properties.district_name.toLowerCase() === s) ?? (all.length === 1 ? all[0] : undefined);
-    queueMicrotask(() => {
-      if (exact) pick(exact.properties.region_id);
-      else { setQ(initialQuery); setOpen(true); }
-    });
-  }, [initialQuery, points, pick]);
+    const best = all.find((f) => f.properties.district_name.toLowerCase() === s) ?? all[0];
+    if (best) { queueMicrotask(() => pick(best.properties.region_id)); return; }
+    getJSON<Town[]>(`/geo/cities?q=${encodeURIComponent(text)}`)
+      .then((r) => { if (r && r[0]) pickTown(r[0]); else { setQ(text); setOpen(true); } })
+      .catch(() => { setQ(text); setOpen(true); });
+  }, [initialQuery, points, pick, pickTown]);
 
   return (
     <div className="relative h-full w-full overflow-hidden">
