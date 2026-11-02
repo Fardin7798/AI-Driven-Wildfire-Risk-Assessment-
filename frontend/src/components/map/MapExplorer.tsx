@@ -21,6 +21,15 @@ const COLOR_EXPR = ["match", ["coalesce", ["get", "risk_class"], "none"],
 const PANEL_W = 416, PANEL_GAP = 24;
 const BAR_FRACS = [0.86, 0.66, 0.52];
 
+type Town = { name: string; state: string; district: string; lat: number; lon: number; display_name?: string };
+type Place = { name: string; lat: number; lon: number } | null;
+/** "…, Bhusawal, Jalgaon, Maharashtra, 425307, India" -> "Jalgaon" (the part just before the state) */
+function townDistrict(t: Town) {
+  const parts = (t.display_name || "").split(",").map((x) => x.trim());
+  const i = parts.lastIndexOf(t.state);
+  return i > 0 ? parts[i - 1] : t.district;
+}
+
 type Hover = { x: number; y: number; name: string; cls: string | null } | null;
 
 export default function MapExplorer({ initialId, bare = false }: { initialId?: number; bare?: boolean }) {
@@ -28,6 +37,7 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
   const mapRef = useRef<MLMap | null>(null);
   const [ready, setReady] = useState(false);
   const [points, setPoints] = useState<RiskMap | null>(null);
+  const [place, setPlace] = useState<Place>(null);
   const [hover, setHover] = useState<Hover>(null);
   const [sel, setSel] = useState<number | null>(initialId ?? null);
   const [risk, setRisk] = useState<Risk | null>(null);
@@ -59,6 +69,7 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
       map.addSource("boundary", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addLayer({ id: "boundary-fill", type: "fill", source: "boundary", paint: { "fill-color": ["get", "color"], "fill-opacity": 0.16 } });
       map.addLayer({ id: "boundary-glow", type: "line", source: "boundary", paint: { "line-color": ["get", "color"], "line-width": 10, "line-blur": 9, "line-opacity": 0.7 } });
+      map.addSource("place", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addLayer({ id: "boundary-line", type: "line", source: "boundary", paint: { "line-color": ["get", "stroke"], "line-width": 2.5 }, layout: { "line-join": "round" } });
       map.addLayer({ id: "dots-glow", type: "circle", source: "districts", paint: {
         "circle-color": COLOR_EXPR, "circle-blur": 1, "circle-opacity": 0.55,
@@ -70,13 +81,18 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
         "circle-stroke-color": "#0B0D12", "circle-stroke-width": 1,
         "circle-opacity": ["case", ["boolean", ["feature-state", "dim"], false], 0.35, 1],
       } });
+      map.addLayer({ id: "place-halo", type: "circle", source: "place", paint: { "circle-color": "#F97316", "circle-radius": 18, "circle-blur": 0.8, "circle-opacity": 0.6 } });
+      map.addLayer({ id: "place-pin", type: "circle", source: "place", paint: { "circle-color": "#FFFFFF", "circle-radius": 7, "circle-stroke-color": "#F97316", "circle-stroke-width": 3 } });
+      map.addLayer({ id: "place-label", type: "symbol", source: "place",
+        layout: { "text-field": ["get", "name"], "text-font": ["Montserrat SemiBold", "Open Sans Bold", "Noto Sans Regular"], "text-size": 14, "text-offset": [0, 1.5], "text-anchor": "top" },
+        paint: { "text-color": "#FFFFFF", "text-halo-color": "#0B0D12", "text-halo-width": 2 } });
       map.on("mousemove", "dots", (e) => {
         const f = e.features?.[0]; if (!f) return;
         map.getCanvas().style.cursor = "pointer";
         setHover({ x: e.point.x, y: e.point.y, name: String(f.properties.district_name), cls: (f.properties.risk_class as string) || null });
       });
       map.on("mouseleave", "dots", () => { map.getCanvas().style.cursor = ""; setHover(null); });
-      map.on("click", "dots", (e) => { const f = e.features?.[0]; if (f) setSel(Number(f.properties.region_id)); });
+      map.on("click", "dots", (e) => { const f = e.features?.[0]; if (f) { setPlace(null); setSel(Number(f.properties.region_id)); } });
       setReady(true);
     });
     return () => { map.remove(); mapRef.current = null; };
@@ -88,6 +104,15 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
     if (!ready || !points) return;
     (mapRef.current!.getSource("districts") as GeoJSONSource).setData(points as unknown as GeoJSON.FeatureCollection);
   }, [ready, points]);
+
+  // town pin
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    (map.getSource("place") as GeoJSONSource).setData(place
+      ? { type: "Feature", geometry: { type: "Point", coordinates: [place.lon, place.lat] }, properties: { name: place.name } }
+      : { type: "FeatureCollection", features: [] });
+  }, [place, ready]);
 
   // selection
   useEffect(() => {
@@ -125,7 +150,6 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
   }, [q, points]);
 
   // Towns / cities: backend geocoder, debounced; town -> parent district via /regions/by-coordinates
-  type Town = { name: string; state: string; district: string; lat: number; lon: number };
   const [towns, setTowns] = useState<Town[]>([]);
   const [searching, setSearching] = useState(false);
   const [resolving, setResolving] = useState(false);
@@ -144,11 +168,11 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
     return () => { alive = false; clearTimeout(t); };
   }, [q]);
 
-  const pick = useCallback((id: number) => { setSel(id); setQ(""); setOpen(false); setSearchErr(null); }, []);
+  const pick = useCallback((id: number, pl: Place = null) => { setPlace(pl); setSel(id); setQ(""); setOpen(false); setSearchErr(null); }, []);
   const pickTown = useCallback((t: Town) => {
     setResolving(true); setSearchErr(null);
     getJSON<{ id: number }>(`/regions/by-coordinates?lat=${t.lat}&lon=${t.lon}`)
-      .then((r) => { if (r?.id) pick(r.id); else setSearchErr("This place is outside our districts."); })
+      .then((r) => { if (r?.id) pick(r.id, { name: t.name, lat: t.lat, lon: t.lon }); else setSearchErr("This place is outside our districts."); })
       .catch(() => setSearchErr("This place is outside our districts."))
       .finally(() => setResolving(false));
   }, [pick]);
@@ -190,7 +214,7 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
                         <button onClick={() => pickTown(t)} disabled={resolving} className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-white/5 disabled:opacity-60">
                           <Icon name="pin" size={14} color="#9AA3B2" />
                           <span className="text-[15px]">{t.name}</span>
-                          <span className="truncate text-[13px] text-muted">{[t.district, t.state].filter(Boolean).join(", ")}</span>
+                          <span className="truncate text-[13px] text-muted">{townDistrict(t)} district, {t.state}</span>
                         </button>
                       </li>
                     ))}
@@ -203,7 +227,7 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
                 )}
               </motion.div>
             ) : (
-              <motion.button key="back" onClick={() => setSel(null)} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }}
+              <motion.button key="back" onClick={() => { setPlace(null); setSel(null); }} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }}
                 className="absolute flex h-[40px] items-center gap-[8px] rounded-[20px] border border-line bg-surface/90 pl-[14px] pr-[18px] text-[15px] backdrop-blur-md hover:border-ember/60"
                 style={{ left: 32, top: 104 }}>
                 <Icon name="arrow-left" size={16} />Back to India
@@ -244,7 +268,7 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
 
           {/* Panel */}
           <AnimatePresence>
-            {sel != null && <Panel key={sel} risk={risk} aq={aq} />}
+            {sel != null && <Panel key={sel} risk={risk} aq={aq} place={place} />}
           </AnimatePresence>
 
           {!points && (
@@ -258,7 +282,7 @@ export default function MapExplorer({ initialId, bare = false }: { initialId?: n
   );
 }
 
-function Panel({ risk, aq }: { risk: Risk | null; aq: AirQuality | null }) {
+function Panel({ risk, aq, place }: { risk: Risk | null; aq: AirQuality | null; place: Place }) {
   const cls = risk?.risk_class;
   const col = (cls && RISK_COLORS[cls]) || NO_DATA;
   const aqCol = (aq?.aqi_category && RISK_COLORS[aq.aqi_category]) || "#F59E0B";
@@ -275,7 +299,15 @@ function Panel({ risk, aq }: { risk: Risk | null; aq: AirQuality | null }) {
         </div>
       ) : (
         <>
-          <h2 className="text-[40px] font-bold leading-[48px]">{risk.district_name},<br />{risk.state_name}</h2>
+          {place ? (
+            <>
+              <h2 className="text-[40px] font-bold leading-[48px]">{place.name}</h2>
+              <p className="mt-[6px] text-[16px] leading-[22px] text-muted">in {risk.district_name} district, {risk.state_name}</p>
+              <p className="mt-[4px] text-[13px] leading-[18px] text-muted">Forecast is for the whole district.</p>
+            </>
+          ) : (
+            <h2 className="text-[40px] font-bold leading-[48px]">{risk.district_name},<br />{risk.state_name}</h2>
+          )}
           <span className="mt-[16px] inline-flex h-[32px] items-center rounded-[16px] px-[14px] text-[13px] font-semibold"
             style={{ color: col, background: `${col}24`, border: `1px solid ${col}E6` }}>{RISK_BADGE[cls!] ?? "No forecast yet"}</span>
           <div className="mt-[16px] flex items-center">
