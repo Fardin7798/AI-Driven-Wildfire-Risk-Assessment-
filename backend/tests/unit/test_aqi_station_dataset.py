@@ -292,3 +292,52 @@ def test_metrics_r2_and_category_accuracy():
     assert m["mae"] == 0 and m["r2"] == 1 and m["category_accuracy"] == 1
     m2 = tr.metrics(np.array([60.0, 80.0, 150.0, 250.0]), y)
     assert m2["mae"] == 5 and m2["category_accuracy"] == 0.75
+
+
+def test_pm25_sub_index_cpcb_breakpoints():
+    # CPCB NAQI PM2.5 (24-h, µg/m³): 0-30 Good, 31-60, 61-90, 91-120, 121-250, >250 Severe
+    known = {0: 0, 30: 50, 31: 51, 45: 75, 60: 100, 61: 101, 75: 149, 90: 200, 91: 201}
+    known |= {120: 300, 121: 301, 250: 400, 251: 401, 300: 420, 500: 500, 750: 500}
+    assert {c: calculate_sub_index("pm25", float(c)) for c in known} == known
+
+
+def test_grid_selection_and_edges():
+    assert len(tr.grid_configs(dry=False)) == 120 and len(tr.grid_configs(dry=True)) == 2
+    trials = [{**c, "mae": 2.0} for c in tr.grid_configs(dry=False)]
+    trials[7]["mae"] = trials[9]["mae"] = 1.0
+    best, edge = tr.select(trials)
+    assert best is trials[7]  # lowest val MAE, first in grid order on a tie
+    assert set(edge) == {"max_depth", "min_child_weight"}
+
+
+def _tiny_frame() -> "pd.DataFrame":
+    rng = np.random.default_rng(0)
+    days = pd.date_range("2025-05-01", "2025-11-30").date
+    df = pd.DataFrame({"station_id": 1, "region_id": 1, "date": days, "split": "x"})
+    df["st_si_lag0"] = rng.uniform(20, 200, len(df))
+    df["cams_pm25_si_lag0"] = df["st_si_lag0"] + rng.normal(0, 10, len(df))
+    for h in tr.HORIZONS:
+        df[f"pm25_si_t+{h}"] = df["st_si_lag0"].shift(-h)
+        df[f"ref_cams_si_t+{h}"] = df["cams_pm25_si_lag0"].shift(-h)
+    return df
+
+
+def test_worker_tasks_are_deterministic_on_cpu(tmp_path):
+    pytest.importorskip("xgboost")
+    df = _tiny_frame()
+    tr._W.update(df=df, feats=tr.variant_features(df), device="cpu", dry=True)
+    train, val = tr.tuning_rows(df, 1)
+    assert tr.target_day(train, 1).max() <= pd.Timestamp(tr.TRAIN_END)
+    assert val["date"].min() >= tr.VAL[0] and tr.target_day(val, 1).max() <= pd.Timestamp(tr.VAL[1])
+    cfg = tr.grid_configs(dry=True)[0]
+    t1, t2 = tr.tune_task("with_station", 1, cfg), tr.tune_task("with_station", 1, cfg)
+    assert t1 == t2 and t1["n_trees"] <= tr.DRY_TREES
+    rows = tr.fit_rows(df, 1, date(2025, 11, 1))
+    idx = df.index[df["date"] >= date(2025, 11, 1)].to_numpy()
+    best = {**cfg, "n_trees": 3}
+    p1 = tr.fit_predict_task("no_station", 1, best, rows.index.to_numpy(), idx, "t")
+    p2 = tr.fit_predict_task("no_station", 1, best, rows.index.to_numpy(), idx, "t")
+    assert np.array_equal(p1, p2) and len(p1) == len(idx) and (p1 >= 0).all()
+    info = tr.final_task("no_station", 1, best, rows.index.to_numpy(), tmp_path / "m.json")
+    assert len(info["sha256"]) == 64 and (tmp_path / "m.json").exists()
+    tr._W.clear()

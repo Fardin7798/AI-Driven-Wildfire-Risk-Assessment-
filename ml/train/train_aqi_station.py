@@ -27,8 +27,14 @@ Metrics: MAE, RMSE, R2, CPCB category accuracy (0-50, 51-100, 101-200, 201-300, 
 the rounded value), per horizon, per season of the target day, per station pollution quartile
 (mean target before the test year), and MAE skill with a 95% day-block bootstrap interval.
 
---dry-run checks the data flow without fitting anything (predictions are zeros; output is not a
-result and goes to the given out dir only).
+Hardware: every model fit (tuning grid, monthly refits, spatial folds, final refits) runs in one
+worker process per --devices entry (default cuda:0 and cuda:1, Kaggle T4 x2); each worker verifies
+its XGBoost booster really runs on its device before any fit. The main process only loads data,
+computes baselines and metrics. Tasks are collected in a fixed order, so results do not depend on
+which worker ran a task (both workers are the same GPU model with the same seed).
+
+--dry-run checks the wiring: real XGBoost with DRY_TREES trees, the first DRY_CONFIGS grid configs,
+on whatever device is given (e.g. --devices cpu,cpu locally). Its output is not a result.
 """
 
 from __future__ import annotations
@@ -37,7 +43,12 @@ import argparse
 import hashlib
 import itertools
 import json
+import multiprocessing as mp
+import os
 import re
+import subprocess
+import time
+from concurrent.futures import Future, ProcessPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
@@ -76,9 +87,11 @@ FIXED = {
     "tree_method": "hist",
     "eval_metric": "mae",
     "random_state": 42,
-    "n_jobs": -1,
+    "n_jobs": 2,  # host threads per worker (4 vCPUs, 2 workers)
 }
 MAX_TREES, EARLY_STOP = 4000, 150
+DEVICES = ("cuda:0", "cuda:1")
+DRY_TREES, DRY_CONFIGS = 3, 2
 SEASONS = {12: "winter", 1: "winter", 2: "winter", 3: "pre_monsoon", 4: "pre_monsoon"}
 SEASONS |= {5: "pre_monsoon", 6: "monsoon", 7: "monsoon", 8: "monsoon", 9: "monsoon"}
 SEASONS |= {10: "post_monsoon", 11: "post_monsoon"}
@@ -198,56 +211,119 @@ def score_table(p: pd.DataFrame, cands: list[str], skill_refs: list[tuple[str, s
     return out
 
 
-# ---------------------------------------------------------------- models
-class ZeroModel:
-    """--dry-run stand-in: fits nothing, predicts 0."""
-
-    best_iteration = 0
-
-    def __init__(self, **_: object) -> None:
-        pass
-
-    def fit(self, *_: object, **__: object) -> ZeroModel:
-        return self
-
-    def predict(self, x: pd.DataFrame) -> np.ndarray:
-        return np.zeros(len(x))
-
-    def save_model(self, path: Path) -> None:
-        path.write_text("{}")
+# ---------------------------------------------------------------- data / rows
+def load_dataset(path: Path) -> pd.DataFrame:
+    df = pd.read_parquet(path).reset_index(drop=True)
+    df["date"] = pd.to_datetime(df["date"]).dt.date
+    return df
 
 
-def make_model(dry: bool, **kw):
-    if dry:
-        return ZeroModel(**kw)
+def variant_features(df: pd.DataFrame) -> dict[str, list[str]]:
+    feats_a = feature_columns(df)
+    return {"with_station": feats_a, "no_station": [c for c in feats_a if not station_feature(c)]}
+
+
+def tuning_rows(df: pd.DataFrame, h: int) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Train: t+h <= TRAIN_END. Val: t in VAL with t+h <= VAL end. Never a test row."""
+    tr = fit_rows(df, h, TRAIN_END + timedelta(days=1))
+    va = df[(df["date"] >= VAL[0]) & (df["date"] <= VAL[1])]
+    return tr, fit_rows(va, h, VAL[1] + timedelta(days=1))
+
+
+def grid_configs(dry: bool) -> list[dict]:
+    combos = [dict(zip(GRID.keys(), v, strict=True)) for v in itertools.product(*GRID.values())]
+    return combos[:DRY_CONFIGS] if dry else combos
+
+
+# ---------------------------------------------------------------- GPU workers
+_W: dict = {}  # per worker process: df, feats, device, dry
+
+
+def _init_worker(dataset: Path, devices: mp.Queue, dry: bool) -> None:
     import xgboost as xgb
 
+    device = devices.get()
+    df = load_dataset(dataset)
+    _W.update(df=df, feats=variant_features(df), device=device, dry=dry)
+    probe = xgb.XGBRegressor(n_estimators=1, tree_method="hist", device=device)
+    probe.fit(np.arange(16.0).reshape(-1, 1), np.arange(16.0))
+    used = json.loads(probe.get_booster().save_config())["learner"]["generic_param"]["device"]
+    if used != device:
+        raise RuntimeError(f"worker asked for {device} but XGBoost runs on {used}")
+    gpu = ""
+    if device.startswith("cuda"):
+        q = [
+            "nvidia-smi",
+            f"--id={device.split(':')[1]}",
+            "--query-gpu=name,uuid",
+            "--format=csv,noheader",
+        ]
+        gpu = subprocess.run(q, capture_output=True, text=True, check=True).stdout.strip()
+    print(
+        f"[worker pid={os.getpid()} device={device}] ready: booster device={used} {gpu} "
+        f"xgboost={xgb.__version__} cuda_build={xgb.build_info().get('USE_CUDA')}",
+        flush=True,
+    )
+
+
+def _model(cfg: dict, n_trees: int, early_stop: bool):
+    import xgboost as xgb
+
+    kw = {**cfg, **FIXED, "device": _W["device"]}
+    kw["n_estimators"] = min(n_trees, DRY_TREES) if _W["dry"] else n_trees
+    if early_stop:
+        kw["early_stopping_rounds"] = EARLY_STOP
     return xgb.XGBRegressor(**kw)
 
 
-def tune(tr: pd.DataFrame, va: pd.DataFrame, feats: list[str], h: int, dry: bool, tag: str):
+def tune_task(name: str, h: int, cfg: dict) -> dict:
+    """One grid config: fit on train with early stopping on val; val metrics."""
+    tr, va = tuning_rows(_W["df"], h)
+    feats = _W["feats"][name]
     y_tr, y_va = tr[TARGETS[h]].to_numpy(float), va[TARGETS[h]].to_numpy(float)
-    trials = []
-    combos = list(itertools.product(*GRID.values()))
-    for values in combos[:1] if dry else combos:
-        cfg = dict(zip(GRID.keys(), values, strict=True))
-        m = make_model(
-            dry, **cfg, **FIXED, n_estimators=MAX_TREES, early_stopping_rounds=EARLY_STOP
-        )
-        m.fit(tr[feats], y_tr, eval_set=[(va[feats], y_va)], verbose=False)
-        p = np.clip(m.predict(va[feats]), 0, 500)
-        trials.append({**cfg, "n_trees": int(m.best_iteration) + 1, **metrics(p, y_va)})
-        print(f"{tag} h{h} {trials[-1]}", flush=True)
+    m = _model(cfg, MAX_TREES, early_stop=True)
+    m.fit(tr[feats], y_tr, eval_set=[(va[feats], y_va)], verbose=False)
+    p = np.clip(m.predict(va[feats]), 0, 500)
+    trial = {**cfg, "n_trees": int(m.best_iteration) + 1, **metrics(p, y_va)}
+    print(f"[{_W['device']}] tune {name} h{h} {trial}", flush=True)
+    return trial
+
+
+def fit_predict_task(
+    name: str, h: int, best: dict, fit_idx: np.ndarray, pred_idx: np.ndarray, tag: str
+) -> np.ndarray:
+    """Refit the chosen config (fixed tree count) on rows fit_idx; predict rows pred_idx."""
+    df, feats = _W["df"], _W["feats"][name]
+    rows, pred = df.iloc[fit_idx], df.iloc[pred_idx]
+    m = _model({k: best[k] for k in GRID}, best["n_trees"], early_stop=False)
+    m.fit(rows[feats], rows[TARGETS[h]].to_numpy(float), verbose=False)
+    out = np.clip(m.predict(pred[feats]), 0, 500)
+    print(f"[{_W['device']}] {tag} {name} h{h} fit={len(rows)} predict={len(pred)}", flush=True)
+    return out
+
+
+def final_task(name: str, h: int, best: dict, fit_idx: np.ndarray, path: Path) -> dict:
+    """Refit the chosen config on every labelled row and save it."""
+    df, feats = _W["df"], _W["feats"][name]
+    rows = df.iloc[fit_idx]
+    m = _model({k: best[k] for k in GRID}, best["n_trees"], early_stop=False)
+    m.fit(rows[feats], rows[TARGETS[h]].to_numpy(float), verbose=False)
+    m.save_model(path)
+    gain = m.get_booster().get_score(importance_type="gain")
+    print(f"[{_W['device']}] final {name} h{h} fit={len(rows)} -> {path.name}", flush=True)
+    return {
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "top_gain_features": {
+            k: round(float(v), 2) for k, v in sorted(gain.items(), key=lambda kv: -kv[1])[:15]
+        },
+    }
+
+
+def select(trials: list[dict]) -> tuple[dict, dict]:
+    """Lowest val MAE (first in grid order on a tie) and whether it sits on a grid edge."""
     best = min(trials, key=lambda t: t["mae"])
     edge = {k: best[k] in (v[0], v[-1]) for k, v in GRID.items() if len(v) > 2}
-    return best, trials, edge
-
-
-def refit(rows: pd.DataFrame, feats: list[str], h: int, best: dict, dry: bool):
-    cfg = {k: best[k] for k in GRID}
-    m = make_model(dry, **cfg, **FIXED, n_estimators=best["n_trees"])
-    m.fit(rows[feats], rows[TARGETS[h]].to_numpy(float), verbose=False)
-    return m
+    return best, edge
 
 
 # ---------------------------------------------------------------- main
@@ -256,16 +332,16 @@ def main() -> None:
     ap.add_argument("--dataset", type=Path, required=True)
     ap.add_argument("--v1-predictions", type=Path, default=None)
     ap.add_argument("--out-dir", type=Path, required=True)
+    ap.add_argument("--devices", default=",".join(DEVICES), help="one worker per device")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
-    dry = args.dry_run
+    dry, devices = args.dry_run, args.devices.split(",")
     args.out_dir.mkdir(parents=True, exist_ok=True)
+    t0 = time.time()
+    timing: dict[str, float] = {}
 
-    df = pd.read_parquet(args.dataset)
-    df["date"] = pd.to_datetime(df["date"]).dt.date
-    feats_a = feature_columns(df)
-    feats_b = [c for c in feats_a if not station_feature(c)]
-    variants = {"with_station": feats_a, "no_station": feats_b}
+    df = load_dataset(args.dataset)
+    variants = variant_features(df)
     checks = leakage_checks(df)
 
     pre_test = df[df["date"] < TEST[0]]
@@ -282,8 +358,9 @@ def main() -> None:
             "test_scoring": "expanding window, monthly refit on rows with t+h < month start",
             "grid": GRID,
             "fixed": {**FIXED, "max_trees": MAX_TREES, "early_stopping_rounds": EARLY_STOP},
+            "devices": devices,
         },
-        "features": {"with_station": len(feats_a), "no_station": len(feats_b)},
+        "features": {k: len(v) for k, v in variants.items()},
         "leakage_checks": checks,
         "station_quartile_bounds_pre_test_mean_si": {
             q: [round(float(smean[quart == q].min()), 2), round(float(smean[quart == q].max()), 2)]
@@ -295,16 +372,30 @@ def main() -> None:
         "test": {},
     }
     meta: dict = {"version": VERSION, "features": variants, "models": {}}
+    test = df[(df["date"] >= TEST[0]) & (df["date"] <= TEST[1])]
+    tmonth = pd.to_datetime(test["date"]).dt.to_period("M")
+    months = month_starts(TEST[0], TEST[1])
 
-    # ---- 1: tuning (test rows are not touched)
-    chosen: dict[tuple[str, int], dict] = {}
-    for name, feats in variants.items():
-        for h in HORIZONS:
-            tr = fit_rows(df, h, TRAIN_END + timedelta(days=1))
-            va = df[(df["date"] >= VAL[0]) & (df["date"] <= VAL[1])]
-            va = fit_rows(va, h, VAL[1] + timedelta(days=1))
-            best, trials, edge = tune(tr, va, feats, h, dry, name)
+    ctx = mp.get_context("spawn")
+    queue = ctx.Queue()
+    for d in devices:
+        queue.put(d)
+    with ProcessPoolExecutor(
+        len(devices), mp_context=ctx, initializer=_init_worker, initargs=(args.dataset, queue, dry)
+    ) as pool:
+        # ---- 1: tuning (test rows are not touched); results kept in grid order
+        configs = grid_configs(dry)
+        tune_f = {
+            (name, h): [pool.submit(tune_task, name, h, cfg) for cfg in configs]
+            for name in variants
+            for h in HORIZONS
+        }
+        chosen: dict[tuple[str, int], dict] = {}
+        for (name, h), futs in tune_f.items():
+            trials = [f.result() for f in futs]
+            best, edge = select(trials)
             chosen[(name, h)] = best
+            tr, va = tuning_rows(df, h)
             evaluation["tuning"][f"{name}_h{h}"] = {
                 "rows_fit": len(tr),
                 "rows_val": len(va),
@@ -312,26 +403,99 @@ def main() -> None:
                 "chosen_at_grid_edge": edge,
                 "grid": trials,
             }
+            print(f"chosen {name} h{h}: {best} edge={edge}", flush=True)
+        timing["tuning"] = round(time.time() - t0, 1)
 
-    # ---- 2: test, expanding window, scored once
-    test = df[(df["date"] >= TEST[0]) & (df["date"] <= TEST[1])].reset_index(drop=True)
-    preds = {(name, h): np.full(len(test), np.nan) for name in variants for h in HORIZONS}
-    tmonth = pd.to_datetime(test["date"]).dt.to_period("M")
-    for start in month_starts(TEST[0], TEST[1]):
-        in_m = (tmonth == pd.Period(start, "M")).to_numpy()
-        for name, feats in variants.items():
+        # ---- 2-4: every refit after selection (test, spatial CV, final)
+        test_f: dict[tuple[date, str, int], tuple[np.ndarray, Future]] = {}
+        for start in months:
+            pred_idx = test.index[(tmonth == pd.Period(start, "M")).to_numpy()].to_numpy()
+            for name in variants:
+                for h in HORIZONS:
+                    rows = fit_rows(df, h, start)
+                    assert target_day(rows, h).max() < pd.Timestamp(start)
+                    evaluation["rolling_test_fits"][f"{start}_{name}_h{h}"] = {
+                        "rows_fit": len(rows),
+                        "last_target_day": str(target_day(rows, h).max().date()),
+                        "rows_predicted": len(pred_idx),
+                    }
+                    fut = pool.submit(
+                        fit_predict_task,
+                        name,
+                        h,
+                        chosen[(name, h)],
+                        rows.index.to_numpy(),
+                        pred_idx,
+                        f"test {start}",
+                    )
+                    test_f[(start, name, h)] = (pred_idx, fut)
+        from sklearn.model_selection import GroupKFold
+
+        cv_f: dict[int, list] = {}
+        for h in HORIZONS:
+            rows = fit_rows(df, h, TEST[0])
+            cv_f[h] = []
+            folds = GroupKFold(n_splits=N_SPATIAL_FOLDS).split(rows, groups=rows["region_id"])
+            for k, (tr_i, te_i) in enumerate(folds):
+                fit_idx, pred_idx = rows.index[tr_i].to_numpy(), rows.index[te_i].to_numpy()
+                fut = pool.submit(
+                    fit_predict_task,
+                    "no_station",
+                    h,
+                    chosen[("no_station", h)],
+                    fit_idx,
+                    pred_idx,
+                    f"spatial fold {k}",
+                )
+                cv_f[h].append((k, pred_idx, fut))
+        final_f = {}
+        for name in variants:
             for h in HORIZONS:
-                rows = fit_rows(df, h, start)
-                assert target_day(rows, h).max() < pd.Timestamp(start)
-                m = refit(rows, feats, h, chosen[(name, h)], dry)
-                preds[(name, h)][in_m] = np.clip(m.predict(test.loc[in_m, feats]), 0, 500)
-                evaluation["rolling_test_fits"][f"{start}_{name}_h{h}"] = {
-                    "rows_fit": len(rows),
-                    "last_target_day": str(target_day(rows, h).max().date()),
-                    "rows_predicted": int(in_m.sum()),
-                }
-        print(f"test month {start} done", flush=True)
+                rows = df[df[TARGETS[h]].notna()]
+                path = args.out_dir / f"aqi_station_{name}_h{h}.json"
+                fut = pool.submit(
+                    final_task, name, h, chosen[(name, h)], rows.index.to_numpy(), path
+                )
+                final_f[(name, h)] = (rows, path, fut)
 
+        preds = {
+            (name, h): pd.Series(np.nan, index=test.index) for name in variants for h in HORIZONS
+        }
+        for (_, name, h), (pred_idx, fut) in test_f.items():
+            preds[(name, h)].loc[pred_idx] = fut.result()
+        timing["test_refits_done"] = round(time.time() - t0, 1)
+        cv_pred: dict[int, pd.Series] = {}
+        cv_folds: dict[int, list] = {}
+        for h in HORIZONS:
+            rows = fit_rows(df, h, TEST[0])
+            cv_pred[h] = pd.Series(np.nan, index=rows.index)
+            cv_folds[h] = []
+            for k, pred_idx, fut in cv_f[h]:
+                cv_pred[h].loc[pred_idx] = fut.result()
+                part = df.loc[pred_idx]
+                cv_folds[h].append(
+                    {
+                        "fold": k,
+                        "districts": int(part["region_id"].nunique()),
+                        "stations": int(part["station_id"].nunique()),
+                        **metrics(
+                            cv_pred[h].loc[pred_idx].to_numpy(), part[TARGETS[h]].to_numpy(float)
+                        ),
+                    }
+                )
+        for (name, h), (rows, path, fut) in final_f.items():
+            info = fut.result()
+            meta["models"][f"{name}_h{h}"] = {
+                "config": {k: chosen[(name, h)][k] for k in GRID},
+                "n_trees": chosen[(name, h)]["n_trees"],
+                "rows_fit": len(rows),
+                "last_target_day": str(target_day(rows, h).max().date()),
+                "file": path.name,
+                **info,
+            }
+    timing["all_fits_done"] = round(time.time() - t0, 1)
+
+    # ---- test scoring (main process, CPU): models vs baselines, scored once
     v1 = None
     if args.v1_predictions is not None:
         v1 = pd.read_parquet(args.v1_predictions)[["region_id", "date", "horizon", "model"]]
@@ -353,7 +517,7 @@ def main() -> None:
                 "cams_t": test["cams_pm25_si_lag0"],
                 "cams_target_day_ref": test[REFERENCE[h]],
             }
-        )
+        ).reset_index(drop=True)
         if v1 is not None:
             p = p.merge(
                 v1[v1["horizon"] == h].drop(columns="horizon"), on=["region_id", "date"], how="left"
@@ -387,35 +551,16 @@ def main() -> None:
         args.out_dir / "aqi_station_test_predictions.parquet", index=False
     )
 
-    # ---- 3: spatial CV of the no-station model (pre-test rows only)
-    from sklearn.model_selection import GroupKFold
-
-    end = TEST[0]
+    # ---- spatial CV of the no-station model (pre-test rows only)
     for h in HORIZONS:
-        rows = fit_rows(df, h, end).reset_index(drop=True)
-        pred = np.full(len(rows), np.nan)
-        folds = []
-        for k, (tr_i, te_i) in enumerate(
-            GroupKFold(n_splits=N_SPATIAL_FOLDS).split(rows, groups=rows["region_id"])
-        ):
-            m = refit(rows.iloc[tr_i], feats_b, h, chosen[("no_station", h)], dry)
-            pred[te_i] = np.clip(m.predict(rows.iloc[te_i][feats_b]), 0, 500)
-            part = rows.iloc[te_i]
-            folds.append(
-                {
-                    "fold": k,
-                    "districts": int(part["region_id"].nunique()),
-                    "stations": int(part["station_id"].nunique()),
-                    **metrics(pred[te_i], part[TARGETS[h]].to_numpy(float)),
-                }
-            )
+        rows = fit_rows(df, h, TEST[0])
         p = pd.DataFrame(
             {
                 "station_id": rows["station_id"],
                 "region_id": rows["region_id"],
                 "date": rows["date"],
                 "target": rows[TARGETS[h]],
-                "no_station_unseen_district": pred,
+                "no_station_unseen_district": cv_pred[h],
                 "cams_t": rows["cams_pm25_si_lag0"],
                 "cams_target_day_ref": rows[REFERENCE[h]],
                 "season": target_day(rows, h).dt.month.map(SEASONS),
@@ -424,7 +569,7 @@ def main() -> None:
         )
         evaluation["spatial_cv_no_station"][f"h{h}"] = {
             "rows": len(rows),
-            "folds": folds,
+            "folds": cv_folds[h],
             "table": score_table(
                 p,
                 ["no_station_unseen_district", "cams_t", "cams_target_day_ref"],
@@ -432,32 +577,13 @@ def main() -> None:
             ),
         }
 
-    # ---- 4: final artifacts on every labelled row
-    for name, feats in variants.items():
-        for h in HORIZONS:
-            rows = df[df[TARGETS[h]].notna()]
-            m = refit(rows, feats, h, chosen[(name, h)], dry)
-            path = args.out_dir / f"aqi_station_{name}_h{h}.json"
-            m.save_model(path)
-            imp = {}
-            if not dry:
-                gain = m.get_booster().get_score(importance_type="gain")
-                imp = dict(sorted(gain.items(), key=lambda kv: -kv[1])[:15])
-            meta["models"][f"{name}_h{h}"] = {
-                "config": {k: chosen[(name, h)][k] for k in GRID},
-                "n_trees": chosen[(name, h)]["n_trees"],
-                "rows_fit": len(rows),
-                "last_target_day": str(target_day(rows, h).max().date()),
-                "file": path.name,
-                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-                "top_gain_features": {k: round(v, 2) for k, v in imp.items()},
-            }
+    timing["total"] = round(time.time() - t0, 1)
+    evaluation["wall_clock_seconds"] = timing
+    import xgboost as xgb
 
     meta["trained_at"] = datetime.now(UTC).isoformat()
-    if not dry:
-        import xgboost as xgb
-
-        meta["xgboost"] = xgb.__version__
+    meta["xgboost"] = xgb.__version__
+    meta["devices"] = devices
     (args.out_dir / "aqi_station_metadata.json").write_text(json.dumps(meta, indent=2))
     (args.out_dir / "aqi_station_evaluation.json").write_text(json.dumps(evaluation, indent=2))
     summary = {
@@ -468,6 +594,7 @@ def main() -> None:
         for h in evaluation["test"]
     }
     print(json.dumps(summary, indent=2))
+    print(f"wall clock seconds: {timing}", flush=True)
 
 
 if __name__ == "__main__":

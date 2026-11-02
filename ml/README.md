@@ -76,6 +76,10 @@ served yet; training runs on Kaggle and the result is reviewed first.
    GroupKFold by district for `no_station`. Baselines: station persistence, seasonal-naive, raw
    CAMS sub-index (day t, and the target day as a reference), CAMS-target model v1. MAE, RMSE,
    R2, CPCB category accuracy, per season and per station pollution quartile.
+   Runs on Kaggle GPU T4 x2: every XGBoost fit runs in two worker processes on `cuda:0` and
+   `cuda:1` (results collected in a fixed order, so they do not depend on the worker); the CPU
+   only loads data and computes baselines and metrics. `--dry-run --devices cpu,cpu` checks the
+   wiring locally with 3-tree models.
 
 ```bash
 python ml/pipeline/build_aqi_station_dataset.py --regions regions_centroids.csv \
@@ -90,7 +94,7 @@ Dataset `shaikhfardin05/india-aqi-station-pm25` (private): `aqi_station_dataset.
 forecasts, baseline only) and a copy of `train_aqi_station.py`.
 
 ```bash
-kaggle kernels push -p ml/kaggle_aqi_station
+kaggle kernels push -p ml/kaggle_aqi_station --accelerator NvidiaTeslaT4
 kaggle kernels status shaikhfardin05/aqi-station-pm25-training
 kaggle kernels output shaikhfardin05/aqi-station-pm25-training -p <dir>
 ```
