@@ -1,0 +1,7794 @@
+{
+ "model_version": "aqi_station_xgb_v3",
+ "rule": "extrapolated = nearest training station > 200 km OR centroid outside the convex hull of the training stations",
+ "stations": [
+  {
+   "station_id": 17,
+   "region_id": 422,
+   "lat": 28.563262000000005,
+   "lon": 77.186937
+  },
+  {
+   "station_id": 50,
+   "region_id": 422,
+   "lat": 28.674045000000003,
+   "lon": 77.13102300000001
+  },
+  {
+   "station_id": 236,
+   "region_id": 422,
+   "lat": 28.6360567,
+   "lon": 77.2007986
+  },
+  {
+   "station_id": 407,
+   "region_id": 549,
+   "lat": 17.349694,
+   "lon": 78.451437
+  },
+  {
+   "station_id": 431,
+   "region_id": 422,
+   "lat": 28.68135888,
+   "lon": 77.30301872
+  },
+  {
+   "station_id": 697,
+   "region_id": 673,
+   "lat": 22.06047,
+   "lon": 88.109737
+  },
+  {
+   "station_id": 716,
+   "region_id": 671,
+   "lat": 22.627875,
+   "lon": 88.3804
+  },
+  {
+   "station_id": 5404,
+   "region_id": 422,
+   "lat": 28.639645,
+   "lon": 77.14626266666666
+  },
+  {
+   "station_id": 5541,
+   "region_id": 422,
+   "lat": 28.7256504,
+   "lon": 77.2011573
+  },
+  {
+   "station_id": 5551,
+   "region_id": 457,
+   "lat": 31.62,
+   "lon": 74.876512
+  },
+  {
+   "station_id": 5558,
+   "region_id": 523,
+   "lat": 12.9099161,
+   "lon": 80.1076538
+  },
+  {
+   "station_id": 5559,
+   "region_id": 75,
+   "lat": 24.7955,
+   "lon": 84.9994
+  },
+  {
+   "station_id": 5566,
+   "region_id": 423,
+   "lat": 20.9360711,
+   "lon": 85.1707021
+  },
+  {
+   "station_id": 5569,
+   "region_id": 468,
+   "lat": 30.9028,
+   "lon": 75.8086
+  },
+  {
+   "station_id": 5570,
+   "region_id": 422,
+   "lat": 28.474261,
+   "lon": 77.131606
+  },
+  {
+   "station_id": 5586,
+   "region_id": 422,
+   "lat": 28.5504249,
+   "lon": 77.2159377
+  },
+  {
+   "station_id": 5599,
+   "region_id": 556,
+   "lat": 17.540891,
+   "lon": 78.358528
+  },
+  {
+   "station_id": 5602,
+   "region_id": 659,
+   "lat": 23.685297,
+   "lon": 86.945968
+  },
+  {
+   "station_id": 5603,
+   "region_id": 312,
+   "lat": 22.624758,
+   "lon": 75.675238
+  },
+  {
+   "station_id": 5609,
+   "region_id": 6,
+   "lat": 16.9872867,
+   "lon": 81.7363176
+  },
+  {
+   "station_id": 5610,
+   "region_id": 422,
+   "lat": 28.6573814,
+   "lon": 77.1585447
+  },
+  {
+   "station_id": 5613,
+   "region_id": 422,
+   "lat": 28.628624,
+   "lon": 77.24106
+  },
+  {
+   "station_id": 5615,
+   "region_id": 659,
+   "lat": 23.5404352,
+   "lon": 87.2892225
+  },
+  {
+   "station_id": 5617,
+   "region_id": 172,
+   "lat": 28.4088421,
+   "lon": 77.3099081
+  },
+  {
+   "station_id": 5622,
+   "region_id": 422,
+   "lat": 28.60909,
+   "lon": 77.0325413
+  },
+  {
+   "station_id": 5623,
+   "region_id": 556,
+   "lat": 17.460103,
+   "lon": 78.334361
+  },
+  {
+   "station_id": 5626,
+   "region_id": 422,
+   "lat": 28.7500499,
+   "lon": 77.1112615
+  },
+  {
+   "station_id": 5627,
+   "region_id": 422,
+   "lat": 28.5512005,
+   "lon": 77.2735737
+  },
+  {
+   "station_id": 5630,
+   "region_id": 422,
+   "lat": 28.6514781,
+   "lon": 77.1473105
+  },
+  {
+   "station_id": 5634,
+   "region_id": 422,
+   "lat": 28.5918245,
+   "lon": 77.2273074
+  },
+  {
+   "station_id": 5636,
+   "region_id": 502,
+   "lat": 25.14389,
+   "lon": 75.821256
+  },
+  {
+   "station_id": 5638,
+   "region_id": 504,
+   "lat": 25.771061,
+   "lon": 73.340227
+  },
+  {
+   "station_id": 5647,
+   "region_id": 556,
+   "lat": 17.4559458,
+   "lon": 78.4332152
+  },
+  {
+   "station_id": 5649,
+   "region_id": 5,
+   "lat": 13.67,
+   "lon": 79.35
+  },
+  {
+   "station_id": 5650,
+   "region_id": 422,
+   "lat": 28.5627763,
+   "lon": 77.1180053
+  },
+  {
+   "station_id": 5655,
+   "region_id": 517,
+   "lat": 13.0052189,
+   "lon": 80.2398125
+  },
+  {
+   "station_id": 5667,
+   "region_id": 311,
+   "lat": 22.9682591,
+   "lon": 76.064118
+  },
+  {
+   "station_id": 5744,
+   "region_id": 422,
+   "lat": 28.49895783333333,
+   "lon": 77.26486223333335
+  },
+  {
+   "station_id": 5755,
+   "region_id": 422,
+   "lat": 28.611688233333336,
+   "lon": 77.2368918
+  },
+  {
+   "station_id": 5762,
+   "region_id": 422,
+   "lat": 28.69549406666667,
+   "lon": 77.18154156666667
+  },
+  {
+   "station_id": 6442,
+   "region_id": 474,
+   "lat": 31.0325454,
+   "lon": 76.5623046
+  },
+  {
+   "station_id": 6928,
+   "region_id": 371,
+   "lat": 19.3832,
+   "lon": 72.8204
+  },
+  {
+   "station_id": 6931,
+   "region_id": 422,
+   "lat": 28.5710274,
+   "lon": 77.0719006
+  },
+  {
+   "station_id": 6932,
+   "region_id": 422,
+   "lat": 28.815329,
+   "lon": 77.15301
+  },
+  {
+   "station_id": 6936,
+   "region_id": 422,
+   "lat": 28.6701,
+   "lon": 76.9254
+  },
+  {
+   "station_id": 6937,
+   "region_id": 148,
+   "lat": 23.221714,
+   "lon": 72.654328
+  },
+  {
+   "station_id": 6938,
+   "region_id": 422,
+   "lat": 28.672342,
+   "lon": 77.31526
+  },
+  {
+   "station_id": 6939,
+   "region_id": 459,
+   "lat": 30.233011,
+   "lon": 74.907758
+  },
+  {
+   "station_id": 6940,
+   "region_id": 468,
+   "lat": 30.736056,
+   "lon": 76.209694
+  },
+  {
+   "station_id": 6947,
+   "region_id": 182,
+   "lat": 27.9002,
+   "lon": 76.9938
+  },
+  {
+   "station_id": 6954,
+   "region_id": 260,
+   "lat": 13.428828,
+   "lon": 77.731418
+  },
+  {
+   "station_id": 6957,
+   "region_id": 422,
+   "lat": 28.58028,
+   "lon": 77.233829
+  },
+  {
+   "station_id": 6960,
+   "region_id": 422,
+   "lat": 28.623748,
+   "lon": 77.287205
+  },
+  {
+   "station_id": 6962,
+   "region_id": 142,
+   "lat": 21.613267,
+   "lon": 73.010555
+  },
+  {
+   "station_id": 6963,
+   "region_id": 177,
+   "lat": 29.307814,
+   "lon": 76.337619
+  },
+  {
+   "station_id": 6966,
+   "region_id": 283,
+   "lat": 10.073232,
+   "lon": 76.302765
+  },
+  {
+   "station_id": 6970,
+   "region_id": 181,
+   "lat": 28.060249,
+   "lon": 76.113115
+  },
+  {
+   "station_id": 6971,
+   "region_id": 178,
+   "lat": 29.8006,
+   "lon": 76.4155
+  },
+  {
+   "station_id": 6972,
+   "region_id": 172,
+   "lat": 28.3419248,
+   "lon": 77.319699
+  },
+  {
+   "station_id": 6982,
+   "region_id": 265,
+   "lat": 15.351773,
+   "lon": 75.140726
+  },
+  {
+   "station_id": 7280,
+   "region_id": 183,
+   "lat": 28.1485564,
+   "lon": 77.3320667
+  },
+  {
+   "station_id": 7289,
+   "region_id": 274,
+   "lat": 12.210409999999998,
+   "lon": 76.37376
+  },
+  {
+   "station_id": 7292,
+   "region_id": 312,
+   "lat": 22.431,
+   "lon": 75.5213
+  },
+  {
+   "station_id": 7494,
+   "region_id": 75,
+   "lat": 24.762518,
+   "lon": 84.982348
+  },
+  {
+   "station_id": 7880,
+   "region_id": 403,
+   "lat": 23.7176342,
+   "lon": 92.7192841
+  },
+  {
+   "station_id": 8171,
+   "region_id": 168,
+   "lat": 22.410802,
+   "lon": 73.097923
+  },
+  {
+   "station_id": 8235,
+   "region_id": 422,
+   "lat": 28.73282,
+   "lon": 77.170633
+  },
+  {
+   "station_id": 8239,
+   "region_id": 422,
+   "lat": 28.530785,
+   "lon": 77.271255
+  },
+  {
+   "station_id": 8365,
+   "region_id": 422,
+   "lat": 28.56789,
+   "lon": 77.250515
+  },
+  {
+   "station_id": 8472,
+   "region_id": 422,
+   "lat": 28.7762,
+   "lon": 77.051074
+  },
+  {
+   "station_id": 8475,
+   "region_id": 422,
+   "lat": 28.710508,
+   "lon": 77.249485
+  },
+  {
+   "station_id": 8915,
+   "region_id": 422,
+   "lat": 28.699793,
+   "lon": 77.165453
+  },
+  {
+   "station_id": 8916,
+   "region_id": 283,
+   "lat": 9.969447,
+   "lon": 76.321186
+  },
+  {
+   "station_id": 10484,
+   "region_id": 422,
+   "lat": 28.531346,
+   "lon": 77.190156
+  },
+  {
+   "station_id": 10485,
+   "region_id": 422,
+   "lat": 28.822836,
+   "lon": 77.101981
+  },
+  {
+   "station_id": 10486,
+   "region_id": 422,
+   "lat": 28.684678,
+   "lon": 77.076574
+  },
+  {
+   "station_id": 10488,
+   "region_id": 422,
+   "lat": 28.570173,
+   "lon": 76.933762
+  },
+  {
+   "station_id": 10537,
+   "region_id": 252,
+   "lat": 16.172806,
+   "lon": 75.659694
+  },
+  {
+   "station_id": 10820,
+   "region_id": 172,
+   "lat": 28.4417,
+   "lon": 77.3217
+  },
+  {
+   "station_id": 10831,
+   "region_id": 422,
+   "lat": 28.732528,
+   "lon": 77.11992
+  },
+  {
+   "station_id": 10851,
+   "region_id": 671,
+   "lat": 22.58157048,
+   "lon": 88.41002457
+  },
+  {
+   "station_id": 10895,
+   "region_id": 394,
+   "lat": 25.5586,
+   "lon": 91.8985
+  },
+  {
+   "station_id": 10902,
+   "region_id": 261,
+   "lat": 13.328028,
+   "lon": 75.797056
+  },
+  {
+   "station_id": 10908,
+   "region_id": 172,
+   "lat": 28.376058,
+   "lon": 77.315741
+  },
+  {
+   "station_id": 10909,
+   "region_id": 276,
+   "lat": 12.733409,
+   "lon": 77.298051
+  },
+  {
+   "station_id": 10910,
+   "region_id": 179,
+   "lat": 29.6953,
+   "lon": 77.0027
+  },
+  {
+   "station_id": 10914,
+   "region_id": 104,
+   "lat": 30.751462,
+   "lon": 76.762879
+  },
+  {
+   "station_id": 10915,
+   "region_id": 287,
+   "lat": 8.8787,
+   "lon": 76.6073
+  },
+  {
+   "station_id": 10916,
+   "region_id": 283,
+   "lat": 9.985653,
+   "lon": 76.281342
+  },
+  {
+   "station_id": 10920,
+   "region_id": 172,
+   "lat": 28.39072,
+   "lon": 77.30059
+  },
+  {
+   "station_id": 11578,
+   "region_id": 517,
+   "lat": 13.1036,
+   "lon": 80.2909
+  },
+  {
+   "station_id": 11581,
+   "region_id": 517,
+   "lat": 13.0664,
+   "lon": 80.2112
+  },
+  {
+   "station_id": 11583,
+   "region_id": 565,
+   "lat": 23.8628276,
+   "lon": 91.2887362
+  },
+  {
+   "station_id": 11603,
+   "region_id": 422,
+   "lat": 28.656756,
+   "lon": 77.227234
+  },
+  {
+   "station_id": 11607,
+   "region_id": 422,
+   "lat": 28.588333,
+   "lon": 77.221667
+  },
+  {
+   "station_id": 12046,
+   "region_id": 523,
+   "lat": 12.9533,
+   "lon": 80.2357
+  },
+  {
+   "station_id": 44514,
+   "region_id": 257,
+   "lat": 17.930306,
+   "lon": 77.482194
+  },
+  {
+   "station_id": 60659,
+   "region_id": 455,
+   "lat": 11.9309,
+   "lon": 79.8027
+  },
+  {
+   "station_id": 220265,
+   "region_id": 226,
+   "lat": 34.06621,
+   "lon": 74.81982
+  },
+  {
+   "station_id": 223145,
+   "region_id": 268,
+   "lat": 13.008556,
+   "lon": 76.125258
+  },
+  {
+   "station_id": 223146,
+   "region_id": 32,
+   "lat": 27.103358,
+   "lon": 93.679645
+  },
+  {
+   "station_id": 227384,
+   "region_id": 568,
+   "lat": 25.425602,
+   "lon": 81.917152
+  },
+  {
+   "station_id": 228299,
+   "region_id": 148,
+   "lat": 23.163798,
+   "lon": 72.677768
+  },
+  {
+   "station_id": 228301,
+   "region_id": 148,
+   "lat": 23.243639,
+   "lon": 72.68994
+  },
+  {
+   "station_id": 229985,
+   "region_id": 88,
+   "lat": 25.204762,
+   "lon": 85.51496
+  },
+  {
+   "station_id": 233415,
+   "region_id": 104,
+   "lat": 30.735567,
+   "lon": 76.77571400000001
+  },
+  {
+   "station_id": 270697,
+   "region_id": 622,
+   "lat": 28.88528,
+   "lon": 78.7388
+  },
+  {
+   "station_id": 270703,
+   "region_id": 94,
+   "lat": 24.952822,
+   "lon": 84.00239599999999
+  },
+  {
+   "station_id": 270724,
+   "region_id": 75,
+   "lat": 24.792403,
+   "lon": 84.992416
+  },
+  {
+   "station_id": 270730,
+   "region_id": 88,
+   "lat": 25.0328,
+   "lon": 85.41948000000001
+  },
+  {
+   "station_id": 270771,
+   "region_id": 622,
+   "lat": 28.83526,
+   "lon": 78.7446
+  },
+  {
+   "station_id": 270775,
+   "region_id": 66,
+   "lat": 26.146529,
+   "lon": 87.454184
+  },
+  {
+   "station_id": 270777,
+   "region_id": 622,
+   "lat": 28.856664,
+   "lon": 78.772638
+  },
+  {
+   "station_id": 270877,
+   "region_id": 622,
+   "lat": 28.840739000000003,
+   "lon": 78.69753100000001
+  },
+  {
+   "station_id": 278418,
+   "region_id": 104,
+   "lat": 30.719859000000003,
+   "lon": 76.738637
+  },
+  {
+   "station_id": 301389,
+   "region_id": 204,
+   "lat": 30.943887,
+   "lon": 76.801991
+  },
+  {
+   "station_id": 301390,
+   "region_id": 565,
+   "lat": 23.8175497,
+   "lon": 91.2726974
+  },
+  {
+   "station_id": 301391,
+   "region_id": 96,
+   "lat": 25.859655,
+   "lon": 85.77944000000001
+  },
+  {
+   "station_id": 307463,
+   "region_id": 512,
+   "lat": 27.33853,
+   "lon": 88.614099
+  },
+  {
+   "station_id": 313410,
+   "region_id": 388,
+   "lat": 24.8207389,
+   "lon": 93.9423085
+  },
+  {
+   "station_id": 313411,
+   "region_id": 394,
+   "lat": 25.5803419,
+   "lon": 91.8942571
+  },
+  {
+   "station_id": 313923,
+   "region_id": 388,
+   "lat": 24.7524239,
+   "lon": 93.9286218
+  },
+  {
+   "station_id": 344103,
+   "region_id": 556,
+   "lat": 17.470431,
+   "lon": 78.566959
+  },
+  {
+   "station_id": 344104,
+   "region_id": 556,
+   "lat": 17.544898999999997,
+   "lon": 78.486949
+  },
+  {
+   "station_id": 344140,
+   "region_id": 549,
+   "lat": 17.417094,
+   "lon": 78.457437
+  },
+  {
+   "station_id": 344142,
+   "region_id": 556,
+   "lat": 17.429398,
+   "lon": 78.569354
+  },
+  {
+   "station_id": 346258,
+   "region_id": 556,
+   "lat": 17.393559,
+   "lon": 78.33919399999999
+  },
+  {
+   "station_id": 352465,
+   "region_id": 549,
+   "lat": 17.37206,
+   "lon": 78.50864
+  },
+  {
+   "station_id": 352777,
+   "region_id": 622,
+   "lat": 28.849399,
+   "lon": 78.742362
+  },
+  {
+   "station_id": 353715,
+   "region_id": 622,
+   "lat": 28.802625,
+   "lon": 78.75372800000001
+  },
+  {
+   "station_id": 358453,
+   "region_id": 521,
+   "lat": 10.358535,
+   "lon": 77.984321
+  },
+  {
+   "station_id": 358627,
+   "region_id": 523,
+   "lat": 12.8777316,
+   "lon": 80.08348070000001
+  },
+  {
+   "station_id": 361411,
+   "region_id": 53,
+   "lat": 26.2028636,
+   "lon": 91.70046436
+  },
+  {
+   "station_id": 3409343,
+   "region_id": 516,
+   "lat": 11.06825,
+   "lon": 79.07033
+  },
+  {
+   "station_id": 3409348,
+   "region_id": 527,
+   "lat": 9.865935,
+   "lon": 78.022669
+  },
+  {
+   "station_id": 3409353,
+   "region_id": 523,
+   "lat": 12.864618,
+   "lon": 79.659968
+  },
+  {
+   "station_id": 3409359,
+   "region_id": 265,
+   "lat": 15.459706,
+   "lon": 75.008381
+  },
+  {
+   "station_id": 3409372,
+   "region_id": 5,
+   "lat": 13.20488,
+   "lon": 79.097889
+  },
+  {
+   "station_id": 3409373,
+   "region_id": 5,
+   "lat": 13.615387,
+   "lon": 79.40923000000001
+  },
+  {
+   "station_id": 3409375,
+   "region_id": 61,
+   "lat": 26.446912,
+   "lon": 91.439057
+  },
+  {
+   "station_id": 3409377,
+   "region_id": 444,
+   "lat": 21.941841,
+   "lon": 86.728318
+  },
+  {
+   "station_id": 3409379,
+   "region_id": 444,
+   "lat": 22.265816,
+   "lon": 86.174829
+  },
+  {
+   "station_id": 3409387,
+   "region_id": 265,
+   "lat": 15.3714823,
+   "lon": 75.1160168
+  },
+  {
+   "station_id": 3409390,
+   "region_id": 53,
+   "lat": 26.10887,
+   "lon": 91.589544
+  },
+  {
+   "station_id": 3409400,
+   "region_id": 16,
+   "lat": 14.465051999999998,
+   "lon": 78.824187
+  },
+  {
+   "station_id": 3409403,
+   "region_id": 486,
+   "lat": 28.018792,
+   "lon": 73.29265799999999
+  },
+  {
+   "station_id": 3409406,
+   "region_id": 502,
+   "lat": 25.196024,
+   "lon": 75.85566800000001
+  },
+  {
+   "station_id": 3409409,
+   "region_id": 654,
+   "lat": 29.2124114,
+   "lon": 78.96117530000001
+  },
+  {
+   "station_id": 3409412,
+   "region_id": 502,
+   "lat": 25.16409,
+   "lon": 75.858137
+  },
+  {
+   "station_id": 3409416,
+   "region_id": 481,
+   "lat": 23.55519,
+   "lon": 74.44001
+  },
+  {
+   "station_id": 3409419,
+   "region_id": 483,
+   "lat": 25.747299,
+   "lon": 71.393989
+  },
+  {
+   "station_id": 3409420,
+   "region_id": 494,
+   "lat": 29.61075,
+   "lon": 74.283608
+  },
+  {
+   "station_id": 3409427,
+   "region_id": 508,
+   "lat": 27.608912,
+   "lon": 75.153302
+  },
+  {
+   "station_id": 3409450,
+   "region_id": 503,
+   "lat": 27.213494,
+   "lon": 73.734444
+  },
+  {
+   "station_id": 3409455,
+   "region_id": 374,
+   "lat": 18.1023399,
+   "lon": 73.4783687
+  },
+  {
+   "station_id": 3409456,
+   "region_id": 349,
+   "lat": 20.719516,
+   "lon": 77.000253
+  },
+  {
+   "station_id": 3409463,
+   "region_id": 361,
+   "lat": 19.854616,
+   "lon": 75.905894
+  },
+  {
+   "station_id": 3409471,
+   "region_id": 374,
+   "lat": 19.02579,
+   "lon": 73.10297
+  },
+  {
+   "station_id": 3409475,
+   "region_id": 374,
+   "lat": 19.063,
+   "lon": 73.1209
+  },
+  {
+   "station_id": 3409480,
+   "region_id": 371,
+   "lat": 19.445821,
+   "lon": 72.7988231
+  },
+  {
+   "station_id": 3409481,
+   "region_id": 371,
+   "lat": 19.786089,
+   "lon": 72.757971
+  },
+  {
+   "station_id": 3409496,
+   "region_id": 422,
+   "lat": 28.57834,
+   "lon": 77.184
+  },
+  {
+   "station_id": 3409502,
+   "region_id": 425,
+   "lat": 21.51161,
+   "lon": 86.89088
+  },
+  {
+   "station_id": 3409504,
+   "region_id": 423,
+   "lat": 20.832874,
+   "lon": 85.104082
+  },
+  {
+   "station_id": 3409507,
+   "region_id": 435,
+   "lat": 20.94185,
+   "lon": 86.1151
+  },
+  {
+   "station_id": 3409509,
+   "region_id": 671,
+   "lat": 22.7605581,
+   "lon": 88.3617589
+  },
+  {
+   "station_id": 3409520,
+   "region_id": 659,
+   "lat": 23.508764,
+   "lon": 87.35444
+  },
+  {
+   "station_id": 3409521,
+   "region_id": 659,
+   "lat": 23.697936,
+   "lon": 86.944395
+  },
+  {
+   "station_id": 3409522,
+   "region_id": 659,
+   "lat": 23.618183,
+   "lon": 87.105718
+  },
+  {
+   "station_id": 3409525,
+   "region_id": 659,
+   "lat": 23.616515,
+   "lon": 87.119133
+  },
+  {
+   "station_id": 3409529,
+   "region_id": 659,
+   "lat": 23.567923,
+   "lon": 87.306843
+  }
+ ],
+ "districts": [
+  {
+   "region_id": 1,
+   "gadm_id": "IND.1.1_1",
+   "lat": 7.5254,
+   "lon": 93.5992,
+   "has_training_station": false,
+   "nearest_training_station_km": 1581.3,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 2,
+   "gadm_id": "IND.1.2_1",
+   "lat": 12.8529,
+   "lon": 92.8728,
+   "has_training_station": false,
+   "nearest_training_station_km": 1141.4,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 3,
+   "gadm_id": "IND.1.3_1",
+   "lat": 11.5278,
+   "lon": 92.665,
+   "has_training_station": false,
+   "nearest_training_station_km": 1258.3,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 4,
+   "gadm_id": "IND.2.1_1",
+   "lat": 14.4751,
+   "lon": 77.5708,
+   "has_training_station": false,
+   "nearest_training_station_km": 117.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 5,
+   "gadm_id": "IND.2.2_1",
+   "lat": 13.4566,
+   "lon": 79.0039,
+   "has_training_station": true,
+   "nearest_training_station_km": 29.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 6,
+   "gadm_id": "IND.2.3_1",
+   "lat": 17.1839,
+   "lon": 82.001,
+   "has_training_station": true,
+   "nearest_training_station_km": 35.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 7,
+   "gadm_id": "IND.2.4_1",
+   "lat": 16.2914,
+   "lon": 80.0813,
+   "has_training_station": false,
+   "nearest_training_station_km": 192.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 8,
+   "gadm_id": "IND.2.5_1",
+   "lat": 16.5504,
+   "lon": 80.7929,
+   "has_training_station": false,
+   "nearest_training_station_km": 111.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 9,
+   "gadm_id": "IND.2.6_1",
+   "lat": 15.528,
+   "lon": 78.0001,
+   "has_training_station": false,
+   "nearest_training_station_km": 147.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 10,
+   "gadm_id": "IND.2.7_1",
+   "lat": 14.4352,
+   "lon": 79.72,
+   "has_training_station": false,
+   "nearest_training_station_km": 94.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 11,
+   "gadm_id": "IND.2.8_1",
+   "lat": 15.6113,
+   "lon": 79.5095,
+   "has_training_station": false,
+   "nearest_training_station_km": 147.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 12,
+   "gadm_id": "IND.2.9_1",
+   "lat": 18.5712,
+   "lon": 83.9794,
+   "has_training_station": false,
+   "nearest_training_station_km": 277.7,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 13,
+   "gadm_id": "IND.2.10_1",
+   "lat": 17.8847,
+   "lon": 82.6819,
+   "has_training_station": false,
+   "nearest_training_station_km": 141.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 14,
+   "gadm_id": "IND.2.11_1",
+   "lat": 18.4652,
+   "lon": 83.3639,
+   "has_training_station": false,
+   "nearest_training_station_km": 238.2,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 15,
+   "gadm_id": "IND.2.12_1",
+   "lat": 16.8869,
+   "lon": 81.3922,
+   "has_training_station": false,
+   "nearest_training_station_km": 38.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 16,
+   "gadm_id": "IND.2.13_1",
+   "lat": 14.4508,
+   "lon": 78.7743,
+   "has_training_station": true,
+   "nearest_training_station_km": 5.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 17,
+   "gadm_id": "IND.3.1_1",
+   "lat": 27.8722,
+   "lon": 96.6818,
+   "has_training_station": false,
+   "nearest_training_station_km": 308.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 18,
+   "gadm_id": "Z07.3.1_1",
+   "lat": 28.1453,
+   "lon": 96.8799,
+   "has_training_station": false,
+   "nearest_training_station_km": 335.9,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 19,
+   "gadm_id": "IND.3.2_1",
+   "lat": 27.3703,
+   "lon": 96.3449,
+   "has_training_station": false,
+   "nearest_training_station_km": 265.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 20,
+   "gadm_id": "Z07.3.3_1",
+   "lat": 28.9551,
+   "lon": 95.9428,
+   "has_training_station": false,
+   "nearest_training_station_km": 302.9,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 21,
+   "gadm_id": "Z07.3.4_1",
+   "lat": 27.294,
+   "lon": 93.032,
+   "has_training_station": false,
+   "nearest_training_station_km": 67.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 22,
+   "gadm_id": "IND.3.5_1",
+   "lat": 27.9754,
+   "lon": 95.3691,
+   "has_training_station": false,
+   "nearest_training_station_km": 192.7,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 23,
+   "gadm_id": "Z07.3.5_1",
+   "lat": 28.1683,
+   "lon": 95.0907,
+   "has_training_station": false,
+   "nearest_training_station_km": 182.6,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 24,
+   "gadm_id": "Z07.3.6_1",
+   "lat": 28.038,
+   "lon": 93.3178,
+   "has_training_station": false,
+   "nearest_training_station_km": 109.9,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 25,
+   "gadm_id": "IND.3.7_1",
+   "lat": 27.8565,
+   "lon": 96.2257,
+   "has_training_station": false,
+   "nearest_training_station_km": 264.8,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 26,
+   "gadm_id": "Z07.3.7_1",
+   "lat": 28.2636,
+   "lon": 96.2957,
+   "has_training_station": false,
+   "nearest_training_station_km": 288.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 27,
+   "gadm_id": "IND.3.8_1",
+   "lat": 26.8584,
+   "lon": 95.3357,
+   "has_training_station": false,
+   "nearest_training_station_km": 166.3,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 28,
+   "gadm_id": "IND.3.9_1",
+   "lat": 28.1006,
+   "lon": 95.7748,
+   "has_training_station": false,
+   "nearest_training_station_km": 234.3,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 29,
+   "gadm_id": "Z07.3.9_1",
+   "lat": 28.4495,
+   "lon": 95.8318,
+   "has_training_station": false,
+   "nearest_training_station_km": 259.3,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 30,
+   "gadm_id": "Z07.3.10_1",
+   "lat": 27.671,
+   "lon": 93.8724,
+   "has_training_station": false,
+   "nearest_training_station_km": 65.9,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 31,
+   "gadm_id": "IND.3.11_1",
+   "lat": 27.6525,
+   "lon": 95.8995,
+   "has_training_station": false,
+   "nearest_training_station_km": 227.5,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 32,
+   "gadm_id": "Z07.3.12_1",
+   "lat": 27.2746,
+   "lon": 93.5882,
+   "has_training_station": true,
+   "nearest_training_station_km": 21.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 33,
+   "gadm_id": "Z07.3.13_1",
+   "lat": 27.6557,
+   "lon": 91.9184,
+   "has_training_station": false,
+   "nearest_training_station_km": 142.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 34,
+   "gadm_id": "IND.3.14_1",
+   "lat": 27.0346,
+   "lon": 95.5301,
+   "has_training_station": false,
+   "nearest_training_station_km": 183.4,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 35,
+   "gadm_id": "Z07.3.15_1",
+   "lat": 28.8284,
+   "lon": 94.9082,
+   "has_training_station": false,
+   "nearest_training_station_km": 226.6,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 36,
+   "gadm_id": "Z07.3.16_1",
+   "lat": 28.2917,
+   "lon": 93.9325,
+   "has_training_station": false,
+   "nearest_training_station_km": 134.5,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 37,
+   "gadm_id": "Z07.3.17_1",
+   "lat": 27.4339,
+   "lon": 92.5148,
+   "has_training_station": false,
+   "nearest_training_station_km": 120.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 38,
+   "gadm_id": "Z07.3.18_1",
+   "lat": 28.3141,
+   "lon": 94.5083,
+   "has_training_station": false,
+   "nearest_training_station_km": 157.4,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 39,
+   "gadm_id": "IND.4.1_1",
+   "lat": 26.666,
+   "lon": 91.3415,
+   "has_training_station": false,
+   "nearest_training_station_km": 26.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 40,
+   "gadm_id": "IND.4.2_1",
+   "lat": 26.3377,
+   "lon": 91.0037,
+   "has_training_station": false,
+   "nearest_training_station_km": 45.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 41,
+   "gadm_id": "IND.4.3_1",
+   "lat": 26.3463,
+   "lon": 90.6134,
+   "has_training_station": false,
+   "nearest_training_station_km": 83.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 42,
+   "gadm_id": "IND.4.4_1",
+   "lat": 24.814,
+   "lon": 92.8569,
+   "has_training_station": false,
+   "nearest_training_station_km": 108.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 43,
+   "gadm_id": "IND.4.5_1",
+   "lat": 26.627,
+   "lon": 90.6786,
+   "has_training_station": false,
+   "nearest_training_station_km": 78.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 44,
+   "gadm_id": "IND.4.6_1",
+   "lat": 26.4494,
+   "lon": 92.0345,
+   "has_training_station": false,
+   "nearest_training_station_km": 43.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 45,
+   "gadm_id": "IND.4.7_1",
+   "lat": 27.5904,
+   "lon": 94.7803,
+   "has_training_station": false,
+   "nearest_training_station_km": 121.5,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 46,
+   "gadm_id": "IND.4.8_1",
+   "lat": 26.1017,
+   "lon": 90.0279,
+   "has_training_station": false,
+   "nearest_training_station_km": 145.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 47,
+   "gadm_id": "IND.4.9_1",
+   "lat": 27.3714,
+   "lon": 95.0549,
+   "has_training_station": false,
+   "nearest_training_station_km": 139.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 48,
+   "gadm_id": "IND.4.10_1",
+   "lat": 25.3801,
+   "lon": 93.034,
+   "has_training_station": false,
+   "nearest_training_station_km": 110.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 49,
+   "gadm_id": "IND.4.11_1",
+   "lat": 26.048,
+   "lon": 90.6087,
+   "has_training_station": false,
+   "nearest_training_station_km": 93.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 50,
+   "gadm_id": "IND.4.12_1",
+   "lat": 26.4788,
+   "lon": 93.8368,
+   "has_training_station": false,
+   "nearest_training_station_km": 71.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 51,
+   "gadm_id": "IND.4.13_1",
+   "lat": 24.4965,
+   "lon": 92.589,
+   "has_training_station": false,
+   "nearest_training_station_km": 87.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 52,
+   "gadm_id": "IND.4.14_1",
+   "lat": 26.7953,
+   "lon": 94.2742,
+   "has_training_station": false,
+   "nearest_training_station_km": 68.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 53,
+   "gadm_id": "IND.4.16_1",
+   "lat": 26.1036,
+   "lon": 91.4271,
+   "has_training_station": true,
+   "nearest_training_station_km": 16.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 54,
+   "gadm_id": "IND.4.15_1",
+   "lat": 26.1314,
+   "lon": 91.9309,
+   "has_training_station": false,
+   "nearest_training_station_km": 24.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 55,
+   "gadm_id": "IND.4.17_1",
+   "lat": 26.0684,
+   "lon": 93.1477,
+   "has_training_station": false,
+   "nearest_training_station_km": 126.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 56,
+   "gadm_id": "IND.4.18_1",
+   "lat": 24.5804,
+   "lon": 92.3795,
+   "has_training_station": false,
+   "nearest_training_station_km": 101.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 57,
+   "gadm_id": "IND.4.19_1",
+   "lat": 26.5844,
+   "lon": 90.1982,
+   "has_training_station": false,
+   "nearest_training_station_km": 124.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 58,
+   "gadm_id": "IND.4.20_1",
+   "lat": 27.1742,
+   "lon": 94.1349,
+   "has_training_station": false,
+   "nearest_training_station_km": 45.7,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 59,
+   "gadm_id": "IND.4.21_1",
+   "lat": 26.2858,
+   "lon": 92.2801,
+   "has_training_station": false,
+   "nearest_training_station_km": 58.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 60,
+   "gadm_id": "IND.4.22_1",
+   "lat": 26.2255,
+   "lon": 92.8416,
+   "has_training_station": false,
+   "nearest_training_station_km": 113.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 61,
+   "gadm_id": "IND.4.23_1",
+   "lat": 26.3755,
+   "lon": 91.3839,
+   "has_training_station": true,
+   "nearest_training_station_km": 9.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 62,
+   "gadm_id": "IND.4.24_1",
+   "lat": 27.0123,
+   "lon": 94.8191,
+   "has_training_station": false,
+   "nearest_training_station_km": 113.3,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 63,
+   "gadm_id": "IND.4.25_1",
+   "lat": 26.7826,
+   "lon": 92.9273,
+   "has_training_station": false,
+   "nearest_training_station_km": 82.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 64,
+   "gadm_id": "IND.4.26_1",
+   "lat": 27.5843,
+   "lon": 95.6256,
+   "has_training_station": false,
+   "nearest_training_station_km": 199.5,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 65,
+   "gadm_id": "IND.4.27_1",
+   "lat": 26.7332,
+   "lon": 92.0197,
+   "has_training_station": false,
+   "nearest_training_station_km": 65.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 66,
+   "gadm_id": "IND.5.1_1",
+   "lat": 26.2008,
+   "lon": 87.3462,
+   "has_training_station": true,
+   "nearest_training_station_km": 12.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 67,
+   "gadm_id": "IND.5.2_1",
+   "lat": 25.1627,
+   "lon": 84.6829,
+   "has_training_station": false,
+   "nearest_training_station_km": 51.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 68,
+   "gadm_id": "IND.5.3_1",
+   "lat": 24.7936,
+   "lon": 84.4045,
+   "has_training_station": false,
+   "nearest_training_station_km": 44.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 69,
+   "gadm_id": "IND.5.4_1",
+   "lat": 24.8519,
+   "lon": 86.8342,
+   "has_training_station": false,
+   "nearest_training_station_km": 128.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 70,
+   "gadm_id": "IND.5.5_1",
+   "lat": 25.4956,
+   "lon": 86.1237,
+   "has_training_station": false,
+   "nearest_training_station_km": 53.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 71,
+   "gadm_id": "IND.5.6_1",
+   "lat": 25.2692,
+   "lon": 87.0772,
+   "has_training_station": false,
+   "nearest_training_station_km": 104.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 72,
+   "gadm_id": "IND.5.7_1",
+   "lat": 25.4704,
+   "lon": 84.5355,
+   "has_training_station": false,
+   "nearest_training_station_km": 78.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 73,
+   "gadm_id": "IND.5.8_1",
+   "lat": 25.4931,
+   "lon": 84.0934,
+   "has_training_station": false,
+   "nearest_training_station_km": 60.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 74,
+   "gadm_id": "IND.5.9_1",
+   "lat": 26.1147,
+   "lon": 86.0174,
+   "has_training_station": false,
+   "nearest_training_station_km": 37.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 75,
+   "gadm_id": "IND.5.10_1",
+   "lat": 24.6986,
+   "lon": 84.9284,
+   "has_training_station": true,
+   "nearest_training_station_km": 9.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 76,
+   "gadm_id": "IND.5.11_1",
+   "lat": 26.4451,
+   "lon": 84.3682,
+   "has_training_station": false,
+   "nearest_training_station_km": 155.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 77,
+   "gadm_id": "IND.5.12_1",
+   "lat": 24.7855,
+   "lon": 86.2885,
+   "has_training_station": false,
+   "nearest_training_station_km": 90.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 78,
+   "gadm_id": "IND.5.13_1",
+   "lat": 25.1562,
+   "lon": 85.0217,
+   "has_training_station": false,
+   "nearest_training_station_km": 40.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 79,
+   "gadm_id": "IND.5.14_1",
+   "lat": 24.9927,
+   "lon": 83.5985,
+   "has_training_station": false,
+   "nearest_training_station_km": 41.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 80,
+   "gadm_id": "IND.5.15_1",
+   "lat": 25.5451,
+   "lon": 87.6388,
+   "has_training_station": false,
+   "nearest_training_station_km": 69.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 81,
+   "gadm_id": "IND.5.16_1",
+   "lat": 25.5122,
+   "lon": 86.5962,
+   "has_training_station": false,
+   "nearest_training_station_km": 90.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 82,
+   "gadm_id": "IND.5.17_1",
+   "lat": 26.2953,
+   "lon": 87.9291,
+   "has_training_station": false,
+   "nearest_training_station_km": 50.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 83,
+   "gadm_id": "IND.5.18_1",
+   "lat": 25.1598,
+   "lon": 86.1282,
+   "has_training_station": false,
+   "nearest_training_station_km": 61.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 84,
+   "gadm_id": "IND.5.19_1",
+   "lat": 25.826,
+   "lon": 86.8893,
+   "has_training_station": false,
+   "nearest_training_station_km": 66.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 85,
+   "gadm_id": "IND.5.20_1",
+   "lat": 26.4063,
+   "lon": 86.2118,
+   "has_training_station": false,
+   "nearest_training_station_km": 74.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 86,
+   "gadm_id": "IND.5.21_1",
+   "lat": 25.211,
+   "lon": 86.527,
+   "has_training_station": false,
+   "nearest_training_station_km": 101.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 87,
+   "gadm_id": "IND.5.22_1",
+   "lat": 26.1525,
+   "lon": 85.3225,
+   "has_training_station": false,
+   "nearest_training_station_km": 56.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 88,
+   "gadm_id": "IND.5.23_1",
+   "lat": 25.2213,
+   "lon": 85.4485,
+   "has_training_station": true,
+   "nearest_training_station_km": 6.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 89,
+   "gadm_id": "IND.5.24_1",
+   "lat": 24.8111,
+   "lon": 85.5871,
+   "has_training_station": false,
+   "nearest_training_station_km": 29.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 90,
+   "gadm_id": "IND.5.25_1",
+   "lat": 27.0795,
+   "lon": 84.3367,
+   "has_training_station": false,
+   "nearest_training_station_km": 197.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 91,
+   "gadm_id": "IND.5.26_1",
+   "lat": 25.4573,
+   "lon": 85.2143,
+   "has_training_station": false,
+   "nearest_training_station_km": 41.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 92,
+   "gadm_id": "IND.5.27_1",
+   "lat": 26.6208,
+   "lon": 84.9164,
+   "has_training_station": false,
+   "nearest_training_station_km": 120.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 93,
+   "gadm_id": "IND.5.28_1",
+   "lat": 25.8161,
+   "lon": 87.4006,
+   "has_training_station": false,
+   "nearest_training_station_km": 37.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 94,
+   "gadm_id": "IND.5.29_1",
+   "lat": 24.9806,
+   "lon": 84.0197,
+   "has_training_station": true,
+   "nearest_training_station_km": 3.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 95,
+   "gadm_id": "IND.5.30_1",
+   "lat": 25.8169,
+   "lon": 86.5826,
+   "has_training_station": false,
+   "nearest_training_station_km": 80.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 96,
+   "gadm_id": "IND.5.31_1",
+   "lat": 25.7776,
+   "lon": 85.8961,
+   "has_training_station": true,
+   "nearest_training_station_km": 14.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 97,
+   "gadm_id": "IND.5.32_1",
+   "lat": 25.9061,
+   "lon": 84.817,
+   "has_training_station": false,
+   "nearest_training_station_km": 96.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 98,
+   "gadm_id": "IND.5.33_1",
+   "lat": 25.1316,
+   "lon": 85.8146,
+   "has_training_station": false,
+   "nearest_training_station_km": 31.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 99,
+   "gadm_id": "IND.5.34_1",
+   "lat": 26.4847,
+   "lon": 85.3227,
+   "has_training_station": false,
+   "nearest_training_station_km": 83.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 100,
+   "gadm_id": "IND.5.35_1",
+   "lat": 26.5967,
+   "lon": 85.557,
+   "has_training_station": false,
+   "nearest_training_station_km": 84.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 101,
+   "gadm_id": "IND.5.36_1",
+   "lat": 26.1628,
+   "lon": 84.3808,
+   "has_training_station": false,
+   "nearest_training_station_km": 139.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 102,
+   "gadm_id": "IND.5.37_1",
+   "lat": 26.2467,
+   "lon": 86.7919,
+   "has_training_station": false,
+   "nearest_training_station_km": 67.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 103,
+   "gadm_id": "IND.5.38_1",
+   "lat": 25.763,
+   "lon": 85.362,
+   "has_training_station": false,
+   "nearest_training_station_km": 43.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 104,
+   "gadm_id": "IND.6.1_1",
+   "lat": 30.7337,
+   "lon": 76.7682,
+   "has_training_station": true,
+   "nearest_training_station_km": 0.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 105,
+   "gadm_id": "IND.7.2_1",
+   "lat": 20.6874,
+   "lon": 81.1566,
+   "has_training_station": false,
+   "nearest_training_station_km": 410.7,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 106,
+   "gadm_id": "IND.7.1_1",
+   "lat": 21.579,
+   "lon": 82.3215,
+   "has_training_station": false,
+   "nearest_training_station_km": 300.1,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 107,
+   "gadm_id": "IND.7.3_1",
+   "lat": 23.5886,
+   "lon": 83.4944,
+   "has_training_station": false,
+   "nearest_training_station_km": 160.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 108,
+   "gadm_id": "IND.7.4_1",
+   "lat": 19.0843,
+   "lon": 81.8337,
+   "has_training_station": false,
+   "nearest_training_station_km": 233.4,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 109,
+   "gadm_id": "IND.7.5_1",
+   "lat": 21.7073,
+   "lon": 81.5193,
+   "has_training_station": false,
+   "nearest_training_station_km": 384.0,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 110,
+   "gadm_id": "IND.7.6_1",
+   "lat": 18.8382,
+   "lon": 80.7685,
+   "has_training_station": false,
+   "nearest_training_station_km": 229.9,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 111,
+   "gadm_id": "IND.7.7_1",
+   "lat": 22.4052,
+   "lon": 82.0694,
+   "has_training_station": false,
+   "nearest_training_station_km": 336.2,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 112,
+   "gadm_id": "IND.7.8_1",
+   "lat": 18.8179,
+   "lon": 81.3754,
+   "has_training_station": false,
+   "nearest_training_station_km": 207.1,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 113,
+   "gadm_id": "IND.7.9_1",
+   "lat": 20.5532,
+   "lon": 81.8033,
+   "has_training_station": false,
+   "nearest_training_station_km": 344.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 114,
+   "gadm_id": "IND.7.10_1",
+   "lat": 21.1519,
+   "lon": 81.355,
+   "has_training_station": false,
+   "nearest_training_station_km": 390.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 115,
+   "gadm_id": "IND.7.11_1",
+   "lat": 20.3696,
+   "lon": 82.2607,
+   "has_training_station": false,
+   "nearest_training_station_km": 300.4,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 116,
+   "gadm_id": "IND.7.12_1",
+   "lat": 21.9245,
+   "lon": 82.7307,
+   "has_training_station": false,
+   "nearest_training_station_km": 274.1,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 117,
+   "gadm_id": "IND.7.13_1",
+   "lat": 22.7987,
+   "lon": 83.8586,
+   "has_training_station": false,
+   "nearest_training_station_km": 240.0,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 118,
+   "gadm_id": "IND.7.14_1",
+   "lat": 22.0911,
+   "lon": 81.2161,
+   "has_training_station": false,
+   "nearest_training_station_km": 377.6,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 119,
+   "gadm_id": "IND.7.15_1",
+   "lat": 19.7401,
+   "lon": 81.6572,
+   "has_training_station": false,
+   "nearest_training_station_km": 306.2,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 120,
+   "gadm_id": "IND.7.16_1",
+   "lat": 22.5324,
+   "lon": 82.6035,
+   "has_training_station": false,
+   "nearest_training_station_km": 304.5,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 121,
+   "gadm_id": "IND.7.17_1",
+   "lat": 23.4693,
+   "lon": 82.2288,
+   "has_training_station": false,
+   "nearest_training_station_km": 219.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 122,
+   "gadm_id": "IND.7.18_1",
+   "lat": 21.2032,
+   "lon": 82.6037,
+   "has_training_station": false,
+   "nearest_training_station_km": 262.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 123,
+   "gadm_id": "IND.7.19_1",
+   "lat": 22.2394,
+   "lon": 81.7253,
+   "has_training_station": false,
+   "nearest_training_station_km": 354.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 124,
+   "gadm_id": "IND.7.20_1",
+   "lat": 19.5712,
+   "lon": 81.0709,
+   "has_training_station": false,
+   "nearest_training_station_km": 295.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 125,
+   "gadm_id": "IND.7.21_1",
+   "lat": 22.0829,
+   "lon": 83.299,
+   "has_training_station": false,
+   "nearest_training_station_km": 231.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 126,
+   "gadm_id": "IND.7.22_1",
+   "lat": 21.2228,
+   "lon": 81.8498,
+   "has_training_station": false,
+   "nearest_training_station_km": 340.5,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 127,
+   "gadm_id": "IND.7.23_1",
+   "lat": 21.0384,
+   "lon": 80.8123,
+   "has_training_station": false,
+   "nearest_training_station_km": 397.6,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 128,
+   "gadm_id": "IND.7.24_1",
+   "lat": 18.2531,
+   "lon": 81.343,
+   "has_training_station": false,
+   "nearest_training_station_km": 146.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 129,
+   "gadm_id": "IND.7.25_1",
+   "lat": 23.4037,
+   "lon": 82.876,
+   "has_training_station": false,
+   "nearest_training_station_km": 206.7,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 130,
+   "gadm_id": "IND.7.26_1",
+   "lat": 22.9271,
+   "lon": 83.2203,
+   "has_training_station": false,
+   "nearest_training_station_km": 238.9,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 131,
+   "gadm_id": "IND.7.27_1",
+   "lat": 20.1342,
+   "lon": 81.1212,
+   "has_training_station": false,
+   "nearest_training_station_km": 355.9,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 132,
+   "gadm_id": "IND.8.1_1",
+   "lat": 20.1948,
+   "lon": 73.0808,
+   "has_training_station": false,
+   "nearest_training_station_km": 56.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 133,
+   "gadm_id": "IND.9.1_1",
+   "lat": 20.4139,
+   "lon": 72.8594,
+   "has_training_station": false,
+   "nearest_training_station_km": 70.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 134,
+   "gadm_id": "IND.9.2_1",
+   "lat": 20.7171,
+   "lon": 70.9406,
+   "has_training_station": false,
+   "nearest_training_station_km": 216.0,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 135,
+   "gadm_id": "IND.10.1_1",
+   "lat": 15.551,
+   "lon": 73.984,
+   "has_training_station": false,
+   "nearest_training_station_km": 110.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 136,
+   "gadm_id": "IND.10.2_1",
+   "lat": 15.1954,
+   "lon": 74.1204,
+   "has_training_station": false,
+   "nearest_training_station_km": 99.7,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 137,
+   "gadm_id": "IND.11.1_1",
+   "lat": 22.7273,
+   "lon": 72.2033,
+   "has_training_station": false,
+   "nearest_training_station_km": 68.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 138,
+   "gadm_id": "IND.11.2_1",
+   "lat": 21.4211,
+   "lon": 71.2637,
+   "has_training_station": false,
+   "nearest_training_station_km": 182.0,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 139,
+   "gadm_id": "IND.11.3_1",
+   "lat": 22.4502,
+   "lon": 72.7911,
+   "has_training_station": false,
+   "nearest_training_station_km": 31.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 140,
+   "gadm_id": "IND.11.4_1",
+   "lat": 23.4692,
+   "lon": 73.3332,
+   "has_training_station": false,
+   "nearest_training_station_km": 70.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 141,
+   "gadm_id": "IND.11.5_1",
+   "lat": 24.2811,
+   "lon": 72.0393,
+   "has_training_station": false,
+   "nearest_training_station_km": 133.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 142,
+   "gadm_id": "IND.11.6_1",
+   "lat": 21.7872,
+   "lon": 72.9229,
+   "has_training_station": true,
+   "nearest_training_station_km": 21.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 143,
+   "gadm_id": "IND.11.7_1",
+   "lat": 21.5983,
+   "lon": 71.9233,
+   "has_training_station": false,
+   "nearest_training_station_km": 112.4,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 144,
+   "gadm_id": "IND.11.8_1",
+   "lat": 22.0409,
+   "lon": 71.6115,
+   "has_training_station": false,
+   "nearest_training_station_km": 152.0,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 145,
+   "gadm_id": "IND.11.9_1",
+   "lat": 22.2051,
+   "lon": 73.8619,
+   "has_training_station": false,
+   "nearest_training_station_km": 81.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 146,
+   "gadm_id": "IND.11.10_1",
+   "lat": 22.7975,
+   "lon": 74.0668,
+   "has_training_station": false,
+   "nearest_training_station_km": 92.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 147,
+   "gadm_id": "IND.11.11_1",
+   "lat": 22.1242,
+   "lon": 69.4726,
+   "has_training_station": false,
+   "nearest_training_station_km": 348.5,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 148,
+   "gadm_id": "IND.11.12_1",
+   "lat": 23.2081,
+   "lon": 72.6996,
+   "has_training_station": true,
+   "nearest_training_station_km": 4.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 149,
+   "gadm_id": "IND.11.13_1",
+   "lat": 20.9254,
+   "lon": 70.6218,
+   "has_training_station": false,
+   "nearest_training_station_km": 256.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 150,
+   "gadm_id": "IND.11.14_1",
+   "lat": 22.3365,
+   "lon": 70.232,
+   "has_training_station": false,
+   "nearest_training_station_km": 267.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 151,
+   "gadm_id": "IND.11.15_1",
+   "lat": 21.2558,
+   "lon": 70.571,
+   "has_training_station": false,
+   "nearest_training_station_km": 255.6,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 152,
+   "gadm_id": "IND.11.16_1",
+   "lat": 23.6254,
+   "lon": 69.9672,
+   "has_training_station": false,
+   "nearest_training_station_km": 276.5,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 153,
+   "gadm_id": "IND.11.17_1",
+   "lat": 22.8765,
+   "lon": 73.0235,
+   "has_training_station": false,
+   "nearest_training_station_km": 47.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 154,
+   "gadm_id": "IND.11.18_1",
+   "lat": 23.5796,
+   "lon": 72.4963,
+   "has_training_station": false,
+   "nearest_training_station_km": 42.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 155,
+   "gadm_id": "IND.11.19_1",
+   "lat": 23.2073,
+   "lon": 73.7687,
+   "has_training_station": false,
+   "nearest_training_station_km": 78.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 156,
+   "gadm_id": "IND.11.20_1",
+   "lat": 22.8245,
+   "lon": 70.9367,
+   "has_training_station": false,
+   "nearest_training_station_km": 181.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 157,
+   "gadm_id": "IND.11.21_1",
+   "lat": 21.7115,
+   "lon": 73.6574,
+   "has_training_station": false,
+   "nearest_training_station_km": 67.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 158,
+   "gadm_id": "IND.11.22_1",
+   "lat": 20.8125,
+   "lon": 73.1033,
+   "has_training_station": false,
+   "nearest_training_station_km": 89.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 159,
+   "gadm_id": "IND.11.23_1",
+   "lat": 22.7344,
+   "lon": 73.6115,
+   "has_training_station": false,
+   "nearest_training_station_km": 63.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 160,
+   "gadm_id": "IND.11.24_1",
+   "lat": 23.7679,
+   "lon": 71.8001,
+   "has_training_station": false,
+   "nearest_training_station_km": 106.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 161,
+   "gadm_id": "IND.11.25_1",
+   "lat": 21.6377,
+   "lon": 69.8021,
+   "has_training_station": false,
+   "nearest_training_station_km": 331.7,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 162,
+   "gadm_id": "IND.11.26_1",
+   "lat": 22.0151,
+   "lon": 70.7607,
+   "has_training_station": false,
+   "nearest_training_station_km": 234.6,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 163,
+   "gadm_id": "IND.11.27_1",
+   "lat": 23.8047,
+   "lon": 73.0375,
+   "has_training_station": false,
+   "nearest_training_station_km": 71.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 164,
+   "gadm_id": "IND.11.28_1",
+   "lat": 21.2641,
+   "lon": 73.0741,
+   "has_training_station": false,
+   "nearest_training_station_km": 39.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 165,
+   "gadm_id": "IND.11.29_1",
+   "lat": 22.7679,
+   "lon": 71.6066,
+   "has_training_station": false,
+   "nearest_training_station_km": 118.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 166,
+   "gadm_id": "IND.11.30_1",
+   "lat": 21.1924,
+   "lon": 73.6382,
+   "has_training_station": false,
+   "nearest_training_station_km": 80.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 167,
+   "gadm_id": "IND.11.31_1",
+   "lat": 20.7986,
+   "lon": 73.7062,
+   "has_training_station": false,
+   "nearest_training_station_km": 115.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 168,
+   "gadm_id": "IND.11.32_1",
+   "lat": 22.2459,
+   "lon": 73.2496,
+   "has_training_station": true,
+   "nearest_training_station_km": 24.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 169,
+   "gadm_id": "IND.11.33_1",
+   "lat": 20.4183,
+   "lon": 73.1221,
+   "has_training_station": false,
+   "nearest_training_station_km": 79.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 170,
+   "gadm_id": "IND.12.1_1",
+   "lat": 30.3586,
+   "lon": 76.9659,
+   "has_training_station": false,
+   "nearest_training_station_km": 45.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 171,
+   "gadm_id": "IND.12.2_1",
+   "lat": 28.724,
+   "lon": 75.9576,
+   "has_training_station": false,
+   "nearest_training_station_km": 74.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 172,
+   "gadm_id": "IND.12.3_1",
+   "lat": 28.2351,
+   "lon": 77.2963,
+   "has_training_station": true,
+   "nearest_training_station_km": 10.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 173,
+   "gadm_id": "IND.12.4_1",
+   "lat": 29.5793,
+   "lon": 75.5691,
+   "has_training_station": false,
+   "nearest_training_station_km": 80.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 174,
+   "gadm_id": "IND.12.5_1",
+   "lat": 28.3748,
+   "lon": 76.9219,
+   "has_training_station": false,
+   "nearest_training_station_km": 21.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 175,
+   "gadm_id": "IND.12.6_1",
+   "lat": 29.2204,
+   "lon": 75.8048,
+   "has_training_station": false,
+   "nearest_training_station_km": 52.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 176,
+   "gadm_id": "IND.12.7_1",
+   "lat": 28.5924,
+   "lon": 76.6164,
+   "has_training_station": false,
+   "nearest_training_station_km": 31.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 177,
+   "gadm_id": "IND.12.8_1",
+   "lat": 29.4424,
+   "lon": 76.2941,
+   "has_training_station": true,
+   "nearest_training_station_km": 15.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 178,
+   "gadm_id": "IND.12.9_1",
+   "lat": 29.816,
+   "lon": 76.4078,
+   "has_training_station": true,
+   "nearest_training_station_km": 1.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 179,
+   "gadm_id": "IND.12.10_1",
+   "lat": 29.697,
+   "lon": 76.8809,
+   "has_training_station": true,
+   "nearest_training_station_km": 11.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 180,
+   "gadm_id": "IND.12.11_1",
+   "lat": 30.0499,
+   "lon": 76.8297,
+   "has_training_station": false,
+   "nearest_training_station_km": 42.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 181,
+   "gadm_id": "IND.12.12_1",
+   "lat": 28.1782,
+   "lon": 76.1363,
+   "has_training_station": true,
+   "nearest_training_station_km": 13.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 182,
+   "gadm_id": "IND.12.13_1",
+   "lat": 27.9871,
+   "lon": 77.0377,
+   "has_training_station": true,
+   "nearest_training_station_km": 10.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 183,
+   "gadm_id": "IND.12.14_1",
+   "lat": 28.0651,
+   "lon": 77.3605,
+   "has_training_station": true,
+   "nearest_training_station_km": 9.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 184,
+   "gadm_id": "IND.12.15_1",
+   "lat": 30.7101,
+   "lon": 76.9586,
+   "has_training_station": false,
+   "nearest_training_station_km": 17.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 185,
+   "gadm_id": "IND.12.16_1",
+   "lat": 29.3374,
+   "lon": 76.9155,
+   "has_training_station": false,
+   "nearest_training_station_km": 40.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 186,
+   "gadm_id": "IND.12.17_1",
+   "lat": 28.2104,
+   "lon": 76.5552,
+   "has_training_station": false,
+   "nearest_training_station_km": 46.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 187,
+   "gadm_id": "IND.12.18_1",
+   "lat": 28.9142,
+   "lon": 76.5111,
+   "has_training_station": false,
+   "nearest_training_station_km": 46.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 188,
+   "gadm_id": "IND.12.19_1",
+   "lat": 29.6163,
+   "lon": 74.8921,
+   "has_training_station": false,
+   "nearest_training_station_km": 58.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 189,
+   "gadm_id": "IND.12.20_1",
+   "lat": 29.0654,
+   "lon": 76.8642,
+   "has_training_station": false,
+   "nearest_training_station_km": 35.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 190,
+   "gadm_id": "IND.12.21_1",
+   "lat": 30.2576,
+   "lon": 77.3303,
+   "has_training_station": false,
+   "nearest_training_station_km": 70.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 191,
+   "gadm_id": "IND.13.1_1",
+   "lat": 31.3753,
+   "lon": 76.6575,
+   "has_training_station": false,
+   "nearest_training_station_km": 39.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 192,
+   "gadm_id": "IND.13.2_1",
+   "lat": 32.6783,
+   "lon": 76.3376,
+   "has_training_station": false,
+   "nearest_training_station_km": 181.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 193,
+   "gadm_id": "IND.13.3_1",
+   "lat": 31.6705,
+   "lon": 76.511,
+   "has_training_station": false,
+   "nearest_training_station_km": 71.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 194,
+   "gadm_id": "IND.13.4_1",
+   "lat": 32.1103,
+   "lon": 76.3023,
+   "has_training_station": false,
+   "nearest_training_station_km": 122.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 195,
+   "gadm_id": "IND.13.5_1",
+   "lat": 31.5984,
+   "lon": 78.3842,
+   "has_training_station": false,
+   "nearest_training_station_km": 167.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 196,
+   "gadm_id": "Z04.13.5_1",
+   "lat": 32.004,
+   "lon": 78.6954,
+   "has_training_station": false,
+   "nearest_training_station_km": 214.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 197,
+   "gadm_id": "Z09.13.5_1",
+   "lat": 31.3549,
+   "lon": 78.7973,
+   "has_training_station": false,
+   "nearest_training_station_km": 195.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 198,
+   "gadm_id": "IND.13.6_1",
+   "lat": 31.9078,
+   "lon": 77.3845,
+   "has_training_station": false,
+   "nearest_training_station_km": 120.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 199,
+   "gadm_id": "IND.13.7_1",
+   "lat": 32.4878,
+   "lon": 77.5858,
+   "has_training_station": false,
+   "nearest_training_station_km": 187.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 200,
+   "gadm_id": "Z04.13.7_1",
+   "lat": 32.1707,
+   "lon": 78.5405,
+   "has_training_station": false,
+   "nearest_training_station_km": 213.9,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 201,
+   "gadm_id": "IND.13.8_1",
+   "lat": 31.6414,
+   "lon": 76.9779,
+   "has_training_station": false,
+   "nearest_training_station_km": 78.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 202,
+   "gadm_id": "IND.13.9_1",
+   "lat": 31.2013,
+   "lon": 77.6177,
+   "has_training_station": false,
+   "nearest_training_station_km": 82.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 203,
+   "gadm_id": "IND.13.10_1",
+   "lat": 30.6721,
+   "lon": 77.4174,
+   "has_training_station": false,
+   "nearest_training_station_km": 61.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 204,
+   "gadm_id": "IND.13.11_1",
+   "lat": 31.0466,
+   "lon": 76.8957,
+   "has_training_station": true,
+   "nearest_training_station_km": 14.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 205,
+   "gadm_id": "IND.13.12_1",
+   "lat": 31.5827,
+   "lon": 76.1958,
+   "has_training_station": false,
+   "nearest_training_station_km": 70.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 206,
+   "gadm_id": "Z01.14.1_1",
+   "lat": 33.8215,
+   "lon": 75.3195,
+   "has_training_station": false,
+   "nearest_training_station_km": 53.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 207,
+   "gadm_id": "Z01.14.2_1",
+   "lat": 33.9133,
+   "lon": 74.6258,
+   "has_training_station": false,
+   "nearest_training_station_km": 24.7,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 208,
+   "gadm_id": "Z01.14.3_1",
+   "lat": 34.5175,
+   "lon": 74.9088,
+   "has_training_station": false,
+   "nearest_training_station_km": 50.8,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 209,
+   "gadm_id": "Z01.14.4_1",
+   "lat": 34.1806,
+   "lon": 74.3373,
+   "has_training_station": false,
+   "nearest_training_station_km": 46.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 210,
+   "gadm_id": "Z01.14.5_1",
+   "lat": 33.1108,
+   "lon": 75.6874,
+   "has_training_station": false,
+   "nearest_training_station_km": 133.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 211,
+   "gadm_id": "Z01.14.6_1",
+   "lat": 34.2878,
+   "lon": 75.0297,
+   "has_training_station": false,
+   "nearest_training_station_km": 31.3,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 212,
+   "gadm_id": "Z01.14.7_1",
+   "lat": 32.7992,
+   "lon": 74.7318,
+   "has_training_station": false,
+   "nearest_training_station_km": 131.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 213,
+   "gadm_id": "Z01.14.8_1",
+   "lat": 33.8833,
+   "lon": 76.473,
+   "has_training_station": false,
+   "nearest_training_station_km": 153.8,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 214,
+   "gadm_id": "Z01.14.9_1",
+   "lat": 32.573,
+   "lon": 75.5565,
+   "has_training_station": false,
+   "nearest_training_station_km": 123.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 215,
+   "gadm_id": "Z01.14.10_1",
+   "lat": 33.5461,
+   "lon": 75.9504,
+   "has_training_station": false,
+   "nearest_training_station_km": 119.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 216,
+   "gadm_id": "Z01.14.11_1",
+   "lat": 33.5989,
+   "lon": 74.8514,
+   "has_training_station": false,
+   "nearest_training_station_km": 52.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 217,
+   "gadm_id": "Z01.14.12_1",
+   "lat": 34.5268,
+   "lon": 74.1926,
+   "has_training_station": false,
+   "nearest_training_station_km": 77.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 218,
+   "gadm_id": "Z01.14.13_1",
+   "lat": 33.9153,
+   "lon": 77.9068,
+   "has_training_station": false,
+   "nearest_training_station_km": 285.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 219,
+   "gadm_id": "Z01.14.14_1",
+   "lat": 33.7082,
+   "lon": 74.2604,
+   "has_training_station": false,
+   "nearest_training_station_km": 65.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 220,
+   "gadm_id": "Z01.14.15_1",
+   "lat": 33.9673,
+   "lon": 75.0431,
+   "has_training_station": false,
+   "nearest_training_station_km": 23.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 221,
+   "gadm_id": "Z01.14.16_1",
+   "lat": 33.2798,
+   "lon": 74.3793,
+   "has_training_station": false,
+   "nearest_training_station_km": 96.5,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 222,
+   "gadm_id": "Z01.14.17_1",
+   "lat": 33.3339,
+   "lon": 75.1718,
+   "has_training_station": false,
+   "nearest_training_station_km": 87.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 223,
+   "gadm_id": "Z01.14.18_1",
+   "lat": 33.2222,
+   "lon": 74.8219,
+   "has_training_station": false,
+   "nearest_training_station_km": 93.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 224,
+   "gadm_id": "Z01.14.19_1",
+   "lat": 32.6041,
+   "lon": 75.0509,
+   "has_training_station": false,
+   "nearest_training_station_km": 110.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 225,
+   "gadm_id": "Z01.14.20_1",
+   "lat": 33.7635,
+   "lon": 74.8303,
+   "has_training_station": false,
+   "nearest_training_station_km": 33.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 226,
+   "gadm_id": "Z01.14.21_1",
+   "lat": 34.1293,
+   "lon": 74.8983,
+   "has_training_station": true,
+   "nearest_training_station_km": 10.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 227,
+   "gadm_id": "Z01.14.22_1",
+   "lat": 32.9081,
+   "lon": 75.2785,
+   "has_training_station": false,
+   "nearest_training_station_km": 135.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 228,
+   "gadm_id": "IND.15.1_1",
+   "lat": 23.6917,
+   "lon": 85.9876,
+   "has_training_station": false,
+   "nearest_training_station_km": 97.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 229,
+   "gadm_id": "IND.15.2_1",
+   "lat": 24.173,
+   "lon": 84.8802,
+   "has_training_station": false,
+   "nearest_training_station_km": 66.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 230,
+   "gadm_id": "IND.15.3_1",
+   "lat": 24.3268,
+   "lon": 86.7352,
+   "has_training_station": false,
+   "nearest_training_station_km": 73.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 231,
+   "gadm_id": "IND.15.4_1",
+   "lat": 23.8304,
+   "lon": 86.4708,
+   "has_training_station": false,
+   "nearest_training_station_km": 50.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 232,
+   "gadm_id": "IND.15.5_1",
+   "lat": 24.3184,
+   "lon": 87.2612,
+   "has_training_station": false,
+   "nearest_training_station_km": 76.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 233,
+   "gadm_id": "IND.15.6_1",
+   "lat": 24.1034,
+   "lon": 83.6897,
+   "has_training_station": false,
+   "nearest_training_station_km": 99.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 234,
+   "gadm_id": "IND.15.7_1",
+   "lat": 24.2969,
+   "lon": 86.1039,
+   "has_training_station": false,
+   "nearest_training_station_km": 107.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 235,
+   "gadm_id": "IND.15.8_1",
+   "lat": 24.8588,
+   "lon": 87.3063,
+   "has_training_station": false,
+   "nearest_training_station_km": 134.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 236,
+   "gadm_id": "IND.15.9_1",
+   "lat": 23.1007,
+   "lon": 84.5278,
+   "has_training_station": false,
+   "nearest_training_station_km": 190.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 237,
+   "gadm_id": "IND.15.10_1",
+   "lat": 24.0774,
+   "lon": 85.421,
+   "has_training_station": false,
+   "nearest_training_station_km": 88.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 238,
+   "gadm_id": "IND.15.11_1",
+   "lat": 23.9753,
+   "lon": 86.9116,
+   "has_training_station": false,
+   "nearest_training_station_km": 31.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 239,
+   "gadm_id": "IND.15.12_1",
+   "lat": 23.0,
+   "lon": 85.2677,
+   "has_training_station": false,
+   "nearest_training_station_km": 123.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 240,
+   "gadm_id": "IND.15.13_1",
+   "lat": 24.5184,
+   "lon": 85.7024,
+   "has_training_station": false,
+   "nearest_training_station_km": 63.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 241,
+   "gadm_id": "IND.15.14_1",
+   "lat": 23.7172,
+   "lon": 84.436,
+   "has_training_station": false,
+   "nearest_training_station_km": 128.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 242,
+   "gadm_id": "IND.15.15_1",
+   "lat": 23.4747,
+   "lon": 84.663,
+   "has_training_station": false,
+   "nearest_training_station_km": 146.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 243,
+   "gadm_id": "IND.15.16_1",
+   "lat": 24.562,
+   "lon": 87.6583,
+   "has_training_station": false,
+   "nearest_training_station_km": 116.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 244,
+   "gadm_id": "IND.15.17_1",
+   "lat": 24.2002,
+   "lon": 84.1586,
+   "has_training_station": false,
+   "nearest_training_station_km": 85.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 245,
+   "gadm_id": "IND.15.18_1",
+   "lat": 22.4165,
+   "lon": 85.5135,
+   "has_training_station": false,
+   "nearest_training_station_km": 70.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 246,
+   "gadm_id": "IND.15.19_1",
+   "lat": 22.5791,
+   "lon": 86.4472,
+   "has_training_station": false,
+   "nearest_training_station_km": 44.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 247,
+   "gadm_id": "IND.15.20_1",
+   "lat": 23.6274,
+   "lon": 85.554,
+   "has_training_station": false,
+   "nearest_training_station_km": 138.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 248,
+   "gadm_id": "IND.15.21_1",
+   "lat": 23.3311,
+   "lon": 85.3657,
+   "has_training_station": false,
+   "nearest_training_station_km": 144.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 249,
+   "gadm_id": "IND.15.22_1",
+   "lat": 25.0071,
+   "lon": 87.6744,
+   "has_training_station": false,
+   "nearest_training_station_km": 128.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 250,
+   "gadm_id": "IND.15.23_1",
+   "lat": 22.8422,
+   "lon": 85.9456,
+   "has_training_station": false,
+   "nearest_training_station_km": 68.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 251,
+   "gadm_id": "IND.15.24_1",
+   "lat": 22.5777,
+   "lon": 84.5597,
+   "has_training_station": false,
+   "nearest_training_station_km": 169.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 252,
+   "gadm_id": "IND.16.1_1",
+   "lat": 16.218,
+   "lon": 75.6266,
+   "has_training_station": true,
+   "nearest_training_station_km": 6.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 253,
+   "gadm_id": "IND.16.3_1",
+   "lat": 12.9423,
+   "lon": 77.5868,
+   "has_training_station": false,
+   "nearest_training_station_km": 39.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 254,
+   "gadm_id": "IND.16.2_1",
+   "lat": 13.2178,
+   "lon": 77.5662,
+   "has_training_station": false,
+   "nearest_training_station_km": 29.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 255,
+   "gadm_id": "IND.16.4_1",
+   "lat": 16.1178,
+   "lon": 74.8279,
+   "has_training_station": false,
+   "nearest_training_station_km": 75.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 256,
+   "gadm_id": "IND.16.5_1",
+   "lat": 15.105,
+   "lon": 76.5305,
+   "has_training_station": false,
+   "nearest_training_station_km": 151.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 257,
+   "gadm_id": "IND.16.6_1",
+   "lat": 17.9502,
+   "lon": 77.2235,
+   "has_training_station": true,
+   "nearest_training_station_km": 27.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 258,
+   "gadm_id": "IND.16.7_1",
+   "lat": 16.7915,
+   "lon": 75.9534,
+   "has_training_station": false,
+   "nearest_training_station_km": 75.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 259,
+   "gadm_id": "IND.16.8_1",
+   "lat": 11.9487,
+   "lon": 77.0903,
+   "has_training_station": false,
+   "nearest_training_station_km": 83.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 260,
+   "gadm_id": "IND.16.9_1",
+   "lat": 13.5688,
+   "lon": 77.8283,
+   "has_training_station": true,
+   "nearest_training_station_km": 18.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 261,
+   "gadm_id": "IND.16.10_1",
+   "lat": 13.4494,
+   "lon": 75.6895,
+   "has_training_station": true,
+   "nearest_training_station_km": 17.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 262,
+   "gadm_id": "IND.16.11_1",
+   "lat": 14.1619,
+   "lon": 76.5124,
+   "has_training_station": false,
+   "nearest_training_station_km": 120.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 263,
+   "gadm_id": "IND.16.12_1",
+   "lat": 12.833,
+   "lon": 75.2667,
+   "has_training_station": false,
+   "nearest_training_station_km": 79.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 264,
+   "gadm_id": "IND.16.13_1",
+   "lat": 14.3515,
+   "lon": 75.9313,
+   "has_training_station": false,
+   "nearest_training_station_km": 114.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 265,
+   "gadm_id": "IND.16.14_1",
+   "lat": 15.3865,
+   "lon": 75.1562,
+   "has_training_station": true,
+   "nearest_training_station_km": 4.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 266,
+   "gadm_id": "IND.16.15_1",
+   "lat": 15.4279,
+   "lon": 75.6667,
+   "has_training_station": false,
+   "nearest_training_station_km": 57.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 267,
+   "gadm_id": "IND.16.16_1",
+   "lat": 17.2571,
+   "lon": 76.8672,
+   "has_training_station": false,
+   "nearest_training_station_km": 99.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 268,
+   "gadm_id": "IND.16.17_1",
+   "lat": 12.9896,
+   "lon": 76.1049,
+   "has_training_station": true,
+   "nearest_training_station_km": 3.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 269,
+   "gadm_id": "IND.16.18_1",
+   "lat": 14.7344,
+   "lon": 75.4186,
+   "has_training_station": false,
+   "nearest_training_station_km": 74.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 270,
+   "gadm_id": "IND.16.19_1",
+   "lat": 12.3187,
+   "lon": 75.7991,
+   "has_training_station": false,
+   "nearest_training_station_km": 63.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 271,
+   "gadm_id": "IND.16.20_1",
+   "lat": 13.1287,
+   "lon": 78.2085,
+   "has_training_station": false,
+   "nearest_training_station_km": 61.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 272,
+   "gadm_id": "IND.16.21_1",
+   "lat": 15.558,
+   "lon": 76.2204,
+   "has_training_station": false,
+   "nearest_training_station_km": 90.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 273,
+   "gadm_id": "IND.16.22_1",
+   "lat": 12.6036,
+   "lon": 76.7905,
+   "has_training_station": false,
+   "nearest_training_station_km": 56.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 274,
+   "gadm_id": "IND.16.23_1",
+   "lat": 12.2022,
+   "lon": 76.436,
+   "has_training_station": true,
+   "nearest_training_station_km": 6.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 275,
+   "gadm_id": "IND.16.24_1",
+   "lat": 16.0855,
+   "lon": 76.8901,
+   "has_training_station": false,
+   "nearest_training_station_km": 131.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 276,
+   "gadm_id": "IND.16.25_1",
+   "lat": 12.67,
+   "lon": 77.3277,
+   "has_training_station": true,
+   "nearest_training_station_km": 7.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 277,
+   "gadm_id": "IND.16.26_1",
+   "lat": 14.0522,
+   "lon": 75.1761,
+   "has_training_station": false,
+   "nearest_training_station_km": 104.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 278,
+   "gadm_id": "IND.16.27_1",
+   "lat": 13.5135,
+   "lon": 76.9415,
+   "has_training_station": false,
+   "nearest_training_station_km": 85.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 279,
+   "gadm_id": "IND.16.28_1",
+   "lat": 13.4648,
+   "lon": 74.8827,
+   "has_training_station": false,
+   "nearest_training_station_km": 100.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 280,
+   "gadm_id": "IND.16.29_1",
+   "lat": 14.7875,
+   "lon": 74.624,
+   "has_training_station": false,
+   "nearest_training_station_km": 83.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 281,
+   "gadm_id": "IND.16.30_1",
+   "lat": 16.6228,
+   "lon": 76.9112,
+   "has_training_station": false,
+   "nearest_training_station_km": 142.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 282,
+   "gadm_id": "IND.17.1_1",
+   "lat": 9.4133,
+   "lon": 76.446,
+   "has_training_station": false,
+   "nearest_training_station_km": 62.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 283,
+   "gadm_id": "IND.17.2_1",
+   "lat": 10.0553,
+   "lon": 76.4743,
+   "has_training_station": true,
+   "nearest_training_station_km": 18.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 284,
+   "gadm_id": "IND.17.3_1",
+   "lat": 9.8738,
+   "lon": 77.0133,
+   "has_training_station": false,
+   "nearest_training_station_km": 76.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 285,
+   "gadm_id": "IND.17.4_1",
+   "lat": 11.9923,
+   "lon": 75.5362,
+   "has_training_station": false,
+   "nearest_training_station_km": 94.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 286,
+   "gadm_id": "IND.17.5_1",
+   "lat": 12.4593,
+   "lon": 75.1525,
+   "has_training_station": false,
+   "nearest_training_station_km": 119.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 287,
+   "gadm_id": "IND.17.6_1",
+   "lat": 8.9541,
+   "lon": 76.8677,
+   "has_training_station": true,
+   "nearest_training_station_km": 29.8,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 288,
+   "gadm_id": "IND.17.7_1",
+   "lat": 9.6283,
+   "lon": 76.6487,
+   "has_training_station": false,
+   "nearest_training_station_km": 52.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 289,
+   "gadm_id": "IND.17.8_1",
+   "lat": 11.4807,
+   "lon": 75.8315,
+   "has_training_station": false,
+   "nearest_training_station_km": 100.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 290,
+   "gadm_id": "IND.17.9_1",
+   "lat": 11.1293,
+   "lon": 76.1516,
+   "has_training_station": false,
+   "nearest_training_station_km": 118.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 291,
+   "gadm_id": "IND.17.10_1",
+   "lat": 10.7872,
+   "lon": 76.5482,
+   "has_training_station": false,
+   "nearest_training_station_km": 83.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 292,
+   "gadm_id": "IND.17.11_1",
+   "lat": 9.2761,
+   "lon": 76.9134,
+   "has_training_station": false,
+   "nearest_training_station_km": 55.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 293,
+   "gadm_id": "IND.17.12_1",
+   "lat": 8.6063,
+   "lon": 77.0047,
+   "has_training_station": false,
+   "nearest_training_station_km": 53.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 294,
+   "gadm_id": "IND.17.13_1",
+   "lat": 10.4656,
+   "lon": 76.3119,
+   "has_training_station": false,
+   "nearest_training_station_km": 43.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 295,
+   "gadm_id": "IND.17.14_1",
+   "lat": 11.7048,
+   "lon": 76.0917,
+   "has_training_station": false,
+   "nearest_training_station_km": 64.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 296,
+   "gadm_id": "IND.18.1_1",
+   "lat": 10.4674,
+   "lon": 72.9338,
+   "has_training_station": false,
+   "nearest_training_station_km": 370.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 297,
+   "gadm_id": "IND.19.1_1",
+   "lat": 23.834,
+   "lon": 76.0703,
+   "has_training_station": false,
+   "nearest_training_station_km": 96.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 298,
+   "gadm_id": "IND.19.2_1",
+   "lat": 22.3157,
+   "lon": 74.3677,
+   "has_training_station": false,
+   "nearest_training_station_km": 119.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 299,
+   "gadm_id": "IND.19.3_1",
+   "lat": 23.1484,
+   "lon": 81.8721,
+   "has_training_station": false,
+   "nearest_training_station_km": 253.3,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 300,
+   "gadm_id": "IND.19.4_1",
+   "lat": 24.6142,
+   "lon": 77.8695,
+   "has_training_station": false,
+   "nearest_training_station_km": 211.9,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 301,
+   "gadm_id": "IND.19.5_1",
+   "lat": 21.8813,
+   "lon": 80.3539,
+   "has_training_station": false,
+   "nearest_training_station_km": 370.7,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 302,
+   "gadm_id": "IND.19.6_1",
+   "lat": 21.7897,
+   "lon": 75.0233,
+   "has_training_station": false,
+   "nearest_training_station_km": 87.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 303,
+   "gadm_id": "IND.19.7_1",
+   "lat": 21.8797,
+   "lon": 77.867,
+   "has_training_station": false,
+   "nearest_training_station_km": 157.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 304,
+   "gadm_id": "IND.19.8_1",
+   "lat": 26.4264,
+   "lon": 78.7149,
+   "has_training_station": false,
+   "nearest_training_station_km": 235.2,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 305,
+   "gadm_id": "IND.19.9_1",
+   "lat": 23.482,
+   "lon": 77.3918,
+   "has_training_station": false,
+   "nearest_training_station_km": 147.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 306,
+   "gadm_id": "IND.19.10_1",
+   "lat": 21.3743,
+   "lon": 76.3691,
+   "has_training_station": false,
+   "nearest_training_station_km": 97.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 307,
+   "gadm_id": "IND.19.11_1",
+   "lat": 24.8022,
+   "lon": 79.6576,
+   "has_training_station": false,
+   "nearest_training_station_km": 237.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 308,
+   "gadm_id": "IND.19.12_1",
+   "lat": 22.1235,
+   "lon": 78.85,
+   "has_training_station": false,
+   "nearest_training_station_km": 247.0,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 309,
+   "gadm_id": "IND.19.13_1",
+   "lat": 23.8162,
+   "lon": 79.5205,
+   "has_training_station": false,
+   "nearest_training_station_km": 301.2,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 310,
+   "gadm_id": "IND.19.14_1",
+   "lat": 25.8453,
+   "lon": 78.6068,
+   "has_training_station": false,
+   "nearest_training_station_km": 278.9,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 311,
+   "gadm_id": "IND.19.15_1",
+   "lat": 22.7485,
+   "lon": 76.4542,
+   "has_training_station": true,
+   "nearest_training_station_km": 46.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 312,
+   "gadm_id": "IND.19.16_1",
+   "lat": 22.5002,
+   "lon": 75.1052,
+   "has_training_station": true,
+   "nearest_training_station_km": 43.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 313,
+   "gadm_id": "IND.19.17_1",
+   "lat": 22.8352,
+   "lon": 81.0456,
+   "has_training_station": false,
+   "nearest_training_station_km": 301.3,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 314,
+   "gadm_id": "IND.19.18_1",
+   "lat": 21.9388,
+   "lon": 76.57,
+   "has_training_station": false,
+   "nearest_training_station_km": 119.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 315,
+   "gadm_id": "IND.19.19_1",
+   "lat": 24.5593,
+   "lon": 77.196,
+   "has_training_station": false,
+   "nearest_training_station_km": 150.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 316,
+   "gadm_id": "IND.19.20_1",
+   "lat": 26.0451,
+   "lon": 78.1388,
+   "has_training_station": false,
+   "nearest_training_station_km": 235.4,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 317,
+   "gadm_id": "IND.19.21_1",
+   "lat": 22.2372,
+   "lon": 77.118,
+   "has_training_station": false,
+   "nearest_training_station_km": 135.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 318,
+   "gadm_id": "IND.19.22_1",
+   "lat": 22.5913,
+   "lon": 77.9844,
+   "has_training_station": false,
+   "nearest_training_station_km": 201.3,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 319,
+   "gadm_id": "IND.19.23_1",
+   "lat": 22.7163,
+   "lon": 75.7815,
+   "has_training_station": false,
+   "nearest_training_station_km": 14.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 320,
+   "gadm_id": "IND.19.24_1",
+   "lat": 23.1743,
+   "lon": 79.945,
+   "has_training_station": false,
+   "nearest_training_station_km": 320.3,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 321,
+   "gadm_id": "IND.19.25_1",
+   "lat": 22.8934,
+   "lon": 74.674,
+   "has_training_station": false,
+   "nearest_training_station_km": 77.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 322,
+   "gadm_id": "IND.19.26_1",
+   "lat": 23.7037,
+   "lon": 80.3347,
+   "has_training_station": false,
+   "nearest_training_station_km": 249.5,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 323,
+   "gadm_id": "IND.19.27_1",
+   "lat": 22.666,
+   "lon": 80.4473,
+   "has_training_station": false,
+   "nearest_training_station_km": 341.2,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 324,
+   "gadm_id": "IND.19.28_1",
+   "lat": 24.215,
+   "lon": 75.4041,
+   "has_training_station": false,
+   "nearest_training_station_km": 111.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 325,
+   "gadm_id": "IND.19.29_1",
+   "lat": 26.4192,
+   "lon": 77.861,
+   "has_training_station": false,
+   "nearest_training_station_km": 185.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 326,
+   "gadm_id": "IND.19.30_1",
+   "lat": 22.9374,
+   "lon": 79.0813,
+   "has_training_station": false,
+   "nearest_training_station_km": 308.9,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 327,
+   "gadm_id": "IND.19.31_1",
+   "lat": 24.6093,
+   "lon": 75.1432,
+   "has_training_station": false,
+   "nearest_training_station_km": 90.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 328,
+   "gadm_id": "IND.19.32_1",
+   "lat": 24.4251,
+   "lon": 80.1854,
+   "has_training_station": false,
+   "nearest_training_station_km": 207.0,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 329,
+   "gadm_id": "IND.19.33_1",
+   "lat": 23.2206,
+   "lon": 78.1134,
+   "has_training_station": false,
+   "nearest_training_station_km": 211.5,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 330,
+   "gadm_id": "IND.19.34_1",
+   "lat": 23.8653,
+   "lon": 76.7311,
+   "has_training_station": false,
+   "nearest_training_station_km": 120.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 331,
+   "gadm_id": "IND.19.35_1",
+   "lat": 23.5042,
+   "lon": 75.0901,
+   "has_training_station": false,
+   "nearest_training_station_km": 66.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 332,
+   "gadm_id": "IND.19.36_1",
+   "lat": 24.7582,
+   "lon": 81.5815,
+   "has_training_station": false,
+   "nearest_training_station_km": 81.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 333,
+   "gadm_id": "IND.19.37_1",
+   "lat": 23.8519,
+   "lon": 78.7528,
+   "has_training_station": false,
+   "nearest_training_station_km": 291.4,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 334,
+   "gadm_id": "IND.19.38_1",
+   "lat": 24.5361,
+   "lon": 80.8255,
+   "has_training_station": false,
+   "nearest_training_station_km": 147.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 335,
+   "gadm_id": "IND.19.39_1",
+   "lat": 22.9948,
+   "lon": 77.125,
+   "has_training_station": false,
+   "nearest_training_station_km": 108.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 336,
+   "gadm_id": "IND.19.40_1",
+   "lat": 22.3174,
+   "lon": 79.6839,
+   "has_training_station": false,
+   "nearest_training_station_km": 329.6,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 337,
+   "gadm_id": "IND.19.41_1",
+   "lat": 23.4633,
+   "lon": 81.433,
+   "has_training_station": false,
+   "nearest_training_station_km": 223.6,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 338,
+   "gadm_id": "IND.19.42_1",
+   "lat": 23.3863,
+   "lon": 76.5581,
+   "has_training_station": false,
+   "nearest_training_station_km": 68.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 339,
+   "gadm_id": "IND.19.43_1",
+   "lat": 25.7581,
+   "lon": 77.0048,
+   "has_training_station": false,
+   "nearest_training_station_km": 131.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 340,
+   "gadm_id": "IND.19.44_1",
+   "lat": 25.3679,
+   "lon": 77.8061,
+   "has_training_station": false,
+   "nearest_training_station_km": 197.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 341,
+   "gadm_id": "IND.19.45_1",
+   "lat": 24.222,
+   "lon": 81.8273,
+   "has_training_station": false,
+   "nearest_training_station_km": 134.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 342,
+   "gadm_id": "IND.19.46_1",
+   "lat": 24.2184,
+   "lon": 82.4128,
+   "has_training_station": false,
+   "nearest_training_station_km": 143.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 343,
+   "gadm_id": "IND.19.47_1",
+   "lat": 24.993,
+   "lon": 78.9395,
+   "has_training_station": false,
+   "nearest_training_station_km": 303.4,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 344,
+   "gadm_id": "IND.19.48_1",
+   "lat": 23.3352,
+   "lon": 75.6674,
+   "has_training_station": false,
+   "nearest_training_station_km": 57.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 345,
+   "gadm_id": "IND.19.49_1",
+   "lat": 23.6065,
+   "lon": 80.9136,
+   "has_training_station": false,
+   "nearest_training_station_km": 226.3,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 346,
+   "gadm_id": "IND.19.50_1",
+   "lat": 23.8969,
+   "lon": 77.8082,
+   "has_training_station": false,
+   "nearest_training_station_km": 205.7,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 347,
+   "gadm_id": "IND.19.51_1",
+   "lat": 21.9232,
+   "lon": 75.7744,
+   "has_training_station": false,
+   "nearest_training_station_km": 62.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 348,
+   "gadm_id": "IND.20.1_1",
+   "lat": 19.2332,
+   "lon": 74.6454,
+   "has_training_station": false,
+   "nearest_training_station_km": 149.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 349,
+   "gadm_id": "IND.20.2_1",
+   "lat": 20.7503,
+   "lon": 77.0446,
+   "has_training_station": true,
+   "nearest_training_station_km": 5.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 350,
+   "gadm_id": "IND.20.3_1",
+   "lat": 21.1893,
+   "lon": 77.5688,
+   "has_training_station": false,
+   "nearest_training_station_km": 78.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 351,
+   "gadm_id": "IND.20.4_1",
+   "lat": 20.0227,
+   "lon": 75.2759,
+   "has_training_station": false,
+   "nearest_training_station_km": 68.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 352,
+   "gadm_id": "IND.20.5_1",
+   "lat": 21.1599,
+   "lon": 79.8692,
+   "has_training_station": false,
+   "nearest_training_station_km": 301.9,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 353,
+   "gadm_id": "IND.20.6_1",
+   "lat": 18.9251,
+   "lon": 75.8019,
+   "has_training_station": false,
+   "nearest_training_station_km": 103.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 354,
+   "gadm_id": "IND.20.7_1",
+   "lat": 20.5108,
+   "lon": 76.4043,
+   "has_training_station": false,
+   "nearest_training_station_km": 66.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 355,
+   "gadm_id": "IND.20.8_1",
+   "lat": 20.1167,
+   "lon": 79.4378,
+   "has_training_station": false,
+   "nearest_training_station_km": 262.7,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 356,
+   "gadm_id": "IND.20.9_1",
+   "lat": 21.1115,
+   "lon": 74.6049,
+   "has_training_station": false,
+   "nearest_training_station_km": 174.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 357,
+   "gadm_id": "IND.20.10_1",
+   "lat": 19.7823,
+   "lon": 80.2342,
+   "has_training_station": false,
+   "nearest_training_station_km": 309.5,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 358,
+   "gadm_id": "IND.20.11_1",
+   "lat": 21.121,
+   "lon": 80.1548,
+   "has_training_station": false,
+   "nearest_training_station_km": 330.7,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 359,
+   "gadm_id": "IND.20.12_1",
+   "lat": 19.6153,
+   "lon": 77.1166,
+   "has_training_station": false,
+   "nearest_training_station_km": 123.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 360,
+   "gadm_id": "IND.20.13_1",
+   "lat": 20.9375,
+   "lon": 75.4913,
+   "has_training_station": false,
+   "nearest_training_station_km": 127.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 361,
+   "gadm_id": "IND.20.14_1",
+   "lat": 19.8198,
+   "lon": 75.9826,
+   "has_training_station": true,
+   "nearest_training_station_km": 8.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 362,
+   "gadm_id": "IND.20.15_1",
+   "lat": 16.4668,
+   "lon": 74.1673,
+   "has_training_station": false,
+   "nearest_training_station_km": 143.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 363,
+   "gadm_id": "IND.20.16_1",
+   "lat": 18.3735,
+   "lon": 76.7596,
+   "has_training_station": false,
+   "nearest_training_station_km": 90.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 364,
+   "gadm_id": "IND.20.17_1",
+   "lat": 18.9857,
+   "lon": 72.8374,
+   "has_training_station": false,
+   "nearest_training_station_km": 28.3,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 365,
+   "gadm_id": "IND.20.18_1",
+   "lat": 19.1427,
+   "lon": 72.8821,
+   "has_training_station": false,
+   "nearest_training_station_km": 26.6,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 366,
+   "gadm_id": "IND.20.19_1",
+   "lat": 21.177,
+   "lon": 79.0821,
+   "has_training_station": false,
+   "nearest_training_station_km": 222.1,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 367,
+   "gadm_id": "IND.20.20_1",
+   "lat": 19.1152,
+   "lon": 77.6207,
+   "has_training_station": false,
+   "nearest_training_station_km": 132.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 368,
+   "gadm_id": "IND.20.21_1",
+   "lat": 21.5473,
+   "lon": 74.2199,
+   "has_training_station": false,
+   "nearest_training_station_km": 125.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 369,
+   "gadm_id": "IND.20.22_1",
+   "lat": 20.26,
+   "lon": 74.0778,
+   "has_training_station": false,
+   "nearest_training_station_km": 147.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 370,
+   "gadm_id": "IND.20.23_1",
+   "lat": 18.1882,
+   "lon": 76.0393,
+   "has_training_station": false,
+   "nearest_training_station_km": 155.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 371,
+   "gadm_id": "IND.20.24_1",
+   "lat": 19.7909,
+   "lon": 73.02,
+   "has_training_station": true,
+   "nearest_training_station_km": 27.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 372,
+   "gadm_id": "IND.20.25_1",
+   "lat": 19.2859,
+   "lon": 76.6815,
+   "has_training_station": false,
+   "nearest_training_station_km": 103.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 373,
+   "gadm_id": "IND.20.26_1",
+   "lat": 18.5705,
+   "lon": 74.0766,
+   "has_training_station": false,
+   "nearest_training_station_km": 81.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 374,
+   "gadm_id": "IND.20.27_1",
+   "lat": 18.51,
+   "lon": 73.2302,
+   "has_training_station": true,
+   "nearest_training_station_km": 52.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 375,
+   "gadm_id": "IND.20.28_1",
+   "lat": 17.2727,
+   "lon": 73.4605,
+   "has_training_station": false,
+   "nearest_training_station_km": 92.3,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 376,
+   "gadm_id": "IND.20.29_1",
+   "lat": 17.1107,
+   "lon": 74.7749,
+   "has_training_station": false,
+   "nearest_training_station_km": 140.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 377,
+   "gadm_id": "IND.20.30_1",
+   "lat": 17.6678,
+   "lon": 74.1811,
+   "has_training_station": false,
+   "nearest_training_station_km": 88.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 378,
+   "gadm_id": "IND.20.31_1",
+   "lat": 16.1322,
+   "lon": 73.7429,
+   "has_training_station": false,
+   "nearest_training_station_km": 154.7,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 379,
+   "gadm_id": "IND.20.32_1",
+   "lat": 17.7888,
+   "lon": 75.4852,
+   "has_training_station": false,
+   "nearest_training_station_km": 180.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 380,
+   "gadm_id": "IND.20.33_1",
+   "lat": 19.36,
+   "lon": 73.3317,
+   "has_training_station": false,
+   "nearest_training_station_km": 39.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 381,
+   "gadm_id": "IND.20.34_1",
+   "lat": 20.7964,
+   "lon": 78.5828,
+   "has_training_station": false,
+   "nearest_training_station_km": 164.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 382,
+   "gadm_id": "IND.20.35_1",
+   "lat": 20.2384,
+   "lon": 77.2165,
+   "has_training_station": false,
+   "nearest_training_station_km": 58.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 383,
+   "gadm_id": "IND.20.36_1",
+   "lat": 20.0839,
+   "lon": 78.158,
+   "has_training_station": false,
+   "nearest_training_station_km": 139.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 384,
+   "gadm_id": "IND.21.1_1",
+   "lat": 24.5401,
+   "lon": 93.8028,
+   "has_training_station": false,
+   "nearest_training_station_km": 26.8,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 385,
+   "gadm_id": "IND.21.2_1",
+   "lat": 24.2411,
+   "lon": 94.0954,
+   "has_training_station": false,
+   "nearest_training_station_km": 59.3,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 386,
+   "gadm_id": "IND.21.3_1",
+   "lat": 24.3037,
+   "lon": 93.421,
+   "has_training_station": false,
+   "nearest_training_station_km": 71.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 387,
+   "gadm_id": "IND.21.4_1",
+   "lat": 24.8063,
+   "lon": 93.7758,
+   "has_training_station": false,
+   "nearest_training_station_km": 16.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 388,
+   "gadm_id": "IND.21.5_1",
+   "lat": 24.8076,
+   "lon": 93.8776,
+   "has_training_station": true,
+   "nearest_training_station_km": 6.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 389,
+   "gadm_id": "IND.21.6_1",
+   "lat": 25.2017,
+   "lon": 94.0414,
+   "has_training_station": false,
+   "nearest_training_station_km": 43.5,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 390,
+   "gadm_id": "IND.21.7_1",
+   "lat": 24.9514,
+   "lon": 93.5281,
+   "has_training_station": false,
+   "nearest_training_station_km": 44.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 391,
+   "gadm_id": "IND.21.8_1",
+   "lat": 24.5363,
+   "lon": 93.9735,
+   "has_training_station": false,
+   "nearest_training_station_km": 24.5,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 392,
+   "gadm_id": "IND.21.9_1",
+   "lat": 25.0261,
+   "lon": 94.4357,
+   "has_training_station": false,
+   "nearest_training_station_km": 54.7,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 393,
+   "gadm_id": "IND.22.1_1",
+   "lat": 25.6802,
+   "lon": 90.6746,
+   "has_training_station": false,
+   "nearest_training_station_km": 103.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 394,
+   "gadm_id": "IND.22.2_1",
+   "lat": 25.3841,
+   "lon": 91.801,
+   "has_training_station": true,
+   "nearest_training_station_km": 21.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 395,
+   "gadm_id": "IND.22.3_1",
+   "lat": 25.3685,
+   "lon": 92.3797,
+   "has_training_station": false,
+   "nearest_training_station_km": 52.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 396,
+   "gadm_id": "IND.22.4_1",
+   "lat": 25.8831,
+   "lon": 90.5539,
+   "has_training_station": false,
+   "nearest_training_station_km": 106.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 397,
+   "gadm_id": "IND.22.5_1",
+   "lat": 25.8752,
+   "lon": 91.8875,
+   "has_training_station": false,
+   "nearest_training_station_km": 32.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 398,
+   "gadm_id": "IND.22.6_1",
+   "lat": 25.302,
+   "lon": 90.5952,
+   "has_training_station": false,
+   "nearest_training_station_km": 134.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 399,
+   "gadm_id": "IND.22.7_1",
+   "lat": 25.4544,
+   "lon": 89.9362,
+   "has_training_station": false,
+   "nearest_training_station_km": 180.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 400,
+   "gadm_id": "IND.22.8_1",
+   "lat": 25.3228,
+   "lon": 91.2508,
+   "has_training_station": false,
+   "nearest_training_station_km": 70.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 401,
+   "gadm_id": "IND.22.9_1",
+   "lat": 25.6179,
+   "lon": 90.1847,
+   "has_training_station": false,
+   "nearest_training_station_km": 150.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 402,
+   "gadm_id": "IND.22.10_1",
+   "lat": 25.6027,
+   "lon": 91.2611,
+   "has_training_station": false,
+   "nearest_training_station_km": 63.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 403,
+   "gadm_id": "IND.23.1_1",
+   "lat": 23.8365,
+   "lon": 92.888,
+   "has_training_station": true,
+   "nearest_training_station_km": 21.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 404,
+   "gadm_id": "IND.23.2_1",
+   "lat": 23.5403,
+   "lon": 93.2374,
+   "has_training_station": false,
+   "nearest_training_station_km": 56.3,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 405,
+   "gadm_id": "IND.23.3_1",
+   "lat": 24.2006,
+   "lon": 92.7276,
+   "has_training_station": false,
+   "nearest_training_station_km": 53.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 406,
+   "gadm_id": "IND.23.4_1",
+   "lat": 22.3847,
+   "lon": 92.7121,
+   "has_training_station": false,
+   "nearest_training_station_km": 148.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 407,
+   "gadm_id": "IND.23.5_1",
+   "lat": 22.9744,
+   "lon": 92.7219,
+   "has_training_station": false,
+   "nearest_training_station_km": 82.6,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 408,
+   "gadm_id": "IND.23.6_1",
+   "lat": 23.752,
+   "lon": 92.4664,
+   "has_training_station": false,
+   "nearest_training_station_km": 26.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 409,
+   "gadm_id": "IND.23.7_1",
+   "lat": 22.3794,
+   "lon": 93.0146,
+   "has_training_station": false,
+   "nearest_training_station_km": 151.8,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 410,
+   "gadm_id": "IND.23.8_1",
+   "lat": 23.29,
+   "lon": 92.9472,
+   "has_training_station": false,
+   "nearest_training_station_km": 52.9,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 411,
+   "gadm_id": "IND.24.1_1",
+   "lat": 25.7777,
+   "lon": 93.7874,
+   "has_training_station": false,
+   "nearest_training_station_km": 107.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 412,
+   "gadm_id": "IND.24.2_1",
+   "lat": 25.8485,
+   "lon": 94.8257,
+   "has_training_station": false,
+   "nearest_training_station_km": 144.7,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 413,
+   "gadm_id": "IND.24.3_1",
+   "lat": 25.7671,
+   "lon": 94.1065,
+   "has_training_station": false,
+   "nearest_training_station_km": 106.5,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 414,
+   "gadm_id": "IND.24.4_1",
+   "lat": 26.5548,
+   "lon": 94.8029,
+   "has_training_station": false,
+   "nearest_training_station_km": 127.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 415,
+   "gadm_id": "IND.24.5_1",
+   "lat": 26.477,
+   "lon": 94.5316,
+   "has_training_station": false,
+   "nearest_training_station_km": 109.6,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 416,
+   "gadm_id": "IND.24.6_1",
+   "lat": 26.6847,
+   "lon": 95.0218,
+   "has_training_station": false,
+   "nearest_training_station_km": 141.0,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 417,
+   "gadm_id": "IND.24.7_1",
+   "lat": 25.4979,
+   "lon": 93.6173,
+   "has_training_station": false,
+   "nearest_training_station_km": 82.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 418,
+   "gadm_id": "IND.24.8_1",
+   "lat": 25.6524,
+   "lon": 94.5381,
+   "has_training_station": false,
+   "nearest_training_station_km": 110.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 419,
+   "gadm_id": "IND.24.9_1",
+   "lat": 26.1732,
+   "lon": 94.8885,
+   "has_training_station": false,
+   "nearest_training_station_km": 158.5,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 420,
+   "gadm_id": "IND.24.10_1",
+   "lat": 26.1896,
+   "lon": 94.1926,
+   "has_training_station": false,
+   "nearest_training_station_km": 113.7,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 421,
+   "gadm_id": "IND.24.11_1",
+   "lat": 26.0083,
+   "lon": 94.4865,
+   "has_training_station": false,
+   "nearest_training_station_km": 142.9,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 422,
+   "gadm_id": "IND.25.1_1",
+   "lat": 28.6465,
+   "lon": 77.1089,
+   "has_training_station": true,
+   "nearest_training_station_km": 3.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 423,
+   "gadm_id": "IND.26.1_1",
+   "lat": 20.981,
+   "lon": 84.9025,
+   "has_training_station": true,
+   "nearest_training_station_km": 26.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 424,
+   "gadm_id": "IND.26.2_1",
+   "lat": 20.5859,
+   "lon": 83.1666,
+   "has_training_station": false,
+   "nearest_training_station_km": 203.4,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 425,
+   "gadm_id": "IND.26.3_1",
+   "lat": 21.4889,
+   "lon": 86.9043,
+   "has_training_station": true,
+   "nearest_training_station_km": 2.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 426,
+   "gadm_id": "IND.26.4_1",
+   "lat": 21.2166,
+   "lon": 83.3462,
+   "has_training_station": false,
+   "nearest_training_station_km": 187.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 427,
+   "gadm_id": "IND.26.5_1",
+   "lat": 20.6414,
+   "lon": 84.1706,
+   "has_training_station": false,
+   "nearest_training_station_km": 99.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 428,
+   "gadm_id": "IND.26.6_1",
+   "lat": 20.9786,
+   "lon": 86.6167,
+   "has_training_station": false,
+   "nearest_training_station_km": 52.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 429,
+   "gadm_id": "IND.26.7_1",
+   "lat": 20.4436,
+   "lon": 85.6986,
+   "has_training_station": false,
+   "nearest_training_station_km": 70.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 430,
+   "gadm_id": "IND.26.8_1",
+   "lat": 21.4623,
+   "lon": 84.7973,
+   "has_training_station": false,
+   "nearest_training_station_km": 70.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 431,
+   "gadm_id": "IND.26.9_1",
+   "lat": 20.8201,
+   "lon": 85.5203,
+   "has_training_station": false,
+   "nearest_training_station_km": 38.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 432,
+   "gadm_id": "IND.26.10_1",
+   "lat": 19.1651,
+   "lon": 84.1533,
+   "has_training_station": false,
+   "nearest_training_station_km": 210.4,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 433,
+   "gadm_id": "IND.26.11_1",
+   "lat": 19.6218,
+   "lon": 84.6587,
+   "has_training_station": false,
+   "nearest_training_station_km": 142.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 434,
+   "gadm_id": "IND.26.12_1",
+   "lat": 20.2164,
+   "lon": 86.33,
+   "has_training_station": false,
+   "nearest_training_station_km": 83.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 435,
+   "gadm_id": "IND.26.13_1",
+   "lat": 20.8497,
+   "lon": 86.1466,
+   "has_training_station": true,
+   "nearest_training_station_km": 10.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 436,
+   "gadm_id": "IND.26.14_1",
+   "lat": 21.8029,
+   "lon": 83.9479,
+   "has_training_station": false,
+   "nearest_training_station_km": 159.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 437,
+   "gadm_id": "IND.26.15_1",
+   "lat": 19.8618,
+   "lon": 83.1017,
+   "has_training_station": false,
+   "nearest_training_station_km": 235.0,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 438,
+   "gadm_id": "IND.26.16_1",
+   "lat": 20.1226,
+   "lon": 84.0401,
+   "has_training_station": false,
+   "nearest_training_station_km": 136.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 439,
+   "gadm_id": "IND.26.17_1",
+   "lat": 20.5469,
+   "lon": 86.6047,
+   "has_training_station": false,
+   "nearest_training_station_km": 67.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 440,
+   "gadm_id": "IND.26.18_1",
+   "lat": 21.5323,
+   "lon": 85.6991,
+   "has_training_station": false,
+   "nearest_training_station_km": 78.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 441,
+   "gadm_id": "IND.26.19_1",
+   "lat": 20.0826,
+   "lon": 85.5051,
+   "has_training_station": false,
+   "nearest_training_station_km": 93.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 442,
+   "gadm_id": "IND.26.20_1",
+   "lat": 18.8112,
+   "lon": 82.7072,
+   "has_training_station": false,
+   "nearest_training_station_km": 227.3,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 443,
+   "gadm_id": "IND.26.21_1",
+   "lat": 18.2505,
+   "lon": 81.948,
+   "has_training_station": false,
+   "nearest_training_station_km": 142.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 444,
+   "gadm_id": "IND.26.22_1",
+   "lat": 21.8907,
+   "lon": 86.4059,
+   "has_training_station": true,
+   "nearest_training_station_km": 33.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 445,
+   "gadm_id": "IND.26.23_1",
+   "lat": 19.5826,
+   "lon": 82.33,
+   "has_training_station": false,
+   "nearest_training_station_km": 295.3,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 446,
+   "gadm_id": "IND.26.24_1",
+   "lat": 20.2062,
+   "lon": 84.9929,
+   "has_training_station": false,
+   "nearest_training_station_km": 70.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 447,
+   "gadm_id": "IND.26.25_1",
+   "lat": 20.4615,
+   "lon": 82.5709,
+   "has_training_station": false,
+   "nearest_training_station_km": 266.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 448,
+   "gadm_id": "IND.26.26_1",
+   "lat": 19.8657,
+   "lon": 85.6984,
+   "has_training_station": false,
+   "nearest_training_station_km": 124.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 449,
+   "gadm_id": "IND.26.27_1",
+   "lat": 19.355,
+   "lon": 83.5063,
+   "has_training_station": false,
+   "nearest_training_station_km": 234.2,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 450,
+   "gadm_id": "IND.26.28_1",
+   "lat": 21.4475,
+   "lon": 84.2742,
+   "has_training_station": false,
+   "nearest_training_station_km": 109.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 451,
+   "gadm_id": "IND.26.29_1",
+   "lat": 20.9271,
+   "lon": 83.8178,
+   "has_training_station": false,
+   "nearest_training_station_km": 134.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 452,
+   "gadm_id": "IND.26.30_1",
+   "lat": 22.0766,
+   "lon": 84.504,
+   "has_training_station": false,
+   "nearest_training_station_km": 144.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 453,
+   "gadm_id": "IND.27.1_1",
+   "lat": 10.9137,
+   "lon": 79.7964,
+   "has_training_station": false,
+   "nearest_training_station_km": 81.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 454,
+   "gadm_id": "IND.27.2_1",
+   "lat": 12.0743,
+   "lon": 75.286,
+   "has_training_station": false,
+   "nearest_training_station_km": 119.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 455,
+   "gadm_id": "IND.27.3_1",
+   "lat": 11.9095,
+   "lon": 79.7483,
+   "has_training_station": true,
+   "nearest_training_station_km": 6.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 456,
+   "gadm_id": "IND.27.4_1",
+   "lat": 16.7172,
+   "lon": 82.2409,
+   "has_training_station": false,
+   "nearest_training_station_km": 61.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 457,
+   "gadm_id": "IND.28.1_1",
+   "lat": 31.7045,
+   "lon": 74.8933,
+   "has_training_station": true,
+   "nearest_training_station_km": 9.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 458,
+   "gadm_id": "IND.28.2_1",
+   "lat": 30.3991,
+   "lon": 75.4933,
+   "has_training_station": false,
+   "nearest_training_station_km": 59.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 459,
+   "gadm_id": "IND.28.3_1",
+   "lat": 30.1841,
+   "lon": 75.03,
+   "has_training_station": true,
+   "nearest_training_station_km": 12.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 460,
+   "gadm_id": "IND.28.4_1",
+   "lat": 30.6112,
+   "lon": 74.7678,
+   "has_training_station": false,
+   "nearest_training_station_km": 44.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 461,
+   "gadm_id": "IND.28.5_1",
+   "lat": 30.6356,
+   "lon": 76.3495,
+   "has_training_station": false,
+   "nearest_training_station_km": 17.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 462,
+   "gadm_id": "IND.28.6_1",
+   "lat": 30.2574,
+   "lon": 74.1472,
+   "has_training_station": false,
+   "nearest_training_station_km": 73.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 463,
+   "gadm_id": "IND.28.7_1",
+   "lat": 30.8905,
+   "lon": 74.6619,
+   "has_training_station": false,
+   "nearest_training_station_km": 76.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 464,
+   "gadm_id": "IND.28.8_1",
+   "lat": 31.9137,
+   "lon": 75.2792,
+   "has_training_station": false,
+   "nearest_training_station_km": 50.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 465,
+   "gadm_id": "IND.28.9_1",
+   "lat": 31.6273,
+   "lon": 75.8446,
+   "has_training_station": false,
+   "nearest_training_station_km": 80.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 466,
+   "gadm_id": "IND.28.10_1",
+   "lat": 31.2138,
+   "lon": 75.5537,
+   "has_training_station": false,
+   "nearest_training_station_km": 42.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 467,
+   "gadm_id": "IND.28.11_1",
+   "lat": 31.3549,
+   "lon": 75.3897,
+   "has_training_station": false,
+   "nearest_training_station_km": 56.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 468,
+   "gadm_id": "IND.28.12_1",
+   "lat": 30.8107,
+   "lon": 75.824,
+   "has_training_station": true,
+   "nearest_training_station_km": 10.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 469,
+   "gadm_id": "IND.28.13_1",
+   "lat": 29.9107,
+   "lon": 75.4284,
+   "has_training_station": false,
+   "nearest_training_station_km": 61.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 470,
+   "gadm_id": "IND.28.14_1",
+   "lat": 30.767,
+   "lon": 75.158,
+   "has_training_station": false,
+   "nearest_training_station_km": 63.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 471,
+   "gadm_id": "IND.28.15_1",
+   "lat": 30.2947,
+   "lon": 74.5307,
+   "has_training_station": false,
+   "nearest_training_station_km": 36.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 472,
+   "gadm_id": "IND.28.16_1",
+   "lat": 32.3027,
+   "lon": 75.6144,
+   "has_training_station": false,
+   "nearest_training_station_km": 103.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 473,
+   "gadm_id": "IND.28.17_1",
+   "lat": 30.284,
+   "lon": 76.3487,
+   "has_training_station": false,
+   "nearest_training_station_km": 52.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 474,
+   "gadm_id": "IND.28.18_1",
+   "lat": 31.0624,
+   "lon": 76.4728,
+   "has_training_station": true,
+   "nearest_training_station_km": 9.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 475,
+   "gadm_id": "IND.28.19_1",
+   "lat": 30.6877,
+   "lon": 76.724,
+   "has_training_station": false,
+   "nearest_training_station_km": 3.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 476,
+   "gadm_id": "IND.28.20_1",
+   "lat": 30.2155,
+   "lon": 75.8574,
+   "has_training_station": false,
+   "nearest_training_station_km": 67.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 477,
+   "gadm_id": "IND.28.21_1",
+   "lat": 31.1115,
+   "lon": 76.1429,
+   "has_training_station": false,
+   "nearest_training_station_km": 39.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 478,
+   "gadm_id": "IND.28.22_1",
+   "lat": 31.336,
+   "lon": 74.8364,
+   "has_training_station": false,
+   "nearest_training_station_km": 31.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 479,
+   "gadm_id": "IND.29.1_1",
+   "lat": 26.2281,
+   "lon": 74.7643,
+   "has_training_station": false,
+   "nearest_training_station_km": 149.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 480,
+   "gadm_id": "IND.29.2_1",
+   "lat": 27.5968,
+   "lon": 76.598,
+   "has_training_station": false,
+   "nearest_training_station_km": 51.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 481,
+   "gadm_id": "IND.29.3_1",
+   "lat": 23.4771,
+   "lon": 74.3653,
+   "has_training_station": true,
+   "nearest_training_station_km": 11.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 482,
+   "gadm_id": "IND.29.4_1",
+   "lat": 25.0004,
+   "lon": 76.7519,
+   "has_training_station": false,
+   "nearest_training_station_km": 91.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 483,
+   "gadm_id": "IND.29.5_1",
+   "lat": 25.7302,
+   "lon": 71.4789,
+   "has_training_station": true,
+   "nearest_training_station_km": 8.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 484,
+   "gadm_id": "IND.29.6_1",
+   "lat": 27.2513,
+   "lon": 77.2707,
+   "has_training_station": false,
+   "nearest_training_station_km": 77.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 485,
+   "gadm_id": "IND.29.7_1",
+   "lat": 25.4831,
+   "lon": 74.7268,
+   "has_training_station": false,
+   "nearest_training_station_km": 116.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 486,
+   "gadm_id": "IND.29.8_1",
+   "lat": 28.191,
+   "lon": 73.0766,
+   "has_training_station": true,
+   "nearest_training_station_km": 28.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 487,
+   "gadm_id": "IND.29.9_1",
+   "lat": 25.4743,
+   "lon": 75.7737,
+   "has_training_station": false,
+   "nearest_training_station_km": 32.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 488,
+   "gadm_id": "IND.29.10_1",
+   "lat": 24.8355,
+   "lon": 74.7819,
+   "has_training_station": false,
+   "nearest_training_station_km": 110.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 489,
+   "gadm_id": "IND.29.11_1",
+   "lat": 28.2927,
+   "lon": 74.5616,
+   "has_training_station": false,
+   "nearest_training_station_km": 95.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 490,
+   "gadm_id": "IND.29.12_1",
+   "lat": 26.8661,
+   "lon": 76.52,
+   "has_training_station": false,
+   "nearest_training_station_km": 124.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 491,
+   "gadm_id": "IND.29.13_1",
+   "lat": 26.6865,
+   "lon": 77.6957,
+   "has_training_station": false,
+   "nearest_training_station_km": 151.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 492,
+   "gadm_id": "IND.29.14_1",
+   "lat": 23.7341,
+   "lon": 73.8579,
+   "has_training_station": false,
+   "nearest_training_station_km": 62.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 493,
+   "gadm_id": "IND.29.15_1",
+   "lat": 29.4078,
+   "lon": 73.5983,
+   "has_training_station": false,
+   "nearest_training_station_km": 70.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 494,
+   "gadm_id": "IND.29.16_1",
+   "lat": 29.2402,
+   "lon": 74.5969,
+   "has_training_station": true,
+   "nearest_training_station_km": 51.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 495,
+   "gadm_id": "IND.29.17_1",
+   "lat": 26.9837,
+   "lon": 75.7183,
+   "has_training_station": false,
+   "nearest_training_station_km": 89.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 496,
+   "gadm_id": "IND.29.18_1",
+   "lat": 27.0703,
+   "lon": 70.9006,
+   "has_training_station": false,
+   "nearest_training_station_km": 155.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 497,
+   "gadm_id": "IND.29.19_1",
+   "lat": 25.095,
+   "lon": 72.2169,
+   "has_training_station": false,
+   "nearest_training_station_km": 110.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 498,
+   "gadm_id": "IND.29.20_1",
+   "lat": 24.3331,
+   "lon": 76.1937,
+   "has_training_station": false,
+   "nearest_training_station_km": 97.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 499,
+   "gadm_id": "IND.29.21_1",
+   "lat": 28.0955,
+   "lon": 75.545,
+   "has_training_station": false,
+   "nearest_training_station_km": 55.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 500,
+   "gadm_id": "IND.29.22_1",
+   "lat": 26.749,
+   "lon": 72.7878,
+   "has_training_station": false,
+   "nearest_training_station_km": 107.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 501,
+   "gadm_id": "IND.29.23_1",
+   "lat": 26.5223,
+   "lon": 76.9396,
+   "has_training_station": false,
+   "nearest_training_station_km": 153.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 502,
+   "gadm_id": "IND.29.24_1",
+   "lat": 25.1287,
+   "lon": 76.1254,
+   "has_training_station": true,
+   "nearest_training_station_km": 27.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 503,
+   "gadm_id": "IND.29.25_1",
+   "lat": 27.0664,
+   "lon": 74.1837,
+   "has_training_station": true,
+   "nearest_training_station_km": 47.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 504,
+   "gadm_id": "IND.29.26_1",
+   "lat": 25.7087,
+   "lon": 73.521,
+   "has_training_station": true,
+   "nearest_training_station_km": 19.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 505,
+   "gadm_id": "IND.29.27_1",
+   "lat": 24.0308,
+   "lon": 74.6812,
+   "has_training_station": false,
+   "nearest_training_station_km": 58.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 506,
+   "gadm_id": "IND.29.28_1",
+   "lat": 25.1973,
+   "lon": 73.8753,
+   "has_training_station": false,
+   "nearest_training_station_km": 83.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 507,
+   "gadm_id": "IND.29.29_1",
+   "lat": 26.1928,
+   "lon": 76.4444,
+   "has_training_station": false,
+   "nearest_training_station_km": 125.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 508,
+   "gadm_id": "IND.29.30_1",
+   "lat": 27.64,
+   "lon": 75.2812,
+   "has_training_station": true,
+   "nearest_training_station_km": 13.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 509,
+   "gadm_id": "IND.29.31_1",
+   "lat": 24.7584,
+   "lon": 72.779,
+   "has_training_station": false,
+   "nearest_training_station_km": 126.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 510,
+   "gadm_id": "IND.29.32_1",
+   "lat": 26.15,
+   "lon": 75.6673,
+   "has_training_station": false,
+   "nearest_training_station_km": 107.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 511,
+   "gadm_id": "IND.29.33_1",
+   "lat": 24.411,
+   "lon": 73.7146,
+   "has_training_station": false,
+   "nearest_training_station_km": 120.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 512,
+   "gadm_id": "IND.30.1_1",
+   "lat": 27.2929,
+   "lon": 88.6713,
+   "has_training_station": true,
+   "nearest_training_station_km": 7.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 513,
+   "gadm_id": "IND.30.2_1",
+   "lat": 27.7437,
+   "lon": 88.5263,
+   "has_training_station": false,
+   "nearest_training_station_km": 45.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 514,
+   "gadm_id": "IND.30.3_1",
+   "lat": 27.2868,
+   "lon": 88.3805,
+   "has_training_station": false,
+   "nearest_training_station_km": 23.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 515,
+   "gadm_id": "IND.30.4_1",
+   "lat": 27.3472,
+   "lon": 88.174,
+   "has_training_station": false,
+   "nearest_training_station_km": 43.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 516,
+   "gadm_id": "IND.31.1_1",
+   "lat": 11.1467,
+   "lon": 79.2282,
+   "has_training_station": true,
+   "nearest_training_station_km": 19.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 517,
+   "gadm_id": "IND.31.2_1",
+   "lat": 13.048,
+   "lon": 80.235,
+   "has_training_station": true,
+   "nearest_training_station_km": 3.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 518,
+   "gadm_id": "IND.31.3_1",
+   "lat": 10.8268,
+   "lon": 76.9309,
+   "has_training_station": false,
+   "nearest_training_station_km": 108.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 519,
+   "gadm_id": "IND.31.4_1",
+   "lat": 11.5251,
+   "lon": 79.4452,
+   "has_training_station": false,
+   "nearest_training_station_km": 59.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 520,
+   "gadm_id": "IND.31.5_1",
+   "lat": 12.0863,
+   "lon": 78.1838,
+   "has_training_station": false,
+   "nearest_training_station_km": 120.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 521,
+   "gadm_id": "IND.31.6_1",
+   "lat": 10.3793,
+   "lon": 77.805,
+   "has_training_station": true,
+   "nearest_training_station_km": 19.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 522,
+   "gadm_id": "IND.31.7_1",
+   "lat": 11.4949,
+   "lon": 77.4037,
+   "has_training_station": false,
+   "nearest_training_station_km": 137.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 523,
+   "gadm_id": "IND.31.8_1",
+   "lat": 12.6813,
+   "lon": 79.9361,
+   "has_training_station": true,
+   "nearest_training_station_km": 27.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 524,
+   "gadm_id": "IND.31.9_1",
+   "lat": 8.3061,
+   "lon": 77.3465,
+   "has_training_station": false,
+   "nearest_training_station_km": 103.2,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 525,
+   "gadm_id": "IND.31.10_1",
+   "lat": 10.8318,
+   "lon": 78.1184,
+   "has_training_station": false,
+   "nearest_training_station_km": 54.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 526,
+   "gadm_id": "IND.31.11_1",
+   "lat": 12.4792,
+   "lon": 78.0217,
+   "has_training_station": false,
+   "nearest_training_station_km": 83.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 527,
+   "gadm_id": "IND.31.12_1",
+   "lat": 9.9099,
+   "lon": 77.9896,
+   "has_training_station": true,
+   "nearest_training_station_km": 6.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 528,
+   "gadm_id": "IND.31.13_1",
+   "lat": 10.8637,
+   "lon": 79.736,
+   "has_training_station": false,
+   "nearest_training_station_km": 76.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 529,
+   "gadm_id": "IND.31.14_1",
+   "lat": 11.3054,
+   "lon": 78.1224,
+   "has_training_station": false,
+   "nearest_training_station_km": 106.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 530,
+   "gadm_id": "IND.31.15_1",
+   "lat": 11.2604,
+   "lon": 78.8778,
+   "has_training_station": false,
+   "nearest_training_station_km": 30.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 531,
+   "gadm_id": "IND.31.16_1",
+   "lat": 10.342,
+   "lon": 78.8666,
+   "has_training_station": false,
+   "nearest_training_station_km": 83.8,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 532,
+   "gadm_id": "IND.31.17_1",
+   "lat": 9.4429,
+   "lon": 78.6803,
+   "has_training_station": false,
+   "nearest_training_station_km": 86.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 533,
+   "gadm_id": "IND.31.18_1",
+   "lat": 11.6631,
+   "lon": 78.2092,
+   "has_training_station": false,
+   "nearest_training_station_km": 114.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 534,
+   "gadm_id": "IND.31.19_1",
+   "lat": 9.907,
+   "lon": 78.576,
+   "has_training_station": false,
+   "nearest_training_station_km": 60.8,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 535,
+   "gadm_id": "IND.31.20_1",
+   "lat": 10.6553,
+   "lon": 79.2235,
+   "has_training_station": false,
+   "nearest_training_station_km": 48.9,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 536,
+   "gadm_id": "IND.31.21_1",
+   "lat": 11.4483,
+   "lon": 76.6329,
+   "has_training_station": false,
+   "nearest_training_station_km": 89.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 537,
+   "gadm_id": "IND.31.22_1",
+   "lat": 9.8808,
+   "lon": 77.4239,
+   "has_training_station": false,
+   "nearest_training_station_km": 65.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 538,
+   "gadm_id": "IND.31.23_1",
+   "lat": 13.2353,
+   "lon": 79.9325,
+   "has_training_station": false,
+   "nearest_training_station_km": 35.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 539,
+   "gadm_id": "IND.31.24_1",
+   "lat": 10.6693,
+   "lon": 79.5346,
+   "has_training_station": false,
+   "nearest_training_station_km": 67.4,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 540,
+   "gadm_id": "IND.31.25_1",
+   "lat": 8.8774,
+   "lon": 77.9882,
+   "has_training_station": false,
+   "nearest_training_station_km": 110.0,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 541,
+   "gadm_id": "IND.31.26_1",
+   "lat": 10.8766,
+   "lon": 78.5548,
+   "has_training_station": false,
+   "nearest_training_station_km": 60.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 542,
+   "gadm_id": "IND.31.27_1",
+   "lat": 8.7902,
+   "lon": 77.523,
+   "has_training_station": false,
+   "nearest_training_station_km": 101.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 543,
+   "gadm_id": "IND.31.28_1",
+   "lat": 10.8456,
+   "lon": 77.3524,
+   "has_training_station": false,
+   "nearest_training_station_km": 87.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 544,
+   "gadm_id": "IND.31.29_1",
+   "lat": 12.4187,
+   "lon": 79.1545,
+   "has_training_station": false,
+   "nearest_training_station_km": 73.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 545,
+   "gadm_id": "IND.31.30_1",
+   "lat": 12.8007,
+   "lon": 78.9982,
+   "has_training_station": false,
+   "nearest_training_station_km": 46.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 546,
+   "gadm_id": "IND.31.31_1",
+   "lat": 11.9603,
+   "lon": 79.2844,
+   "has_training_station": false,
+   "nearest_training_station_km": 56.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 547,
+   "gadm_id": "IND.31.32_1",
+   "lat": 9.4806,
+   "lon": 77.8944,
+   "has_training_station": false,
+   "nearest_training_station_km": 45.1,
+   "inside_station_hull": false,
+   "extrapolated": true
+  },
+  {
+   "region_id": 548,
+   "gadm_id": "IND.32.1_1",
+   "lat": 19.2544,
+   "lon": 78.9666,
+   "has_training_station": false,
+   "nearest_training_station_km": 196.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 549,
+   "gadm_id": "IND.32.2_1",
+   "lat": 17.3857,
+   "lon": 78.4641,
+   "has_training_station": true,
+   "nearest_training_station_km": 3.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 550,
+   "gadm_id": "IND.32.3_1",
+   "lat": 18.5462,
+   "lon": 79.2348,
+   "has_training_station": false,
+   "nearest_training_station_km": 136.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 551,
+   "gadm_id": "IND.32.4_1",
+   "lat": 17.59,
+   "lon": 80.6791,
+   "has_training_station": false,
+   "nearest_training_station_km": 130.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 552,
+   "gadm_id": "IND.32.5_1",
+   "lat": 16.4934,
+   "lon": 78.1404,
+   "has_training_station": false,
+   "nearest_training_station_km": 100.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 553,
+   "gadm_id": "IND.32.6_1",
+   "lat": 17.8849,
+   "lon": 78.2108,
+   "has_training_station": false,
+   "nearest_training_station_km": 41.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 554,
+   "gadm_id": "IND.32.7_1",
+   "lat": 17.0619,
+   "lon": 79.2815,
+   "has_training_station": false,
+   "nearest_training_station_km": 86.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 555,
+   "gadm_id": "IND.32.8_1",
+   "lat": 18.5239,
+   "lon": 78.1394,
+   "has_training_station": false,
+   "nearest_training_station_km": 95.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 556,
+   "gadm_id": "IND.32.9_1",
+   "lat": 17.284,
+   "lon": 78.1722,
+   "has_training_station": true,
+   "nearest_training_station_km": 21.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 557,
+   "gadm_id": "IND.32.10_1",
+   "lat": 17.9499,
+   "lon": 79.7917,
+   "has_training_station": false,
+   "nearest_training_station_km": 140.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 558,
+   "gadm_id": "IND.33.1_1",
+   "lat": 23.821,
+   "lon": 91.9103,
+   "has_training_station": false,
+   "nearest_training_station_km": 63.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 559,
+   "gadm_id": "IND.33.2_1",
+   "lat": 23.5052,
+   "lon": 91.619,
+   "has_training_station": false,
+   "nearest_training_station_km": 49.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 560,
+   "gadm_id": "IND.33.3_1",
+   "lat": 23.9446,
+   "lon": 91.6559,
+   "has_training_station": false,
+   "nearest_training_station_km": 38.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 561,
+   "gadm_id": "IND.33.4_1",
+   "lat": 24.0967,
+   "lon": 92.2149,
+   "has_training_station": false,
+   "nearest_training_station_km": 66.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 562,
+   "gadm_id": "IND.33.5_1",
+   "lat": 23.575,
+   "lon": 91.3327,
+   "has_training_station": false,
+   "nearest_training_station_km": 27.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 563,
+   "gadm_id": "IND.33.6_1",
+   "lat": 23.1982,
+   "lon": 91.5817,
+   "has_training_station": false,
+   "nearest_training_station_km": 75.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 564,
+   "gadm_id": "IND.33.7_1",
+   "lat": 24.1897,
+   "lon": 92.0469,
+   "has_training_station": false,
+   "nearest_training_station_km": 85.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 565,
+   "gadm_id": "IND.33.8_1",
+   "lat": 23.8764,
+   "lon": 91.3972,
+   "has_training_station": true,
+   "nearest_training_station_km": 11.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 566,
+   "gadm_id": "IND.34.1_1",
+   "lat": 27.0075,
+   "lon": 78.0628,
+   "has_training_station": false,
+   "nearest_training_station_km": 144.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 567,
+   "gadm_id": "IND.34.2_1",
+   "lat": 27.9262,
+   "lon": 78.0772,
+   "has_training_station": false,
+   "nearest_training_station_km": 77.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 568,
+   "gadm_id": "IND.34.3_1",
+   "lat": 25.2999,
+   "lon": 81.9648,
+   "has_training_station": true,
+   "nearest_training_station_km": 14.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 569,
+   "gadm_id": "IND.34.4_1",
+   "lat": 26.4237,
+   "lon": 82.6597,
+   "has_training_station": false,
+   "nearest_training_station_km": 133.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 570,
+   "gadm_id": "IND.34.5_1",
+   "lat": 26.2868,
+   "lon": 81.6308,
+   "has_training_station": false,
+   "nearest_training_station_km": 100.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 571,
+   "gadm_id": "IND.34.6_1",
+   "lat": 28.8434,
+   "lon": 78.3492,
+   "has_training_station": false,
+   "nearest_training_station_km": 33.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 572,
+   "gadm_id": "IND.34.7_1",
+   "lat": 26.65,
+   "lon": 79.4496,
+   "has_training_station": false,
+   "nearest_training_station_km": 249.0,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 573,
+   "gadm_id": "IND.34.8_1",
+   "lat": 26.0553,
+   "lon": 83.0413,
+   "has_training_station": false,
+   "nearest_training_station_km": 132.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 574,
+   "gadm_id": "IND.34.9_1",
+   "lat": 29.0601,
+   "lon": 77.3025,
+   "has_training_station": false,
+   "nearest_training_station_km": 30.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 575,
+   "gadm_id": "IND.34.10_1",
+   "lat": 27.7414,
+   "lon": 81.4127,
+   "has_training_station": false,
+   "nearest_training_station_km": 262.3,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 576,
+   "gadm_id": "IND.34.11_1",
+   "lat": 25.8774,
+   "lon": 84.0968,
+   "has_training_station": false,
+   "nearest_training_station_km": 103.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 577,
+   "gadm_id": "IND.34.12_1",
+   "lat": 27.4871,
+   "lon": 82.3688,
+   "has_training_station": false,
+   "nearest_training_station_km": 233.6,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 578,
+   "gadm_id": "IND.34.13_1",
+   "lat": 25.4712,
+   "lon": 80.5526,
+   "has_training_station": false,
+   "nearest_training_station_km": 137.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 579,
+   "gadm_id": "IND.34.14_1",
+   "lat": 26.9167,
+   "lon": 81.3716,
+   "has_training_station": false,
+   "nearest_training_station_km": 174.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 580,
+   "gadm_id": "IND.34.15_1",
+   "lat": 28.4555,
+   "lon": 79.4111,
+   "has_training_station": false,
+   "nearest_training_station_km": 74.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 581,
+   "gadm_id": "IND.34.16_1",
+   "lat": 26.79,
+   "lon": 82.6064,
+   "has_training_station": false,
+   "nearest_training_station_km": 166.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 582,
+   "gadm_id": "IND.34.17_1",
+   "lat": 29.3928,
+   "lon": 78.3868,
+   "has_training_station": false,
+   "nearest_training_station_km": 59.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 583,
+   "gadm_id": "IND.34.18_1",
+   "lat": 28.0865,
+   "lon": 79.0316,
+   "has_training_station": false,
+   "nearest_training_station_km": 84.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 584,
+   "gadm_id": "IND.34.19_1",
+   "lat": 28.3667,
+   "lon": 77.9992,
+   "has_training_station": false,
+   "nearest_training_station_km": 66.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 585,
+   "gadm_id": "IND.34.20_1",
+   "lat": 25.1394,
+   "lon": 83.2527,
+   "has_training_station": false,
+   "nearest_training_station_km": 78.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 586,
+   "gadm_id": "IND.34.21_1",
+   "lat": 25.209,
+   "lon": 81.0813,
+   "has_training_station": false,
+   "nearest_training_station_km": 87.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 587,
+   "gadm_id": "IND.34.22_1",
+   "lat": 26.4255,
+   "lon": 83.8275,
+   "has_training_station": false,
+   "nearest_training_station_km": 164.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 588,
+   "gadm_id": "IND.34.23_1",
+   "lat": 27.5177,
+   "lon": 78.7021,
+   "has_training_station": false,
+   "nearest_training_station_km": 143.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 589,
+   "gadm_id": "IND.34.24_1",
+   "lat": 26.7896,
+   "lon": 79.0814,
+   "has_training_station": false,
+   "nearest_training_station_km": 226.1,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 590,
+   "gadm_id": "IND.34.25_1",
+   "lat": 26.6347,
+   "lon": 82.0705,
+   "has_training_station": false,
+   "nearest_training_station_km": 135.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 591,
+   "gadm_id": "IND.34.26_1",
+   "lat": 27.4363,
+   "lon": 79.4515,
+   "has_training_station": false,
+   "nearest_training_station_km": 166.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 592,
+   "gadm_id": "IND.34.27_1",
+   "lat": 25.8779,
+   "lon": 80.7983,
+   "has_training_station": false,
+   "nearest_training_station_km": 122.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 593,
+   "gadm_id": "IND.34.28_1",
+   "lat": 27.206,
+   "lon": 78.4567,
+   "has_training_station": false,
+   "nearest_training_station_km": 152.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 594,
+   "gadm_id": "IND.34.29_1",
+   "lat": 28.3957,
+   "lon": 77.5374,
+   "has_training_station": false,
+   "nearest_training_station_km": 21.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 595,
+   "gadm_id": "IND.34.30_1",
+   "lat": 28.7785,
+   "lon": 77.4762,
+   "has_training_station": false,
+   "nearest_training_station_km": 19.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 596,
+   "gadm_id": "IND.34.31_1",
+   "lat": 25.6247,
+   "lon": 83.5476,
+   "has_training_station": false,
+   "nearest_training_station_km": 87.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 597,
+   "gadm_id": "IND.34.32_1",
+   "lat": 27.0877,
+   "lon": 82.0125,
+   "has_training_station": false,
+   "nearest_training_station_km": 185.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 598,
+   "gadm_id": "IND.34.33_1",
+   "lat": 26.6258,
+   "lon": 83.36,
+   "has_training_station": false,
+   "nearest_training_station_km": 196.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 599,
+   "gadm_id": "IND.34.34_1",
+   "lat": 25.7366,
+   "lon": 79.8707,
+   "has_training_station": false,
+   "nearest_training_station_km": 208.1,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 600,
+   "gadm_id": "IND.34.35_1",
+   "lat": 28.7178,
+   "lon": 77.8702,
+   "has_training_station": false,
+   "nearest_training_station_km": 54.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 601,
+   "gadm_id": "IND.34.36_1",
+   "lat": 27.3344,
+   "lon": 80.1525,
+   "has_training_station": false,
+   "nearest_training_station_km": 213.3,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 602,
+   "gadm_id": "IND.34.37_1",
+   "lat": 27.5762,
+   "lon": 78.1441,
+   "has_training_station": false,
+   "nearest_training_station_km": 102.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 603,
+   "gadm_id": "IND.34.38_1",
+   "lat": 26.0963,
+   "lon": 79.3797,
+   "has_training_station": false,
+   "nearest_training_station_km": 264.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 604,
+   "gadm_id": "IND.34.39_1",
+   "lat": 25.7491,
+   "lon": 82.5671,
+   "has_training_station": false,
+   "nearest_training_station_km": 74.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 605,
+   "gadm_id": "IND.34.40_1",
+   "lat": 25.5105,
+   "lon": 78.9465,
+   "has_training_station": false,
+   "nearest_training_station_km": 298.4,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 606,
+   "gadm_id": "IND.34.41_1",
+   "lat": 27.0177,
+   "lon": 79.6785,
+   "has_training_station": false,
+   "nearest_training_station_km": 218.3,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 607,
+   "gadm_id": "IND.34.42_1",
+   "lat": 26.445,
+   "lon": 79.8466,
+   "has_training_station": false,
+   "nearest_training_station_km": 236.0,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 608,
+   "gadm_id": "IND.34.43_1",
+   "lat": 26.3923,
+   "lon": 80.2023,
+   "has_training_station": false,
+   "nearest_training_station_km": 202.4,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 609,
+   "gadm_id": "IND.34.44_1",
+   "lat": 27.7822,
+   "lon": 78.8368,
+   "has_training_station": false,
+   "nearest_training_station_km": 113.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 610,
+   "gadm_id": "IND.34.45_1",
+   "lat": 25.4914,
+   "lon": 81.459,
+   "has_training_station": false,
+   "nearest_training_station_km": 46.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 611,
+   "gadm_id": "IND.34.46_1",
+   "lat": 26.8647,
+   "lon": 83.9253,
+   "has_training_station": false,
+   "nearest_training_station_km": 212.7,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 612,
+   "gadm_id": "IND.34.47_1",
+   "lat": 28.1276,
+   "lon": 80.6566,
+   "has_training_station": false,
+   "nearest_training_station_km": 200.6,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 613,
+   "gadm_id": "IND.34.48_1",
+   "lat": 24.6581,
+   "lon": 78.5553,
+   "has_training_station": false,
+   "nearest_training_station_km": 277.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 614,
+   "gadm_id": "IND.34.49_1",
+   "lat": 26.8466,
+   "lon": 80.897,
+   "has_training_station": false,
+   "nearest_training_station_km": 188.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 615,
+   "gadm_id": "IND.34.50_1",
+   "lat": 27.1882,
+   "lon": 83.5009,
+   "has_training_station": false,
+   "nearest_training_station_km": 251.7,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 616,
+   "gadm_id": "IND.34.51_1",
+   "lat": 25.3524,
+   "lon": 79.6927,
+   "has_training_station": false,
+   "nearest_training_station_km": 223.6,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 617,
+   "gadm_id": "IND.34.52_1",
+   "lat": 27.1865,
+   "lon": 79.044,
+   "has_training_station": false,
+   "nearest_training_station_km": 182.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 618,
+   "gadm_id": "IND.34.53_1",
+   "lat": 27.6006,
+   "lon": 77.6208,
+   "has_training_station": false,
+   "nearest_training_station_km": 67.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 619,
+   "gadm_id": "IND.34.54_1",
+   "lat": 26.0354,
+   "lon": 83.5028,
+   "has_training_station": false,
+   "nearest_training_station_km": 130.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 620,
+   "gadm_id": "IND.34.55_1",
+   "lat": 29.0417,
+   "lon": 77.7836,
+   "has_training_station": false,
+   "nearest_training_station_km": 61.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 621,
+   "gadm_id": "IND.34.56_1",
+   "lat": 24.9878,
+   "lon": 82.6108,
+   "has_training_station": false,
+   "nearest_training_station_km": 85.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 622,
+   "gadm_id": "IND.34.57_1",
+   "lat": 28.8782,
+   "lon": 78.7818,
+   "has_training_station": true,
+   "nearest_training_station_km": 2.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 623,
+   "gadm_id": "IND.34.58_1",
+   "lat": 29.4178,
+   "lon": 77.7278,
+   "has_training_station": false,
+   "nearest_training_station_km": 76.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 624,
+   "gadm_id": "IND.34.59_1",
+   "lat": 28.5478,
+   "lon": 79.9503,
+   "has_training_station": false,
+   "nearest_training_station_km": 119.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 625,
+   "gadm_id": "IND.34.60_1",
+   "lat": 25.8764,
+   "lon": 81.8225,
+   "has_training_station": false,
+   "nearest_training_station_km": 51.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 626,
+   "gadm_id": "IND.34.61_1",
+   "lat": 26.2304,
+   "lon": 81.1255,
+   "has_training_station": false,
+   "nearest_training_station_km": 119.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 627,
+   "gadm_id": "IND.34.62_1",
+   "lat": 28.8016,
+   "lon": 79.094,
+   "has_training_station": false,
+   "nearest_training_station_km": 31.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 628,
+   "gadm_id": "IND.34.63_1",
+   "lat": 29.9547,
+   "lon": 77.5354,
+   "has_training_station": false,
+   "nearest_training_station_km": 58.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 629,
+   "gadm_id": "IND.34.64_1",
+   "lat": 28.454,
+   "lon": 78.5276,
+   "has_training_station": false,
+   "nearest_training_station_km": 44.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 630,
+   "gadm_id": "IND.34.65_1",
+   "lat": 26.7477,
+   "lon": 83.0301,
+   "has_training_station": false,
+   "nearest_training_station_km": 184.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 631,
+   "gadm_id": "IND.34.66_1",
+   "lat": 25.351,
+   "lon": 82.4555,
+   "has_training_station": false,
+   "nearest_training_station_km": 54.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 632,
+   "gadm_id": "IND.34.67_1",
+   "lat": 27.9817,
+   "lon": 79.8342,
+   "has_training_station": false,
+   "nearest_training_station_km": 139.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 633,
+   "gadm_id": "IND.34.68_1",
+   "lat": 29.4997,
+   "lon": 77.2765,
+   "has_training_station": false,
+   "nearest_training_station_km": 34.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 634,
+   "gadm_id": "IND.34.69_1",
+   "lat": 27.6784,
+   "lon": 81.8159,
+   "has_training_station": false,
+   "nearest_training_station_km": 250.7,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 635,
+   "gadm_id": "IND.34.70_1",
+   "lat": 27.2328,
+   "lon": 82.8604,
+   "has_training_station": false,
+   "nearest_training_station_km": 221.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 636,
+   "gadm_id": "IND.34.71_1",
+   "lat": 27.5232,
+   "lon": 80.847,
+   "has_training_station": false,
+   "nearest_training_station_km": 249.7,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 637,
+   "gadm_id": "IND.34.72_1",
+   "lat": 24.4036,
+   "lon": 83.0456,
+   "has_training_station": false,
+   "nearest_training_station_km": 114.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 638,
+   "gadm_id": "IND.34.73_1",
+   "lat": 26.2471,
+   "lon": 82.2174,
+   "has_training_station": false,
+   "nearest_training_station_km": 96.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 639,
+   "gadm_id": "IND.34.74_1",
+   "lat": 26.6144,
+   "lon": 80.5499,
+   "has_training_station": false,
+   "nearest_training_station_km": 190.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 640,
+   "gadm_id": "IND.34.75_1",
+   "lat": 25.3906,
+   "lon": 82.909,
+   "has_training_station": false,
+   "nearest_training_station_km": 99.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 641,
+   "gadm_id": "IND.35.1_1",
+   "lat": 29.6952,
+   "lon": 79.489,
+   "has_training_station": false,
+   "nearest_training_station_km": 74.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 642,
+   "gadm_id": "IND.35.2_1",
+   "lat": 29.997,
+   "lon": 79.846,
+   "has_training_station": false,
+   "nearest_training_station_km": 122.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 643,
+   "gadm_id": "IND.35.3_1",
+   "lat": 30.4963,
+   "lon": 79.555,
+   "has_training_station": false,
+   "nearest_training_station_km": 153.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 644,
+   "gadm_id": "Z05.35.3_1",
+   "lat": 30.8129,
+   "lon": 80.0353,
+   "has_training_station": false,
+   "nearest_training_station_km": 205.8,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 645,
+   "gadm_id": "IND.35.4_1",
+   "lat": 29.3031,
+   "lon": 80.0617,
+   "has_training_station": false,
+   "nearest_training_station_km": 107.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 646,
+   "gadm_id": "IND.35.5_1",
+   "lat": 30.4686,
+   "lon": 77.9597,
+   "has_training_station": false,
+   "nearest_training_station_km": 117.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 647,
+   "gadm_id": "IND.35.6_1",
+   "lat": 29.8987,
+   "lon": 78.7567,
+   "has_training_station": false,
+   "nearest_training_station_km": 78.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 648,
+   "gadm_id": "IND.35.7_1",
+   "lat": 29.8773,
+   "lon": 77.9887,
+   "has_training_station": false,
+   "nearest_training_station_km": 97.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 649,
+   "gadm_id": "IND.35.8_1",
+   "lat": 29.3168,
+   "lon": 79.455,
+   "has_training_station": false,
+   "nearest_training_station_km": 49.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 650,
+   "gadm_id": "IND.35.9_1",
+   "lat": 30.0944,
+   "lon": 80.3389,
+   "has_training_station": false,
+   "nearest_training_station_km": 165.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 651,
+   "gadm_id": "Z05.35.9_1",
+   "lat": 30.7204,
+   "lon": 80.1512,
+   "has_training_station": false,
+   "nearest_training_station_km": 203.1,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 652,
+   "gadm_id": "IND.35.10_1",
+   "lat": 30.5949,
+   "lon": 79.0984,
+   "has_training_station": false,
+   "nearest_training_station_km": 154.3,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 653,
+   "gadm_id": "IND.35.11_1",
+   "lat": 30.4428,
+   "lon": 78.5697,
+   "has_training_station": false,
+   "nearest_training_station_km": 141.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 654,
+   "gadm_id": "IND.35.12_1",
+   "lat": 29.043,
+   "lon": 79.4991,
+   "has_training_station": true,
+   "nearest_training_station_km": 55.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 655,
+   "gadm_id": "IND.35.13_1",
+   "lat": 30.9396,
+   "lon": 78.5174,
+   "has_training_station": false,
+   "nearest_training_station_km": 163.6,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 656,
+   "gadm_id": "Z09.35.13_1",
+   "lat": 31.256,
+   "lon": 79.1057,
+   "has_training_station": false,
+   "nearest_training_station_km": 222.1,
+   "inside_station_hull": true,
+   "extrapolated": true
+  },
+  {
+   "region_id": 657,
+   "gadm_id": "IND.36.1_1",
+   "lat": 26.6329,
+   "lon": 89.4611,
+   "has_training_station": false,
+   "nearest_training_station_km": 114.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 658,
+   "gadm_id": "IND.36.2_1",
+   "lat": 23.1382,
+   "lon": 87.13,
+   "has_training_station": false,
+   "nearest_training_station_km": 47.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 659,
+   "gadm_id": "IND.36.3_1",
+   "lat": 23.4254,
+   "lon": 87.7633,
+   "has_training_station": true,
+   "nearest_training_station_km": 42.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 660,
+   "gadm_id": "IND.36.4_1",
+   "lat": 23.9517,
+   "lon": 87.6616,
+   "has_training_station": false,
+   "nearest_training_station_km": 55.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 661,
+   "gadm_id": "IND.36.5_1",
+   "lat": 25.3613,
+   "lon": 88.5946,
+   "has_training_station": false,
+   "nearest_training_station_km": 143.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 662,
+   "gadm_id": "IND.36.6_1",
+   "lat": 26.9144,
+   "lon": 88.3924,
+   "has_training_station": false,
+   "nearest_training_station_km": 52.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 663,
+   "gadm_id": "IND.36.7_1",
+   "lat": 22.5237,
+   "lon": 88.0646,
+   "has_training_station": false,
+   "nearest_training_station_km": 34.4,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 664,
+   "gadm_id": "IND.36.8_1",
+   "lat": 22.8816,
+   "lon": 88.076,
+   "has_training_station": false,
+   "nearest_training_station_km": 32.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 665,
+   "gadm_id": "IND.36.9_1",
+   "lat": 26.6862,
+   "lon": 88.7639,
+   "has_training_station": false,
+   "nearest_training_station_km": 74.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 666,
+   "gadm_id": "IND.36.10_1",
+   "lat": 26.2922,
+   "lon": 89.3413,
+   "has_training_station": false,
+   "nearest_training_station_km": 136.9,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 667,
+   "gadm_id": "IND.36.11_1",
+   "lat": 22.5516,
+   "lon": 88.3523,
+   "has_training_station": false,
+   "nearest_training_station_km": 6.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 668,
+   "gadm_id": "IND.36.12_1",
+   "lat": 25.1358,
+   "lon": 88.0877,
+   "has_training_station": false,
+   "nearest_training_station_km": 129.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 669,
+   "gadm_id": "IND.36.13_1",
+   "lat": 24.1617,
+   "lon": 88.2294,
+   "has_training_station": false,
+   "nearest_training_station_km": 114.7,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 670,
+   "gadm_id": "IND.36.14_1",
+   "lat": 23.4769,
+   "lon": 88.5173,
+   "has_training_station": false,
+   "nearest_training_station_km": 81.2,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 671,
+   "gadm_id": "IND.36.15_1",
+   "lat": 22.4638,
+   "lon": 88.7783,
+   "has_training_station": true,
+   "nearest_training_station_km": 40.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 672,
+   "gadm_id": "IND.36.16_1",
+   "lat": 22.4105,
+   "lon": 87.2624,
+   "has_training_station": false,
+   "nearest_training_station_km": 75.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 673,
+   "gadm_id": "IND.36.17_1",
+   "lat": 22.0268,
+   "lon": 87.7744,
+   "has_training_station": true,
+   "nearest_training_station_km": 34.8,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 674,
+   "gadm_id": "IND.36.18_1",
+   "lat": 23.275,
+   "lon": 86.4126,
+   "has_training_station": false,
+   "nearest_training_station_km": 71.0,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 675,
+   "gadm_id": "IND.36.19_1",
+   "lat": 22.1145,
+   "lon": 88.4161,
+   "has_training_station": false,
+   "nearest_training_station_km": 32.1,
+   "inside_station_hull": true,
+   "extrapolated": false
+  },
+  {
+   "region_id": 676,
+   "gadm_id": "IND.36.20_1",
+   "lat": 25.8739,
+   "lon": 88.1571,
+   "has_training_station": false,
+   "nearest_training_station_km": 76.5,
+   "inside_station_hull": true,
+   "extrapolated": false
+  }
+ ]
+}

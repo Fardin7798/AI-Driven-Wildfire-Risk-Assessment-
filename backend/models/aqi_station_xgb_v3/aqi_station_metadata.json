@@ -1,0 +1,149 @@
+{
+  "version": "aqi_station_xgb_v3",
+  "test_disclosure": "second look at the test period: 2025-11-01..2026-10-28 was already scored by run v2 (aqi_station_xgb_v1: NASA POWER weather, station lat/lon). v3 changes the inputs (Open-Meteo Historical Forecast weather, district-centroid lat/lon) after v2's test results were seen; protocol, grid, splits and seed are unchanged. Its test numbers are not an untouched test.",
+  "features": {
+    "no_station": [
+      "cams_pm25_si_lag0",
+      "cams_pm25_si_lag1",
+      "cams_pm25_si_lag2",
+      "cams_pm25_si_lag3",
+      "cams_pm25_si_lag4",
+      "cams_pm25_si_lag5",
+      "cams_pm25_si_lag6",
+      "cams_pm25_si_roll7",
+      "cams_pm25_si_roll14",
+      "cams_pm25_lag0",
+      "cams_pm25_lag1",
+      "cams_pm25_lag2",
+      "cams_pm10_lag0",
+      "cams_pm10_lag1",
+      "cams_pm10_lag2",
+      "cams_no2_lag0",
+      "cams_no2_lag1",
+      "cams_no2_lag2",
+      "cams_so2_lag0",
+      "cams_so2_lag1",
+      "cams_so2_lag2",
+      "cams_co_lag0",
+      "cams_co_lag1",
+      "cams_co_lag2",
+      "cams_o3_lag0",
+      "cams_o3_lag1",
+      "cams_o3_lag2",
+      "temp_max",
+      "temp_max_lag1",
+      "temp_mean",
+      "temp_mean_lag1",
+      "rh_mean",
+      "rh_mean_lag1",
+      "wind_max",
+      "wind_max_lag1",
+      "precip_sum",
+      "precip_sum_lag1",
+      "doy_sin",
+      "doy_cos",
+      "month",
+      "weekday",
+      "lat",
+      "lon"
+    ]
+  },
+  "models": {
+    "no_station_h1": {
+      "config": {
+        "objective": "reg:absoluteerror",
+        "max_depth": 10,
+        "min_child_weight": 20,
+        "colsample_bytree": 0.6
+      },
+      "n_trees": 476,
+      "rows_fit": 76960,
+      "last_target_day": "2026-10-29",
+      "file": "aqi_station_no_station_h1.json",
+      "sha256": "67e77fa3eaf11a0b47abe0240fa48a696d52659f6dd5dcfa8c273c8f6f991d14",
+      "top_gain_features": {
+        "cams_pm25_lag0": 99119.38,
+        "precip_sum": 39026.95,
+        "cams_co_lag0": 38248.12,
+        "month": 30574.14,
+        "doy_cos": 27266.5,
+        "cams_pm25_si_lag0": 22770.17,
+        "cams_so2_lag0": 20941.39,
+        "lat": 13124.87,
+        "cams_so2_lag1": 12907.81,
+        "precip_sum_lag1": 12657.82,
+        "rh_mean": 11856.55,
+        "lon": 10996.01,
+        "cams_co_lag1": 9846.37,
+        "rh_mean_lag1": 8636.38,
+        "cams_pm25_si_roll14": 7524.54
+      }
+    },
+    "no_station_h2": {
+      "config": {
+        "objective": "reg:absoluteerror",
+        "max_depth": 5,
+        "min_child_weight": 5,
+        "colsample_bytree": 0.6
+      },
+      "n_trees": 741,
+      "rows_fit": 76928,
+      "last_target_day": "2026-10-30",
+      "file": "aqi_station_no_station_h2.json",
+      "sha256": "c0828521a264b664b9b423dd7a6b09a970d6ae2d60a08b6ec6b3622b01cc61de",
+      "top_gain_features": {
+        "cams_pm25_lag0": 185229.38,
+        "cams_pm25_si_roll14": 158633.81,
+        "cams_co_lag0": 145479.06,
+        "precip_sum": 124890.73,
+        "month": 122046.89,
+        "doy_cos": 105356.01,
+        "cams_so2_lag0": 78503.32,
+        "cams_pm25_si_roll7": 72883.42,
+        "cams_co_lag1": 65426.24,
+        "rh_mean": 46084.93,
+        "cams_so2_lag1": 44442.16,
+        "lat": 40900.02,
+        "cams_pm10_lag0": 40178.89,
+        "cams_pm25_si_lag0": 39599.38,
+        "rh_mean_lag1": 37754.49
+      }
+    },
+    "no_station_h3": {
+      "config": {
+        "objective": "reg:absoluteerror",
+        "max_depth": 6,
+        "min_child_weight": 5,
+        "colsample_bytree": 0.6
+      },
+      "n_trees": 307,
+      "rows_fit": 76917,
+      "last_target_day": "2026-10-31",
+      "file": "aqi_station_no_station_h3.json",
+      "sha256": "37dc10e152a896f0e79d45c72c5cfb1fbe2a515990da843d40633e7cded85637",
+      "top_gain_features": {
+        "cams_pm25_si_roll14": 217086.75,
+        "cams_co_lag0": 195751.73,
+        "cams_pm25_lag0": 154547.22,
+        "month": 140845.64,
+        "doy_cos": 119702.83,
+        "cams_pm25_si_roll7": 116065.63,
+        "precip_sum": 113004.55,
+        "cams_so2_lag0": 103062.29,
+        "cams_co_lag1": 68704.41,
+        "temp_mean_lag1": 60698.22,
+        "cams_so2_lag2": 54608.44,
+        "rh_mean": 54321.84,
+        "cams_pm25_si_lag0": 49230.57,
+        "cams_so2_lag1": 48690.88,
+        "lat": 48362.47
+      }
+    }
+  },
+  "trained_at": "2026-11-02T11:47:20.171003+00:00",
+  "xgboost": "3.4.1",
+  "devices": [
+    "cuda:0",
+    "cuda:1"
+  ]
+}

@@ -2192,6 +2192,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "geoalchemy2" },
     { name = "httpx" },
+    { name = "pandas" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
@@ -2216,7 +2217,6 @@ dev = [
 ]
 pipeline = [
     { name = "geopandas" },
-    { name = "pandas" },
     { name = "pyarrow" },
     { name = "rasterio" },
 ]
@@ -2234,7 +2234,7 @@ requires-dist = [
     { name = "geopandas", marker = "extra == 'pipeline'", specifier = ">=1.0.0" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10.0" },
-    { name = "pandas", marker = "extra == 'pipeline'", specifier = ">=2.2.0" },
+    { name = "pandas", specifier = ">=2.2.0" },
     { name = "pyarrow", marker = "extra == 'pipeline'", specifier = ">=16.0.0" },
     { name = "pydantic", specifier = ">=2.8.0" },
     { name = "pydantic-settings", specifier = ">=2.4.0" },

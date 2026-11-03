@@ -1,10 +1,8 @@
 """Shared readers and cleaning rules for the AQI pipeline (CAMS, CPCB stations, weather).
 
 CAMS (Open-Meteo, hourly, Asia/Kolkata, one file per district `data/raw/cams/<region_id>.csv.gz`):
-  * Invalid hourly values become missing hours (never clipped): negative concentrations of any
-    pollutant, and CAMS PM10 >= 3270 µg/m³ (the CAMS PM10 ceiling value).
-  * Daily value = 24-hour mean of the calendar day, valid only with >= 16 valid hours (CPCB
-    minimum); otherwise missing. Nothing is filled or interpolated.
+the cleaning rules, 24-h daily means and PM2.5 sub-index live in `app.domain.aqi_features`, the
+single implementation that live forecasting uses too; this module only reads the files.
 
 CPCB stations (OpenAQ v3 daily aggregates, `data/raw/openaq/sensors/<sensor_id>.csv`, local IST
 date). A station day is excluded when: value missing, pct_complete < 75, value <= 0,
@@ -18,7 +16,6 @@ District ids: region_id = GADM 4.1 level-2 feature index + 1; names are checked 
 from __future__ import annotations
 
 import sys
-import warnings
 from datetime import date
 from pathlib import Path
 
@@ -31,20 +28,17 @@ BACKEND = Path(__file__).resolve().parents[2] / "backend"
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
 
-from app.domain.aqi import calculate_sub_index  # noqa: E402
-
-# CAMS column -> short key
-POLLUTANTS = {
-    "pm2_5": "pm25",
-    "pm10": "pm10",
-    "nitrogen_dioxide": "no2",
-    "sulphur_dioxide": "so2",
-    "carbon_monoxide": "co",
-    "ozone": "o3",
-}
-MIN_VALID_HOURS = 16
-CAMS_PM10_CEILING = 3270.0
-WEATHER = ["temp_max", "temp_mean", "rh_mean", "wind_max", "precip_sum"]
+from app.domain.aqi_features import (  # noqa: E402,F401  (re-exported for the builders)
+    CAMS_PM10_CEILING,
+    MIN_VALID_HOURS,
+    POLLUTANTS,
+    WEATHER,
+    clean_hourly,
+    daily_mean_24h,
+    daily_table,
+    invalid_hours,
+    pm25_sub_index,
+)
 
 MIN_PCT_COMPLETE = 75.0
 STUCK_RUN_DAYS = 5
@@ -84,55 +78,15 @@ SEASONS = {
 
 
 # ---------------------------------------------------------------- CAMS
-def invalid_hours(hourly: pd.DataFrame) -> pd.DataFrame:
-    """Boolean frame: hourly values that are physically invalid (negative, PM10 at ceiling)."""
-    bad = hourly < 0
-    bad["pm10"] |= hourly["pm10"] >= CAMS_PM10_CEILING
-    return bad
-
-
-def daily_mean_24h(hourly: pd.Series) -> pd.Series:
-    """24-h mean per calendar day; NaN when fewer than MIN_VALID_HOURS valid hours.
-
-    Hours absent from the index and NaN hours are missing. Invalid values must already be NaN.
-    """
-    idx = pd.DatetimeIndex(hourly.index)
-    start, end = idx.min().normalize(), idx.max().normalize() + pd.Timedelta(hours=23)
-    full = pd.date_range(start, end, freq="h")
-    m = hourly[~idx.duplicated()].reindex(full).to_numpy(dtype=float).reshape(-1, 24)
-    n = np.isfinite(m).sum(axis=1)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", RuntimeWarning)
-        mean = np.nanmean(m, axis=1)
-    mean[n < MIN_VALID_HOURS] = np.nan
-    days = pd.date_range(start, end.normalize(), freq="D")
-    return pd.Series(mean, index=days.date)
-
-
-def pm25_sub_index(daily_pm25: pd.Series) -> pd.Series:
-    """CPCB PM2.5 sub-index of daily 24-h means; NaN stays NaN."""
-    return daily_pm25.map(lambda v: np.nan if pd.isna(v) else float(calculate_sub_index("pm25", v)))
-
-
-def daily_table(hourly: pd.DataFrame) -> pd.DataFrame:
-    """Hourly CAMS frame (DatetimeIndex, short-key columns, µg/m³, invalid hours already NaN)
-    -> daily frame with <p>_mean for all six pollutants and pm25_si. Index: datetime.date."""
-    out = pd.DataFrame({f"{p}_mean": daily_mean_24h(hourly[p]) for p in POLLUTANTS.values()})
-    out["pm25_si"] = pm25_sub_index(out["pm25_mean"])
-    return out
-
-
 def read_cams(path: Path) -> tuple[pd.DataFrame, dict[str, int]]:
     """Hourly CAMS file -> (frame with invalid hours set to NaN, counts of invalidated hours)."""
-    df = pd.read_csv(path)
-    df.index = pd.DatetimeIndex(pd.to_datetime(df.pop("time")))
-    df = df.rename(columns=POLLUTANTS)[list(POLLUTANTS.values())]
-    bad = invalid_hours(df)
+    raw = pd.read_csv(path)
+    vals = raw.rename(columns=POLLUTANTS)[list(POLLUTANTS.values())]
     counts = {
-        "negative": int((df < 0).sum().sum()),
-        "pm10_ceiling": int((df["pm10"] >= CAMS_PM10_CEILING).sum()),
+        "negative": int((vals < 0).sum().sum()),
+        "pm10_ceiling": int((vals["pm10"] >= CAMS_PM10_CEILING).sum()),
     }
-    return df.mask(bad), counts
+    return clean_hourly(raw), counts
 
 
 # ---------------------------------------------------------------- CPCB stations

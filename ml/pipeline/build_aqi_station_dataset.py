@@ -45,7 +45,6 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from aqi_sources import (  # noqa: E402
     EXCLUSION_RULES,
-    POLLUTANTS,
     WEATHER,
     assign_split,
     clean_station_days,
@@ -55,12 +54,21 @@ from aqi_sources import (  # noqa: E402
     read_cams,
 )
 
+# District features (CAMS lags/means, weather t/t-1, calendar) come from the one implementation
+# live forecasting also uses.
+from app.domain.aqi_features import (  # noqa: E402
+    HORIZONS,
+    POLLUTANT_LAGS,
+    SI_LAGS,
+    add_calendar,
+    calendar_panel,
+    district_features,
+    district_panel,
+    rolling_mean,
+)
+
 STATION_RADIUS_M = 300.0
-HORIZONS = (1, 2, 3)
-SI_LAGS = range(7)
-POLLUTANT_LAGS = range(3)
 ST_ROLL = {7: 5, 14: 10, 30: 20}  # window: minimum valid days
-CAMS_ROLL = {7: 5, 14: 10}
 TARGETS = [f"pm25_si_t+{h}" for h in HORIZONS]
 REFERENCE = [f"ref_cams_si_t+{h}" for h in HORIZONS]
 ID_COLS = ["station_id", "region_id", "date", "split"]
@@ -113,42 +121,6 @@ def station_daily(days: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     return out[["station_id", "parameter", "date", "value"]], stats
 
 
-def calendar_panel(df: pd.DataFrame, key: str) -> pd.DataFrame:
-    """Reindex each `key` group to every calendar day between its first and last date."""
-    parts = []
-    for k, part in df.groupby(key, sort=True):
-        days = pd.date_range(min(part["date"]), max(part["date"]), freq="D").date
-        full = pd.DataFrame({key: k, "date": days})
-        parts.append(full.merge(part, on=[key, "date"], how="left"))
-    return pd.concat(parts, ignore_index=True)
-
-
-# ---------------------------------------------------------------- features
-def _roll(g, col: str, w: int, min_n: int) -> pd.Series:
-    return g[col].transform(lambda s: s.rolling(w, min_periods=min_n).mean())
-
-
-def district_features(panel: pd.DataFrame) -> pd.DataFrame:
-    """Calendar-complete district panel (region_id, date, <p>_mean, pm25_si, weather) ->
-    district features at day t, plus reference CAMS sub-index on t+h (not a feature)."""
-    p = panel.sort_values(["region_id", "date"]).reset_index(drop=True)
-    g = p.groupby("region_id", sort=False)
-    new: dict[str, pd.Series] = {}
-    for k in SI_LAGS:
-        new[f"cams_pm25_si_lag{k}"] = g["pm25_si"].shift(k)
-    for w, n in CAMS_ROLL.items():
-        new[f"cams_pm25_si_roll{w}"] = _roll(g, "pm25_si", w, n)
-    for pol in POLLUTANTS.values():
-        for k in POLLUTANT_LAGS:
-            new[f"cams_{pol}_lag{k}"] = g[f"{pol}_mean"].shift(k)
-    for col in WEATHER:
-        new[col] = p[col]
-        new[f"{col}_lag1"] = g[col].shift(1)
-    for h in HORIZONS:
-        new[f"ref_cams_si_t+{h}"] = g["pm25_si"].shift(-h)
-    return pd.concat([p[["region_id", "date"]], pd.DataFrame(new)], axis=1)
-
-
 def station_features(panel: pd.DataFrame) -> pd.DataFrame:
     """Calendar-complete station panel (station_id, date, st_si, st_pm10) -> station features at
     day t and targets at t+h."""
@@ -158,7 +130,7 @@ def station_features(panel: pd.DataFrame) -> pd.DataFrame:
     for k in SI_LAGS:
         new[f"st_si_lag{k}"] = g["st_si"].shift(k)
     for w, n in ST_ROLL.items():
-        new[f"st_si_roll{w}"] = _roll(g, "st_si", w, n)
+        new[f"st_si_roll{w}"] = rolling_mean(g, "st_si", w, n)
     new["st_nvalid7"] = g["st_si"].transform(lambda s: s.notna().rolling(7, min_periods=1).sum())
     for k in POLLUTANT_LAGS:
         new[f"st_pm10_lag{k}"] = g["st_pm10"].shift(k)
@@ -195,12 +167,7 @@ def combine(
     df = st.merge(dist, on=["region_id", "date"], how="left")
     df["bias_si_lag0"] = df["st_si_lag0"] - df["cams_pm25_si_lag0"]
     df["bias_si_roll7"] = df["st_si_roll7"] - df["cams_pm25_si_roll7"]
-    dt = pd.to_datetime(df["date"])
-    doy = dt.dt.day_of_year.astype(float)
-    df["doy_sin"] = np.sin(2 * np.pi * doy / 365.25)
-    df["doy_cos"] = np.cos(2 * np.pi * doy / 365.25)
-    df["month"] = dt.dt.month
-    df["weekday"] = dt.dt.day_of_week
+    add_calendar(df)
     df["lat"] = df["region_id"].map(cen["lat"])
     df["lon"] = df["region_id"].map(cen["lon"])
     return df
@@ -308,9 +275,7 @@ def main() -> None:
     # outer join + calendar reindex: weather days before the first CAMS day (CAMS starts
     # 2022-08-01) still feed the t-1 weather lag; CAMS on those days stays NaN.
     weather = read_weather(args.weather, dpanel["region_id"].unique())
-    dpanel = calendar_panel(
-        dpanel.merge(weather, on=["region_id", "date"], how="outer"), "region_id"
-    )
+    dpanel = district_panel(dpanel, weather)
 
     df = combine(station_features(spanel), district_features(dpanel), st_meta, regions)
     df["split"] = assign_split(df["date"])
