@@ -1,11 +1,15 @@
+from datetime import UTC
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
 from app.core.config import settings
 from app.db.models.air_quality import AQObservation
+from app.domain.aqi_features import CAMS_AVERAGED_PROVIDER, current_averaging
 from app.schemas.air_quality import (
     AllAQIForecastsResponse,
+    AQAveraging,
     AQIForecastCounts,
     AQObservationResponse,
     RegionAQIForecastResponse,
@@ -28,6 +32,11 @@ def _serialize_aq(obs: AQObservation) -> AQObservationResponse:
         district_name = None
         state_name = None
 
+    averaging = None
+    if obs.provider == CAMS_AVERAGED_PROVIDER:
+        end = obs.observed_at_utc.astimezone(UTC).replace(tzinfo=None)
+        averaging = AQAveraging.model_validate(current_averaging(end))
+
     return AQObservationResponse(
         region_id=obs.region_id,
         district_name=district_name,
@@ -43,6 +52,7 @@ def _serialize_aq(obs: AQObservation) -> AQObservationResponse:
         aqi=obs.aqi,
         aqi_category=obs.aqi_category,
         provider=obs.provider,
+        averaging=averaging,
         as_of=get_as_of(),
         disclaimer_short=SHORT_DISCLAIMER,
     )
@@ -54,7 +64,8 @@ async def list_latest_air_quality(
     limit: int = Query(default=50, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
 ) -> list[AQObservationResponse]:
-    """Retrieve the most recent real-time air quality observations across districts."""
+    """Most recent air quality observations across districts. CAMS rows are CPCB-averaged over
+    the trailing 24 h ending at `observed_at_utc` (see `averaging`)."""
     records = await get_latest_air_quality(session=db, state=state, limit=limit)
     return [_serialize_aq(r) for r in records]
 
@@ -80,7 +91,8 @@ async def get_region_air_quality(
     region_id: int,
     db: AsyncSession = Depends(get_db),
 ) -> AQObservationResponse:
-    """Retrieve latest air quality snapshot for a specific district."""
+    """Latest air quality observation for a district (CAMS rows CPCB-averaged, see `averaging`);
+    fetched on demand from Open-Meteo when none is stored."""
     record = await get_air_quality_for_region(session=db, region_id=region_id)
     if not record:
         raise HTTPException(

@@ -6,6 +6,17 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.schemas.names import ReadableName
 
 
+class AQAveraging(BaseModel):
+    """How the pollutant values and AQI of a CAMS observation were averaged (CPCB rules)."""
+
+    window_start_utc: datetime
+    window_end_utc: datetime
+    window_hours: int
+    methods: dict[str, str]
+    aqi_rule: str
+    reference: str
+
+
 class AQObservationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -23,6 +34,7 @@ class AQObservationResponse(BaseModel):
     aqi: int | None = None
     aqi_category: str | None = None
     provider: str
+    averaging: AQAveraging | None = None
     as_of: dict[str, str]
     disclaimer_short: str
 

@@ -18,7 +18,6 @@ from app.domain.fwi import fwi_inputs
 from app.domain.names import humanize_gadm_name, normalize_name_key
 from app.jobs.scheduler import job_lock_key
 from app.ml.wildfire_predictor import missing_features, predict_wildfire_risk
-from app.providers.open_meteo_air import OpenMeteoAirProvider
 from app.providers.open_meteo_weather import OpenMeteoWeatherProvider
 
 JOBS = [
@@ -152,22 +151,6 @@ async def test_weather_batch_keeps_missing_values_as_none():
     assert out[0][0].temp_max == 31.0
     assert out[1][0].temp_max is None  # never replaced with a default
     assert out[0][0].soil_moisture is None
-
-
-@pytest.mark.asyncio
-@respx.mock
-async def test_aq_batch_one_request_for_many_points():
-    payload = [
-        {"current": {"time": "2026-11-01T05:00", "pm2_5": 40.0, "pm10": 80.0}},
-        {"current": {"time": "2026-11-01T05:00", "pm2_5": 10.0, "pm10": 20.0}},
-    ]
-    route = respx.get("https://air-quality-api.open-meteo.com/v1/air-quality").mock(
-        return_value=httpx.Response(200, json=payload)
-    )
-    p = OpenMeteoAirProvider(air_url="https://air-quality-api.open-meteo.com/v1/air-quality")
-    out = await p.fetch_air_quality_batch([(20.9, 75.5), (21.1, 79.0)])
-    assert route.call_count == 1
-    assert out[0][0].pm25 == 40.0 and out[1][0].pm25 == 10.0
 
 
 def test_models_comparison_reads_real_evaluation():

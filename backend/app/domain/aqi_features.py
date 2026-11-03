@@ -1,5 +1,6 @@
 """District AQI features: the ONE implementation used by the training dataset builder
-(ml/pipeline/build_aqi_station_dataset.py) and by live forecasting (app/ml/aqi_station_b.py).
+(ml/pipeline/build_aqi_station_dataset.py) and by live forecasting (app/ml/aqi_station_b.py),
+plus the CPCB averaging of the live current AQI (app/providers/open_meteo_air.py).
 
 CAMS (Open-Meteo air-quality, hourly, district centroid, timezone Asia/Kolkata):
   * Invalid hourly values become missing hours (never clipped): negative concentrations of any
@@ -7,6 +8,18 @@ CAMS (Open-Meteo air-quality, hourly, district centroid, timezone Asia/Kolkata):
   * Daily value = 24-hour mean of the IST calendar day, valid only with >= 16 valid hours (CPCB
     minimum); otherwise missing. Nothing is filled or interpolated.
   * PM2.5 sub-index: `app.domain.aqi.calculate_sub_index` (CPCB breakpoints) of the daily mean.
+
+Current AQI (live, `current_concentrations`): CPCB averaging over the trailing 24 h ending at the
+latest whole UTC hour (24 hourly values). Reference: CPCB, "How is AQI calculated?"
+https://airquality.cpcb.gov.in/ccr_docs/How_AQI_Calculated.pdf (sub-indices from 24-hourly
+averages, 8-hourly for CO and O3; >= 16 hours of data per sub-index; running averages, e.g. AQI at
+6 am uses data from 6 am the previous day).
+  * PM2.5, PM10, NO2, SO2: 24-h mean, valid only with >= 16 valid hours, else missing.
+  * CO, O3: maximum of the 8-h running means whose 8 hours all lie inside the 24-h window; an 8-h
+    window counts only with >= 6 valid hours. The 6-of-8 rule is a common convention (75 %
+    completeness), NOT a CPCB rule; the CPCB note says only "8-hourly", so taking the maximum
+    8-h mean of the window is likewise a convention. No valid 8-h window -> missing.
+  Nothing is filled or interpolated; a missing pollutant stays missing.
 
 District features at day t (calendar lags: a missing day is missing, never the previous row):
   cams_pm25_si_lag0..6, cams_pm25_si_roll7/14 (>= 5/10 valid days),
@@ -19,6 +32,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Iterable
+from datetime import UTC, datetime, timedelta
 
 import numpy as np
 import pandas as pd
@@ -36,6 +50,17 @@ POLLUTANTS = {
 }
 MIN_VALID_HOURS = 16
 CAMS_PM10_CEILING = 3270.0
+
+# Current AQI averaging (see module docstring)
+CPCB_AQI_DOC_URL = "https://airquality.cpcb.gov.in/ccr_docs/How_AQI_Calculated.pdf"
+CURRENT_WINDOW_HOURS = 24
+MEAN_24H_POLLUTANTS = ("pm25", "pm10", "no2", "so2")
+MAX_8H_POLLUTANTS = ("co", "o3")
+RUNNING_WINDOW_HOURS = 8
+RUNNING_MIN_VALID_HOURS = 6  # common convention, not a CPCB rule
+# Provider label of rows stored with this averaging (older rows labelled "copernicus_cams" were
+# instantaneous values and get no averaging metadata).
+CAMS_AVERAGED_PROVIDER = "copernicus_cams_cpcb_avg"
 
 # Open-Meteo daily variable -> short key (default units: deg C, %, km/h, mm)
 WEATHER_DAILY = {
@@ -73,6 +98,17 @@ def clean_hourly(raw: pd.DataFrame) -> pd.DataFrame:
     return df.mask(invalid_hours(df))
 
 
+def row_means(m: np.ndarray, min_valid: int) -> np.ndarray:
+    """Mean of each row of a 2-D array over its finite values; NaN where a row has fewer than
+    `min_valid` finite values."""
+    n = np.isfinite(m).sum(axis=1)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        mean = np.nanmean(m, axis=1)
+    mean[n < min_valid] = np.nan
+    return mean
+
+
 def daily_mean_24h(hourly: pd.Series) -> pd.Series:
     """24-h mean per calendar day; NaN when fewer than MIN_VALID_HOURS valid hours.
 
@@ -82,13 +118,62 @@ def daily_mean_24h(hourly: pd.Series) -> pd.Series:
     start, end = idx.min().normalize(), idx.max().normalize() + pd.Timedelta(hours=23)
     full = pd.date_range(start, end, freq="h")
     m = hourly[~idx.duplicated()].reindex(full).to_numpy(dtype=float).reshape(-1, 24)
-    n = np.isfinite(m).sum(axis=1)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", RuntimeWarning)
-        mean = np.nanmean(m, axis=1)
-    mean[n < MIN_VALID_HOURS] = np.nan
+    mean = row_means(m, MIN_VALID_HOURS)
     days = pd.date_range(start, end.normalize(), freq="D")
     return pd.Series(mean, index=days.date)
+
+
+def current_window_end(now: datetime) -> datetime:
+    """Latest whole UTC hour at or before `now` (aware) -> naive UTC hour ending the 24-h window."""
+    return now.astimezone(UTC).replace(minute=0, second=0, microsecond=0, tzinfo=None)
+
+
+def current_window_start(end: datetime) -> datetime:
+    """First hourly timestamp of the 24-h window ending at `end` (24 values, end inclusive)."""
+    return end - timedelta(hours=CURRENT_WINDOW_HOURS - 1)
+
+
+def current_concentrations(hourly: pd.DataFrame, end: datetime) -> dict[str, float | None]:
+    """CPCB-averaged concentrations over the 24-h window ending at `end` (see module docstring).
+
+    `hourly`: clean_hourly frame (naive UTC DatetimeIndex, short keys, invalid hours NaN). Hours
+    outside the window are ignored; hours absent from it are missing. Units are kept as given.
+    """
+    window = pd.date_range(current_window_start(end), end, freq="h")
+    h = hourly[~pd.DatetimeIndex(hourly.index).duplicated()].reindex(window)
+    out: dict[str, float | None] = {}
+    for p in MEAN_24H_POLLUTANTS:
+        v = row_means(h[p].to_numpy(dtype=float)[None, :], MIN_VALID_HOURS)[0]
+        out[p] = None if np.isnan(v) else float(v)
+    for p in MAX_8H_POLLUTANTS:
+        runs = np.lib.stride_tricks.sliding_window_view(
+            h[p].to_numpy(dtype=float), RUNNING_WINDOW_HOURS
+        )
+        means = row_means(runs, RUNNING_MIN_VALID_HOURS)
+        out[p] = float(np.nanmax(means)) if np.isfinite(means).any() else None
+    return out
+
+
+MEAN_24H_METHOD = f"{CURRENT_WINDOW_HOURS}h mean, >= {MIN_VALID_HOURS} valid hours"
+MAX_8H_METHOD = (
+    f"max {RUNNING_WINDOW_HOURS}h running mean in window, each {RUNNING_WINDOW_HOURS}h window "
+    f">= {RUNNING_MIN_VALID_HOURS} valid hours (common convention, not a CPCB rule)"
+)
+
+
+def current_averaging(end: datetime) -> dict[str, object]:
+    """Averaging metadata for a value computed by `current_concentrations` with window `end`."""
+    return {
+        "window_start_utc": current_window_start(end).replace(tzinfo=UTC),
+        "window_end_utc": end.replace(tzinfo=UTC),
+        "window_hours": CURRENT_WINDOW_HOURS,
+        "methods": {
+            **dict.fromkeys(MEAN_24H_POLLUTANTS, MEAN_24H_METHOD),
+            **dict.fromkeys(MAX_8H_POLLUTANTS, MAX_8H_METHOD),
+        },
+        "aqi_rule": "max sub-index; reported only with >= 3 pollutants incl. PM2.5 or PM10",
+        "reference": CPCB_AQI_DOC_URL,
+    }
 
 
 def pm25_sub_index(daily_pm25: pd.Series) -> pd.Series:

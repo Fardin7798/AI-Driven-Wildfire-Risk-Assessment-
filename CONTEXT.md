@@ -15,7 +15,7 @@ Platform: AI-Driven Wildfire Risk Assessment, Air Quality Monitoring and Communi
 | FWI | Canadian FWI with daily carry-over, 00:50 IST; skipped for districts without weather |
 | Wildfire risk | `wildfire_xgb_v2` when its artifact is deployed, else FWI fallback; 01:10 IST |
 | Fires | NASA FIRMS NRT (VIIRS NOAA-20/21, MODIS), joined to districts with PostGIS |
-| Air quality | Open-Meteo CAMS every 6 h; NAQI calculation; rule-based 1-3 day forecast 01:30 IST |
+| Air quality | Open-Meteo CAMS every 6 h; current NAQI from CPCB averaging (24-h means; CO/O3 max 8-h running mean) of the trailing 24 h; model-B 1-3 day forecast |
 | Preparedness | Static NDMA-style guidance from `backend/data/seed/preparedness.json` |
 
 ## Rules

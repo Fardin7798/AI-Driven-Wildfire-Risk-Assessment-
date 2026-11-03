@@ -26,6 +26,7 @@ This platform aggregates multiple open scientific datasets for environmental ris
 - **License**: Open Data under Copernicus Sentinel Data Policy & Open-Meteo CC BY 4.0
 - **Attribution**: "Air quality forecasts provided by Open-Meteo using Copernicus Atmosphere Monitoring Service (CAMS) chemical transport simulation."
 - **Endpoint**: `https://air-quality-api.open-meteo.com/v1/air-quality`
+- **Current AQI** (`ingest_air_quality` job every 6 h, and on-demand region fetch): hourly `pm2_5, pm10, nitrogen_dioxide, sulphur_dioxide, carbon_monoxide, ozone` for the 24 hours ending at the latest whole UTC hour (`start_hour`/`end_hour`, `timezone=UTC`), averaged per CPCB (https://airquality.cpcb.gov.in/ccr_docs/How_AQI_Calculated.pdf): 24-h means (>= 16 valid hours) for PM2.5/PM10/NO2/SO2; CO/O3 maximum 8-h running mean (8-h window valid with >= 6 hours, a common convention, not a CPCB rule). Negative values and CAMS PM10 >= 3270 µg/m³ are invalid hours. Code: `app/domain/aqi_features.py` (`current_concentrations`). The instantaneous `current` value is no longer used.
 
 ## 4. Central Pollution Control Board (CPCB) India via data.gov.in
 - **Source**: National Air Quality Monitoring Programme (NAMP) & Continuous Ambient Air Quality Monitoring Stations (CAAQMS) via Open Government Data (OGD) Platform India.

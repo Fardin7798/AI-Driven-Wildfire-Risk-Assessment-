@@ -32,8 +32,10 @@ OpenAPI Docs: Enabled only in `ENV=development` at `/docs`.
 - `GET /fires/stats?days=7`: Fire count, radiative power, high-confidence count, breakdown by source and state, and detections outside any district.
 
 ### 5. Air Quality
-- `GET /air-quality/latest?state=`: Current CPCB NAQI values and prominent pollutants per region.
-- `GET /air-quality/{region_id}`: Comprehensive criteria pollutant concentrations (PM2.5, PM10, NO2, SO2, CO, O3) and sub-indices.
+- `GET /air-quality/latest?state=`: Latest stored observation per row (CPCB NAQI `aqi`, `aqi_category`, pollutant concentrations); averaging below.
+- `GET /air-quality/{region_id}`: Latest observation for one district (PM2.5, PM10, NO2, SO2 µg/m³, CO mg/m³, O3 µg/m³, `aqi`, `aqi_category`); fetched from Open-Meteo on demand when none is stored. 404 when none can be had.
+  - Current AQI averaging (CAMS rows, `provider: copernicus_cams_cpcb_avg`), per CPCB "How is AQI calculated?" (https://airquality.cpcb.gov.in/ccr_docs/How_AQI_Calculated.pdf): trailing 24 h of hourly CAMS values ending at the latest whole UTC hour (`observed_at_utc` = window end). PM2.5, PM10, NO2, SO2 = 24-h mean, only with >= 16 valid hours. CO, O3 = maximum 8-h running mean inside the window, each 8-h window valid with >= 6 hours (common convention, not a CPCB rule). A pollutant without enough hours is `null` (never filled). `aqi` = max sub-index, `null` unless >= 3 pollutants incl. PM2.5 or PM10 (CPCB).
+  - `averaging`: `{window_start_utc, window_end_utc, window_hours, methods{pollutant: rule}, aqi_rule, reference}` on averaged CAMS rows; `null` on other rows (CPCB station rows, and older `copernicus_cams` rows which were instantaneous values).
 - `GET /air-quality/forecast`: Latest AQI model-B forecast for every district (each district's latest origin day for the active model version), plus `counts` {forecast, skipped}.
 - `GET /air-quality/{region_id}/forecast`: One district: `origin_date`, `model_version`, `source`, `extrapolated` and `forecasts` [{horizon, target_date, pm25_si_pred, category}] (PM2.5 sub-index, days +1..+3), or `status: skipped` with `skip_reason` and no values. 404 when nothing is recorded.
 

@@ -30,6 +30,8 @@ async def get_latest_air_quality(
 
 
 async def get_air_quality_for_region(session: AsyncSession, region_id: int) -> AQObservation | None:
+    """Latest stored observation; without one, fetch the CPCB-averaged current CAMS value (24-h
+    window ending at the latest whole UTC hour) on demand, store it and return it."""
     query = (
         select(AQObservation)
         .options(selectinload(AQObservation.region))
