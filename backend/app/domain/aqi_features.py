@@ -15,10 +15,12 @@ https://airquality.cpcb.gov.in/ccr_docs/How_AQI_Calculated.pdf (sub-indices from
 averages, 8-hourly for CO and O3; >= 16 hours of data per sub-index; running averages, e.g. AQI at
 6 am uses data from 6 am the previous day).
   * PM2.5, PM10, NO2, SO2: 24-h mean, valid only with >= 16 valid hours, else missing.
-  * CO, O3: maximum of the 8-h running means whose 8 hours all lie inside the 24-h window; an 8-h
-    window counts only with >= 6 valid hours. The 6-of-8 rule is a common convention (75 %
-    completeness), NOT a CPCB rule; the CPCB note says only "8-hourly", so taking the maximum
-    8-h mean of the window is likewise a convention. No valid 8-h window -> missing.
+  * CO, O3: valid only with >= 16 valid hours in the 24-h window (CPCB minimum for any
+    sub-index), else missing. Value = maximum of the 8-h running means whose 8 hours all lie
+    inside the 24-h window; an 8-h window counts only with >= 6 valid hours. The 6-of-8 rule is a
+    common convention (75 % completeness), NOT a CPCB rule; the CPCB note says only "8-hourly",
+    so taking the maximum 8-h mean of the window is likewise a convention. No valid 8-h window
+    -> missing.
   Nothing is filled or interpolated; a missing pollutant stays missing.
 
 District features at day t (calendar lags: a missing day is missing, never the previous row):
@@ -146,9 +148,11 @@ def current_concentrations(hourly: pd.DataFrame, end: datetime) -> dict[str, flo
         v = row_means(h[p].to_numpy(dtype=float)[None, :], MIN_VALID_HOURS)[0]
         out[p] = None if np.isnan(v) else float(v)
     for p in MAX_8H_POLLUTANTS:
-        runs = np.lib.stride_tricks.sliding_window_view(
-            h[p].to_numpy(dtype=float), RUNNING_WINDOW_HOURS
-        )
+        values = h[p].to_numpy(dtype=float)
+        if np.isfinite(values).sum() < MIN_VALID_HOURS:
+            out[p] = None
+            continue
+        runs = np.lib.stride_tricks.sliding_window_view(values, RUNNING_WINDOW_HOURS)
         means = row_means(runs, RUNNING_MIN_VALID_HOURS)
         out[p] = float(np.nanmax(means)) if np.isfinite(means).any() else None
     return out
@@ -156,6 +160,7 @@ def current_concentrations(hourly: pd.DataFrame, end: datetime) -> dict[str, flo
 
 MEAN_24H_METHOD = f"{CURRENT_WINDOW_HOURS}h mean, >= {MIN_VALID_HOURS} valid hours"
 MAX_8H_METHOD = (
+    f">= {MIN_VALID_HOURS} valid hours in the {CURRENT_WINDOW_HOURS}h window; "
     f"max {RUNNING_WINDOW_HOURS}h running mean in window, each {RUNNING_WINDOW_HOURS}h window "
     f">= {RUNNING_MIN_VALID_HOURS} valid hours (common convention, not a CPCB rule)"
 )
