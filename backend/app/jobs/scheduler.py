@@ -135,14 +135,15 @@ def start_scheduler() -> None:
     from app.jobs.update_fwi_state import job_update_fwi_state
 
     # Daily chain is staggered so each step reads the previous step's output (all IST):
-    #   00:20 weather -> 00:50 FWI -> 01:10 risk prediction -> 01:30 AQ forecast
+    #   00:20 weather -> 00:50 FWI -> 01:10 risk prediction
+    # AQI model B runs at 10:30, origin = yesterday (IST), once CAMS for that day is complete.
     jobs: list[tuple[Callable[[], Coroutine[Any, Any, int]], str, dict[str, Any]]] = [
         (job_ingest_fires, "job_ingest_fires", {"hour": "*/3", "minute": 10}),
         (job_ingest_air_quality, "job_ingest_air_quality", {"hour": "*/6", "minute": 40}),
         (job_ingest_weather, "job_ingest_weather", {"hour": 0, "minute": 20}),
         (job_update_fwi_state, "job_update_fwi_state", {"hour": 0, "minute": 50}),
         (job_predict_risk, "job_predict_risk", {"hour": 1, "minute": 10}),
-        (job_forecast_aqi, "job_forecast_aqi", {"hour": 1, "minute": 30}),
+        (job_forecast_aqi, "job_forecast_aqi", {"hour": 10, "minute": 30}),
         (job_retention, "job_retention", {"day_of_week": "sun", "hour": 3, "minute": 0}),
     ]
     for func, job_id, cron in jobs:

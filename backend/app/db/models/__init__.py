@@ -1,5 +1,11 @@
 from app.db.base import Base
-from app.db.models.air_quality import AQForecast, AQObservation, AQStation
+from app.db.models.air_quality import (
+    AQForecast,
+    AQIForecastB,
+    AQIForecastSkip,
+    AQObservation,
+    AQStation,
+)
 from app.db.models.fire import FireDetection
 from app.db.models.ingestion import IngestionRun
 from app.db.models.preparedness import PreparednessItem
@@ -16,6 +22,8 @@ __all__ = [
     "AQStation",
     "AQObservation",
     "AQForecast",
+    "AQIForecastB",
+    "AQIForecastSkip",
     "RiskPrediction",
     "IngestionRun",
     "PreparednessItem",

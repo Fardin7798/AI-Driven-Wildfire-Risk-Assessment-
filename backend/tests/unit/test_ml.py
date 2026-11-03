@@ -1,6 +1,3 @@
-from datetime import date
-
-from app.ml.aqi_forecaster import forecast_aqi_trajectory
 from app.ml.wildfire_predictor import predict_wildfire_risk
 
 
@@ -26,21 +23,6 @@ def test_wildfire_predictor_fwi_fallback():
     factors = result.top_factors.get("factors", [])
     assert len(factors) == 3
     assert all("factor" in f and "value" in f and "unit" in f for f in factors)
-
-
-def test_aqi_forecaster_persistence():
-    """Persistence repeats the observed AQI for days +1..+3 with no adjustment."""
-    forecasts = forecast_aqi_trajectory(date(2026, 4, 15), observed_aqi=180, observed_pm25=75.0)
-
-    assert [f["horizon_days"] for f in forecasts] == [1, 2, 3]
-    assert [f["target_date"] for f in forecasts] == ["2026-04-16", "2026-04-17", "2026-04-18"]
-    assert all(f["aqi_pred"] == 180 and f["pm25_pred"] == 75.0 for f in forecasts)
-    assert all(f["aqi_category"] == "Moderate" for f in forecasts)
-
-
-def test_aqi_forecaster_no_observation_no_forecast():
-    """Without an observed AQI nothing is forecast; no default value is invented."""
-    assert forecast_aqi_trajectory(date(2026, 4, 15), observed_aqi=None, observed_pm25=40.0) == []
 
 
 def test_wildfire_predictor_real_model_loading(tmp_path):

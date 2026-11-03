@@ -4,6 +4,8 @@ from typing import Any
 from geoalchemy2 import Geometry
 from sqlalchemy import (
     BigInteger,
+    Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     Float,
@@ -11,6 +13,7 @@ from sqlalchemy import (
     Integer,
     String,
     UniqueConstraint,
+    func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -94,3 +97,60 @@ class AQForecast(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
     region = relationship("Region", back_populates="aq_forecasts")
+
+
+class AQIForecastB(Base):
+    """Model B (no-station) AQI forecasts: one row per district, origin day and horizon."""
+
+    __tablename__ = "aqi_forecasts_b"
+    __table_args__ = (
+        UniqueConstraint(
+            "region_id",
+            "origin_date",
+            "horizon",
+            "model_version",
+            name="uq_aqi_forecasts_b_region_origin_horizon_version",
+        ),
+        CheckConstraint("horizon BETWEEN 1 AND 3", name="horizon"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    region_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("regions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    origin_date: Mapped[date] = mapped_column(Date, nullable=False)
+    target_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    horizon: Mapped[int] = mapped_column(Integer, nullable=False)
+    pm25_si_pred: Mapped[float] = mapped_column(Float, nullable=False)
+    category: Mapped[str] = mapped_column(String(50), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(50), nullable=False)
+    source: Mapped[str] = mapped_column(String(50), nullable=False)
+    extrapolated: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class AQIForecastSkip(Base):
+    """Why a district got no model-B forecast for an origin day (latest reason per run key)."""
+
+    __tablename__ = "aqi_forecast_skips"
+    __table_args__ = (
+        UniqueConstraint(
+            "region_id",
+            "origin_date",
+            "model_version",
+            name="uq_aqi_forecast_skips_region_origin_version",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    region_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("regions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    origin_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    model_version: Mapped[str] = mapped_column(String(50), nullable=False)
+    reason: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
