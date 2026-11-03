@@ -1,4 +1,5 @@
-from datetime import timedelta
+from collections import defaultdict
+from datetime import date, timedelta
 
 from sqlalchemy import func, select
 
@@ -36,13 +37,27 @@ def _to_record(r: WeatherDaily) -> DailyWeatherRecord | None:
     )
 
 
+def missing_window_dates(available: set[date], target: date) -> list[date]:
+    """Dates of the rolling window (target and the ROLLING_WINDOW_DAYS-1 days before it) with no
+    complete weather row.
+
+    Training (ml/pipeline/build_wildfire_dataset.py) only ever saw full, gap-free windows: its
+    NASA POWER archive is a contiguous daily series and train_wildfire_v2.py refuses any NaN
+    feature. A shorter window would compute precip_sum_30d, dry-day counts etc. over fewer days,
+    i.e. silently treat the missing days as dry, so such district-days are skipped.
+    """
+    window = [target - timedelta(days=k) for k in range(ROLLING_WINDOW_DAYS)]
+    return sorted(d for d in window if d not in available)
+
+
 @tracked_job("predict_risk")
 async def job_predict_risk() -> int:
     today = today_ist()
     cutoff_window = today - timedelta(days=ROLLING_WINDOW_DAYS - 1)
     cutoff_30d = today - timedelta(days=30)
     cutoff_7d = today - timedelta(days=7)
-    predicted = skipped = fallbacks = 0
+    predicted = fallbacks = 0
+    skipped: dict[str, list[int]] = defaultdict(list)  # reason -> region ids
 
     artifact = model_loader.load_wildfire_model()
     meta = artifact.metadata if artifact else {}
@@ -102,16 +117,17 @@ async def job_predict_risk() -> int:
 
         for reg in regions:
             per_day = weather_map.get(reg.id, {})
-            today_weather = per_day.get(today)
             fwi_row = fwi_map.get(reg.id)
-            if (
-                today_weather is None
-                or fwi_row is None
-                or reg.centroid_lat is None
-                or reg.centroid_lon is None
-            ):
-                skipped += 1
+            if reg.centroid_lat is None or reg.centroid_lon is None:
+                skipped["no_centroid"].append(reg.id)
                 continue
+            if fwi_row is None:
+                skipped["no_fwi_state_today"].append(reg.id)
+                continue
+            if missing_window_dates(set(per_day), today):
+                skipped["weather_window_incomplete"].append(reg.id)
+                continue
+            today_weather = per_day[today]
 
             clim = climatology.get(reg.gadm_id or "")
             features = extract_features(
@@ -136,7 +152,7 @@ async def job_predict_risk() -> int:
 
             pred = predict_wildfire_risk(features)
             if pred is None:
-                skipped += 1
+                skipped["no_model_score_and_no_fwi"].append(reg.id)
                 continue
             fallbacks += int(pred.is_fallback)
             await save_risk_prediction(
@@ -153,9 +169,21 @@ async def job_predict_risk() -> int:
 
         await session.commit()
 
+    skip_counts = {reason: len(ids) for reason, ids in skipped.items()}
+    for reason, ids in skipped.items():
+        logger.warn(
+            "predict_risk_regions_skipped",
+            reason=reason,
+            date=str(today),
+            count=len(ids),
+            region_ids=ids,
+        )
     logger.info(
-        "predict_risk_summary", predicted=predicted, skipped=skipped, fwi_fallbacks=fallbacks
+        "predict_risk_summary",
+        predicted=predicted,
+        skipped=skip_counts,
+        fwi_fallbacks=fallbacks,
     )
     if predicted == 0:
-        raise RuntimeError(f"No risk predictions written ({skipped} regions lacked weather/FWI)")
+        raise RuntimeError(f"No risk predictions written; skipped by reason: {skip_counts}")
     return predicted

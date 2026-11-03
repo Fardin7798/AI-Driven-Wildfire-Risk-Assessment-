@@ -56,6 +56,17 @@ Thresholds (probability): moderate 0.1356, high 0.3421, extreme 0.5419.
 - `fires_prev_30d` needs 30 days of detections in `wf.fire_detections`; run
   `POST /api/v1/internal/jobs/backfill_fires` once after a fresh deploy.
 
+### Missing weather (no imputation)
+- Training never saw a missing value: the POWER archive is a contiguous daily series (-999 kept as
+  NaN) and `train_wildfire_v2.py` refuses any NaN feature. XGBoost's native NaN handling is never
+  relied on.
+- Live inference matches that: a district-day is scored only when all 31 days of its rolling window
+  (target day and 30 before) have temp_max, temp_mean, rh_mean, wind_max and precip_sum; otherwise
+  `predict_risk` skips it and logs the reason (`weather_window_incomplete`, `no_fwi_state_today`,
+  `no_centroid`). FWI state carries over only from the previous day; any gap restarts from the
+  standard start-up codes, as in the dataset builder.
+- The NASA POWER provider (fallback only) returns -999 / absent values as None; nothing is filled.
+
 ## 3. AQI model B v3 (`aqi_station_xgb_v3`)
 
 - **Question answered**: CPCB PM2.5 sub-index (24 h mean, IST day) of a district on day t+h,

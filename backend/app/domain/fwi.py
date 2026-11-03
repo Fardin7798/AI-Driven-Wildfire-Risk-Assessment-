@@ -228,10 +228,11 @@ def calculate_daily_fwi(
     )
 
 
-# Standard Van Wagner start-up moisture codes, used only when a region has no carry-over state
-# (first run, or a gap longer than FWI_MAX_CARRYOVER_GAP_DAYS).
+# Standard Van Wagner start-up moisture codes, used when a region has no state for the previous
+# day (first run, or any missing day). Training (build_wildfire_dataset.build_district) restarts
+# from these on every gap, so live inference does the same instead of carrying old state across
+# days it has no weather for.
 FWI_STARTUP = {"ffmc": 85.0, "dmc": 6.0, "dc": 15.0}
-FWI_MAX_CARRYOVER_GAP_DAYS = 3
 
 
 def fwi_inputs(

@@ -8,32 +8,28 @@ from app.core.timeutil import today_ist
 from app.db.models.region import Region
 from app.db.models.weather import FWIState, WeatherDaily
 from app.db.session import async_session_factory
-from app.domain.fwi import FWI_MAX_CARRYOVER_GAP_DAYS, FWI_STARTUP, calculate_daily_fwi, fwi_inputs
+from app.domain.fwi import FWI_STARTUP, calculate_daily_fwi, fwi_inputs
 from app.jobs.scheduler import tracked_job
 
 
 @tracked_job("update_fwi_state")
 async def job_update_fwi_state() -> int:
     today = today_ist()
-    gap_start = today - timedelta(days=FWI_MAX_CARRYOVER_GAP_DAYS)
+    yesterday = today - timedelta(days=1)
     updated_count = 0
     skipped_no_weather = 0
+    restarted_no_prev = 0
 
     async with async_session_factory() as session:
         region_ids = (await session.execute(select(Region.id))).scalars().all()
 
+        # Only yesterday's state carries over; any gap restarts from FWI_STARTUP (as in training).
         prev_rows = (
-            (
-                await session.execute(
-                    select(FWIState)
-                    .where(FWIState.date >= gap_start, FWIState.date < today)
-                    .order_by(FWIState.region_id, FWIState.date.asc())
-                )
-            )
+            (await session.execute(select(FWIState).where(FWIState.date == yesterday)))
             .scalars()
             .all()
         )
-        latest_prev: dict[int, FWIState] = {r.region_id: r for r in prev_rows}  # last wins
+        prev_state: dict[int, FWIState] = {r.region_id: r for r in prev_rows}
 
         weather_rows = (
             (await session.execute(select(WeatherDaily).where(WeatherDaily.date == today)))
@@ -53,7 +49,8 @@ async def job_update_fwi_state() -> int:
                 skipped_no_weather += 1
                 continue
 
-            prev = latest_prev.get(region_id)
+            prev = prev_state.get(region_id)
+            restarted_no_prev += int(prev is None)
             res = calculate_daily_fwi(
                 month=today.month,
                 prev_ffmc=prev.ffmc if prev else FWI_STARTUP["ffmc"],
@@ -82,6 +79,12 @@ async def job_update_fwi_state() -> int:
     if skipped_no_weather:
         logger.warn(
             "fwi_regions_skipped_missing_weather", count=skipped_no_weather, date=str(today)
+        )
+    if restarted_no_prev:
+        logger.warn(
+            "fwi_regions_restarted_no_previous_day_state",
+            count=restarted_no_prev,
+            date=str(today),
         )
     if updated_count == 0:
         raise RuntimeError(
