@@ -90,7 +90,7 @@ reports, but they cannot produce a value for a district without one, which model
 - `aqi_xgb_v1` (removed 2026-11-01): trained on CPCB station `city_day.csv` (2015-2020) while live
   data is CAMS modelled concentrations at district centroids. Replaced by `aqi_station_xgb_v3`.
 - `aqi_persistence_v1` (removed 2026-11-03): latest observed AQI repeated for days +1..+3.
-  Replaced by model B; its rows in `wf.aq_forecasts` are no longer read (table kept).
+  Replaced by model B; its table `wf.aq_forecasts` is dropped by migration 004.
 
 ## 5. Limitations
 - Cloud cover and monsoon reduce satellite detections (labels are "detected fire", not "fire").
