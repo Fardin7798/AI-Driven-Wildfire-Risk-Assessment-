@@ -1,6 +1,5 @@
 from app.db.base import Base
 from app.db.models.air_quality import (
-    AQForecast,
     AQIForecastB,
     AQIForecastSkip,
     AQObservation,
@@ -21,7 +20,6 @@ __all__ = [
     "FWIState",
     "AQStation",
     "AQObservation",
-    "AQForecast",
     "AQIForecastB",
     "AQIForecastSkip",
     "RiskPrediction",

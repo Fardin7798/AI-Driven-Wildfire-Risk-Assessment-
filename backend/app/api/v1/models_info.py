@@ -1,11 +1,55 @@
+import json
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter
 
-from app.ml.loader import model_loader
+from app.core.config import settings
+from app.ml.loader import AQI_HORIZONS, model_loader
 from app.schemas.models_info import ModelComparisonResponse, ModelVersionResponse
 
 router = APIRouter(prefix="/models", tags=["Model Registry & Evaluation"])
+
+
+def _aqi_model_entry() -> ModelVersionResponse:
+    """AQI model B (no-station, CPCB PM2.5 sub-index at t+1..t+3). Metrics are the test MAE per
+    horizon and the raw-CAMS reference on the same rows, read from the training run's
+    aqi_station_evaluation.json; the test disclosure comes from aqi_station_metadata.json."""
+    ver = settings.ACTIVE_AQI_MODEL
+    model = model_loader.load_aqi_model(ver)
+    if model is None:
+        return ModelVersionResponse(
+            model_type="aqi", version=ver, metrics=None, status="unavailable", is_active=False
+        )
+    trained = model.metadata.get("trained_at")
+    metrics: dict[str, Any] | None = None
+    eval_path = Path(settings.MODEL_DIR) / ver / "aqi_station_evaluation.json"
+    try:
+        ev = json.loads(eval_path.read_text(encoding="utf-8"))
+        test = ev["test"]
+        rows = {h: test[f"h{h}"]["all_rows_with_target"] for h in AQI_HORIZONS}
+        metrics = {
+            "target": "CPCB PM2.5 sub-index (24 h mean, IST day) at t+h",
+            "variant": "no_station",
+            "test_days": ev["protocol"]["test_days"],
+            "test_mae": {f"h{h}": rows[h]["no_station"]["mae"] for h in AQI_HORIZONS},
+            "raw_cams_mae": {f"h{h}": rows[h]["cams_t"]["mae"] for h in AQI_HORIZONS},
+            "test_rows": {f"h{h}": rows[h]["no_station"]["n"] for h in AQI_HORIZONS},
+            "test_disclosure": model.metadata.get("test_disclosure"),
+        }
+    except (OSError, ValueError, KeyError, TypeError):
+        metrics = None
+    return ModelVersionResponse(
+        model_type="aqi",
+        version=model.model_version,
+        trained_at=datetime.fromisoformat(trained) if trained else None,
+        metrics=metrics,
+        status="active",
+        feature_list=model.feature_list,
+        thresholds={},
+        is_active=True,
+    )
 
 
 @router.get("/current", response_model=list[ModelVersionResponse])
@@ -45,19 +89,7 @@ async def get_active_models() -> list[ModelVersionResponse]:
             )
         )
 
-    # AQI forecasts are the persistence baseline (app/ml/aqi_forecaster.py): the latest observed
-    # AQI repeated for days +1..+3. No learned AQI model is served, so no metrics are claimed.
-    responses.append(
-        ModelVersionResponse(
-            model_type="aqi",
-            version="aqi_persistence_v1",
-            metrics=None,
-            status="persistence_baseline",
-            feature_list=["observed_aqi"],
-            thresholds={},
-            is_active=True,
-        )
-    )
+    responses.append(_aqi_model_entry())
     return responses
 
 
@@ -68,11 +100,6 @@ async def get_model_comparison() -> ModelComparisonResponse:
     Numbers come only from the evaluation file the training run wrote next to the artifact
     (`<model>_evaluation.json`); without it the endpoint says `not_available`.
     """
-    import json
-    from pathlib import Path
-
-    from app.core.config import settings
-
     path = Path(settings.MODEL_DIR) / f"{settings.ACTIVE_WILDFIRE_MODEL}_evaluation.json"
     if path.exists():
         try:

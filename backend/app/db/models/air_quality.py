@@ -80,25 +80,6 @@ class AQObservation(Base):
     region = relationship("Region", back_populates="aq_observations")
 
 
-class AQForecast(Base):
-    __tablename__ = "aq_forecasts"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    region_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("regions.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    target_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
-    horizon_days: Mapped[int] = mapped_column(Integer, nullable=False)
-
-    pm25_pred: Mapped[float | None] = mapped_column(Float, nullable=True)
-    aqi_pred: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    aqi_category: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    model_version: Mapped[str] = mapped_column(String(50), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
-
-    region = relationship("Region", back_populates="aq_forecasts")
-
-
 class AQIForecastB(Base):
     """Model B (no-station) AQI forecasts: one row per district, origin day and horizon."""
 

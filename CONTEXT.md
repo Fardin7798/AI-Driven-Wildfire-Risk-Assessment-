@@ -30,6 +30,6 @@ Platform: AI-Driven Wildfire Risk Assessment, Air Quality Monitoring and Communi
 - [x] Leaky `wildfire_xgb_v1`, CPCB-station `aqi_xgb_v1`, synthetic notebooks and invented reports removed
 - [x] Wildfire v2 pipeline: FIRMS VIIRS SP + NASA POWER -> district-day dataset -> Kaggle training
 - [x] `wildfire_xgb_v2` trained on Kaggle (2026-11-01) and served from `backend/models/`
-- [ ] AQI model (PM2.5 sub-index, CAMS history) trained on Kaggle and compared with persistence; not served yet
+- [x] AQI model B `aqi_station_xgb_v3` (PM2.5 sub-index, no-station) trained on Kaggle, served via `forecast_aqi` job and `/air-quality/forecast` endpoints
 - [ ] Land cover (ESA WorldCover) fractions into `wf.regions`
 - [ ] Frontend rebuild

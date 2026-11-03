@@ -1,7 +1,7 @@
 from app.services.air_quality_service import (
     get_air_quality_for_region,
-    get_air_quality_forecast,
     get_latest_air_quality,
+    get_latest_aqi_forecasts,
     upsert_aq_observation,
 )
 from app.services.fire_service import (
@@ -40,7 +40,7 @@ __all__ = [
     "upsert_daily_weather",
     "get_latest_air_quality",
     "get_air_quality_for_region",
-    "get_air_quality_forecast",
+    "get_latest_aqi_forecasts",
     "upsert_aq_observation",
     "get_latest_risk",
     "get_risk_by_region",

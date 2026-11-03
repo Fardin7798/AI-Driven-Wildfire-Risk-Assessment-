@@ -11,7 +11,7 @@ Production-grade backend and ML pipeline for "AI-Driven Wildfire Risk Assessment
   - Indian National AQI (NAQI) piecewise linear sub-index aggregator.
   - Risk class categorization engine.
   - Single Source of Truth `features.py` shared by offline training and live inference without leakage.
-- **ML Runtime (`app/ml/`)**: Model loader, XGBoost wildfire inference with FWI fallback and TreeSHAP factors, rule-based persistence AQI forecasting.
+- **ML Runtime (`app/ml/`)**: Model loader, XGBoost wildfire inference with FWI fallback and TreeSHAP factors, AQI model B (`aqi_station_b.py`, XGBoost no-station, 1-3 day PM2.5 sub-index).
 - **Business Services (`app/services/`)**: Async database operations and business logic.
 - **Background Jobs (`app/jobs/`)**: APScheduler with Postgres advisory locking and `X-Job-Token` protected HTTP endpoints.
 - **API (`app/api/`)**: FastAPI, Pydantic v2 schemas, RFC 9457 errors, rate limiting, and structured JSON logs.

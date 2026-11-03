@@ -1,6 +1,11 @@
 """Pydantic schemas for request validation and response serialization."""
 
-from app.schemas.air_quality import AQForecastResponse, AQObservationResponse
+from app.schemas.air_quality import (
+    AllAQIForecastsResponse,
+    AQObservationResponse,
+    DistrictAQIForecast,
+    RegionAQIForecastResponse,
+)
 from app.schemas.common import SHORT_DISCLAIMER, AsOfInfo, PaginatedResponse, get_as_of
 from app.schemas.fires import FireDetectionResponse, FireStatsResponse
 from app.schemas.jobs import JobTriggerResponse
@@ -18,7 +23,9 @@ from app.schemas.risk import (
 from app.schemas.weather import WeatherDailyResponse
 
 __all__ = [
-    "AQForecastResponse",
+    "AllAQIForecastsResponse",
+    "DistrictAQIForecast",
+    "RegionAQIForecastResponse",
     "AQObservationResponse",
     "AsOfInfo",
     "DisclaimerResponse",

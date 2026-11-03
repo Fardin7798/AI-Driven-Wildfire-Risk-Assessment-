@@ -29,7 +29,7 @@ graph TD
 
     subgraph Machine Learning Runtime
         XGB[XGBoost Wildfire v2<br/>FWI fallback when no artifact]
-        AQIF[AQI Forecaster<br/>Persistence baseline]
+        AQIF[AQI Model B v3<br/>XGBoost no-station, h1-h3]
         SHAP_EXP[TreeSHAP Explainer<br/>Top 3 Drivers]
     end
 

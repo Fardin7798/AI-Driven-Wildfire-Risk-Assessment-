@@ -42,7 +42,6 @@ class Region(Base):
     aq_observations = relationship(
         "AQObservation", back_populates="region", cascade="all, delete-orphan"
     )
-    aq_forecasts = relationship("AQForecast", back_populates="region", cascade="all, delete-orphan")
 
     @property
     def centroid_lat(self) -> float | None:

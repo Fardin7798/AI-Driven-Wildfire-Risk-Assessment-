@@ -75,7 +75,7 @@ def test_models_current_and_comparison():
     assert "wildfire" in types
 
     for m in models:
-        assert m["status"] in ["active", "fallback_rule_based", "persistence_baseline"]
+        assert m["status"] in ["active", "fallback_rule_based", "unavailable"]
         if m["status"] != "active":
             # Nothing that is not a trained, deployed model may claim metrics
             assert m["metrics"] is None
