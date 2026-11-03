@@ -20,6 +20,7 @@ async def job_ingest_weather() -> int:
     weather_provider = registry.get_weather_provider("IN")
     total_written = 0
     failed_batches = 0
+    quota_error: str | None = None
 
     async with async_session_factory() as session:
         query = (
@@ -52,6 +53,7 @@ async def job_ingest_weather() -> int:
                     ]
             except OpenMeteoQuotaExceeded as e:
                 logger.error("open_meteo_quota_exceeded_stopping", error=str(e))
+                quota_error = str(e)
                 break
             except Exception as e:
                 failed_batches += 1
@@ -71,5 +73,8 @@ async def job_ingest_weather() -> int:
             await asyncio.sleep(BATCH_PAUSE_SECONDS)
 
     if total_written == 0:
-        raise RuntimeError(f"Weather ingestion wrote 0 rows ({failed_batches} batches failed)")
+        reason = f"; Open-Meteo quota: {quota_error}" if quota_error else ""
+        raise RuntimeError(
+            f"Weather ingestion wrote 0 rows ({failed_batches} batches failed){reason}"
+        )
     return total_written

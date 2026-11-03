@@ -11,7 +11,7 @@ Platform: AI-Driven Wildfire Risk Assessment, Air Quality Monitoring and Communi
 ## What runs in production
 | Part | How it works |
 |---|---|
-| Weather | Open-Meteo forecast API, batched per request, daily 00:20 IST |
+| Weather | Open-Meteo forecast API, batched per request, daily 00:20 IST with retries at 06:20 and 12:20 IST (Render IP hits the Open-Meteo daily quota) |
 | FWI | Canadian FWI with daily carry-over, 00:50 IST; skipped for districts without weather |
 | Wildfire risk | `wildfire_xgb_v2` when its artifact is deployed, else FWI fallback; 01:10 IST |
 | Fires | NASA FIRMS NRT (VIIRS NOAA-20/21, MODIS), joined to districts with PostGIS |
