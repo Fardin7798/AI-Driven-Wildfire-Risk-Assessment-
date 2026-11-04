@@ -152,8 +152,10 @@ async def test_job_fails_without_model(monkeypatch):
         await fj.job_forecast_aqi.__wrapped__()
 
 
-def test_job_registered_and_scheduled(monkeypatch):
+def test_job_registered_and_scheduled_in_github_actions(monkeypatch):
+    """forecast_aqi is triggerable, runs from GitHub Actions at 10:30 IST, and not on Render."""
     import importlib
+    from pathlib import Path
 
     from app.api.v1.internal_jobs import JOB_MAPPING
 
@@ -170,9 +172,17 @@ def test_job_registered_and_scheduled(monkeypatch):
     monkeypatch.setattr(sched_mod.scheduler, "add_job", add_job)
     monkeypatch.setattr(sched_mod.scheduler, "start", lambda: None)
     sched_mod.start_scheduler()
-    job = added["job_forecast_aqi"]
-    assert job["func"] is fj.job_forecast_aqi
-    assert (job["hour"], job["minute"]) == (10, 30)
+    # Open-Meteo jobs must not run on Render's shared IP (daily quota).
+    for name in ("forecast_aqi", "ingest_weather", "update_fwi_state", "predict_risk"):
+        assert f"job_{name}" not in added
+    assert {"job_ingest_fires", "job_ingest_air_quality", "job_retention"} <= set(added)
+
+    wf = Path(__file__).resolve().parents[3] / ".github" / "workflows" / "pipeline-jobs.yml"
+    text = wf.read_text()
+    assert 'cron: "0 5 * * *"' in text  # 05:00 UTC = 10:30 IST
+    assert 'echo "jobs=forecast_aqi"' in text
+    assert 'echo "jobs=ingest_weather update_fwi_state predict_risk"' in text
+    assert "python -m app.jobs.cli" in text
 
 
 # ---------------------------------------------------------------- persistence (real Postgres)

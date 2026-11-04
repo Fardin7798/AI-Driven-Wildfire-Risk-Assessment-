@@ -126,28 +126,16 @@ def start_scheduler() -> None:
         logger.info("scheduler_disabled_by_config")
         return
 
-    from app.jobs.forecast_aqi import job_forecast_aqi
     from app.jobs.ingest_air_quality import job_ingest_air_quality
     from app.jobs.ingest_fires import job_ingest_fires
-    from app.jobs.ingest_weather import job_ingest_weather
-    from app.jobs.predict_risk import job_predict_risk
     from app.jobs.retention import job_retention
-    from app.jobs.update_fwi_state import job_update_fwi_state
 
-    # Daily chain is staggered so each step reads the previous step's output (all IST):
-    #   00:20 weather -> 00:50 FWI -> 01:10 risk prediction
-    # Weather is fetched again at 06:20 and 12:20: Render's shared outbound IP regularly hits
-    # Open-Meteo's daily quota by 00:20 IST (runs of 2026-11-02 and 2026-11-03 failed). Each run
-    # stores past_days=3 + forecast_days=3, so a later success still gives the next 00:50 FWI run
-    # its row for that day; the 31-day window used by predict_risk stays gap-free.
-    # AQI model B runs at 10:30, origin = yesterday (IST), once CAMS for that day is complete.
+    # ingest_weather -> update_fwi_state -> predict_risk and forecast_aqi run in GitHub Actions
+    # (.github/workflows/pipeline-jobs.yml, via app.jobs.cli), not here: Render's shared outbound IP
+    # uses up Open-Meteo's free daily quota (forecast_aqi failed 2026-11-03 and 2026-11-04).
     jobs: list[tuple[Callable[[], Coroutine[Any, Any, int]], str, dict[str, Any]]] = [
         (job_ingest_fires, "job_ingest_fires", {"hour": "*/3", "minute": 10}),
         (job_ingest_air_quality, "job_ingest_air_quality", {"hour": "*/6", "minute": 40}),
-        (job_ingest_weather, "job_ingest_weather", {"hour": "0,6,12", "minute": 20}),
-        (job_update_fwi_state, "job_update_fwi_state", {"hour": 0, "minute": 50}),
-        (job_predict_risk, "job_predict_risk", {"hour": 1, "minute": 10}),
-        (job_forecast_aqi, "job_forecast_aqi", {"hour": 10, "minute": 30}),
         (job_retention, "job_retention", {"day_of_week": "sun", "hour": 3, "minute": 0}),
     ]
     for func, job_id, cron in jobs:

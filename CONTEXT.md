@@ -11,9 +11,9 @@ Platform: AI-Driven Wildfire Risk Assessment, Air Quality Monitoring and Communi
 ## What runs in production
 | Part | How it works |
 |---|---|
-| Weather | Open-Meteo forecast API `models=ecmwf_ifs` (temp max/min from hourly, IST day), batched per request, daily 00:20 IST with retries at 06:20 and 12:20 IST (Render IP hits the Open-Meteo daily quota) |
-| FWI | Canadian FWI with daily carry-over, 00:50 IST; skipped for districts without weather |
-| Wildfire risk | `wildfire_xgb_v3` (IFS weather) when its artifact is deployed, else FWI fallback; 01:10 IST (v3 on `backend` 2026-11-04, not yet deployed; v2 on `main`) |
+| Weather | Open-Meteo forecast API `models=ecmwf_ifs` (temp max/min from hourly, IST day), batched per request, daily 00:20 IST with retries at 06:20 and 12:20 IST; runs in GitHub Actions `pipeline-jobs.yml` (`python -m app.jobs.cli`), not on Render, because Render's IP hits the Open-Meteo daily quota |
+| FWI | Canadian FWI with daily carry-over, right after the 00:20 IST weather run in the same GitHub Actions job; skipped for districts without weather |
+| Wildfire risk | `wildfire_xgb_v3` (IFS weather) when its artifact is deployed, else FWI fallback; runs right after FWI in the same GitHub Actions job |
 | Fires | NASA FIRMS NRT (VIIRS NOAA-20/21, MODIS), joined to districts with PostGIS |
 | Air quality | Open-Meteo CAMS every 6 h; current NAQI from CPCB averaging (24-h means; CO/O3 max 8-h running mean; >= 16 valid hours per pollutant) of the trailing 24 h; model-B 1-3 day forecast |
 | Preparedness | Static NDMA-style guidance from `backend/data/seed/preparedness.json` |

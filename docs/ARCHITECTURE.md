@@ -14,10 +14,10 @@ graph TD
     end
 
     subgraph Ingestion & Scheduling Engine
-        SCHED[APScheduler In-Process<br/>+ Postgres Advisory Lock]
+        SCHED[APScheduler In-Process<br/>Fires / AQ / Retention<br/>+ Postgres Advisory Lock]
         JOBS[Async Ingestion Jobs<br/>Fires / Weather / AQ / Retention]
         INT_API[POST /internal/jobs/:job<br/>X-Job-Token Protected]
-        GH_CRON[GitHub Actions Cron<br/>Awake Keep-Alive Trigger]
+        GH_CRON[GitHub Actions Cron<br/>Weather, FWI, Risk, AQI Forecast<br/>(Open-Meteo jobs)]
     end
 
     subgraph Domain Engine & Storage
@@ -43,7 +43,8 @@ graph TD
     OM_W --> JOBS
     OM_AQ --> JOBS
     CPCB --> JOBS
-    GH_CRON --> INT_API --> JOBS
+    GH_CRON --> JOBS
+    INT_API --> JOBS
     SCHED --> JOBS
 
     JOBS --> DB

@@ -102,7 +102,7 @@ it. The numbers above are the single official Kaggle run.
   flagged `extrapolated` (coverage.json: extrapolated = nearest training station > 200 km OR centroid outside the convex hull of the training stations).
 - **Split**: train target day <= 2025-06-30, validation 2025-07-01..2025-10-31
   (grid search), test 2025-11-01..2026-10-28 scored with monthly expanding-window refits.
-- **Serving**: daily job `forecast_aqi` (10:30 IST) writes `wf.aqi_forecasts_b`; districts without
+- **Serving**: daily job `forecast_aqi` (10:30 IST, GitHub Actions `pipeline-jobs.yml`) writes `wf.aqi_forecasts_b`; districts without
   complete inputs get a reason in `wf.aqi_forecast_skips` and no value.
 - **Test disclosure**: second look at the test period: 2025-11-01..2026-10-28 was already scored by run v2 (aqi_station_xgb_v1: NASA POWER weather, station lat/lon). v3 changes the inputs (Open-Meteo Historical Forecast weather, district-centroid lat/lon) after v2's test results were seen; protocol, grid, splits and seed are unchanged. Its test numbers are not an untouched test.
 

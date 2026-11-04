@@ -1,0 +1,52 @@
+name: Pipeline jobs (Open-Meteo)
+
+# Runs the jobs that call Open-Meteo outside Render: Render's shared outbound IP hits Open-Meteo's
+# free daily quota (forecast_aqi failed 2026-11-03 and 2026-11-04). Times are UTC (IST = UTC+5:30).
+# Each job writes its own wf.ingestion_runs row. Secret DATABASE_URL = Render's DATABASE_URL.
+on:
+  schedule:
+    - cron: "50 18 * * *" # 00:20 IST: weather -> FWI -> risk (daily chain)
+    - cron: "50 0 * * *"  # 06:20 IST: weather retry
+    - cron: "50 6 * * *"  # 12:20 IST: weather retry
+    - cron: "0 5 * * *"   # 10:30 IST: AQI model B forecast, origin = yesterday (IST)
+  workflow_dispatch:
+    inputs:
+      jobs:
+        description: "Jobs to run in order, space separated"
+        required: true
+        default: "forecast_aqi"
+
+concurrency:
+  group: pipeline-jobs
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      ENV: production
+      ENABLE_SCHEDULER: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - run: pip install -e .
+      - name: Pick jobs
+        id: pick
+        run: |
+          case "${{ github.event_name }}:${{ github.event.schedule }}" in
+            "workflow_dispatch:"*) echo "jobs=${{ github.event.inputs.jobs }}" >> "$GITHUB_OUTPUT" ;;
+            "schedule:50 18 * * *") echo "jobs=ingest_weather update_fwi_state predict_risk" >> "$GITHUB_OUTPUT" ;;
+            "schedule:0 5 * * *") echo "jobs=forecast_aqi" >> "$GITHUB_OUTPUT" ;;
+            *) echo "jobs=ingest_weather" >> "$GITHUB_OUTPUT" ;;
+          esac
+      - name: Run
+        run: python -m app.jobs.cli ${{ steps.pick.outputs.jobs }}
