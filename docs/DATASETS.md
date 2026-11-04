@@ -13,13 +13,24 @@ This platform aggregates multiple open scientific datasets for environmental ris
 - **Live Endpoint**: `https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/{SOURCE}/{west,south,east,north}/{DAY_RANGE}`
 - **Historical Data (training)**: VIIRS NOAA-20 standard processing (`VIIRS_NOAA20_SP`), 2019-2024, downloaded with `ml/pipeline/download_firms_history.py`.
 
-## 2. Open-Meteo Weather API (ERA5 Reanalysis & Forecast)
-- **Source**: Open-Meteo API using ECMWF ERA5 reanalysis and high-resolution numerical weather prediction models.
+## 2. Open-Meteo Weather API, ECMWF IFS HRES 9 km (wildfire model weather)
+- **Source**: ECMWF IFS HRES (open data) served by Open-Meteo with `models=ecmwf_ifs`; the same model
+  in training (wildfire_xgb_v3) and live. ERA5 is not used anywhere.
 - **License**: Creative Commons Attribution 4.0 International (CC BY 4.0)
-- **Attribution**: "Weather data courtesy of Open-Meteo (https://open-meteo.com) under CC BY 4.0, derived from ECMWF ERA5 and national meteorological services."
+- **Attribution**: "Weather data by Open-Meteo.com (https://open-meteo.com), CC BY 4.0, from ECMWF IFS open data."
+- **Request** (`app/providers/open_meteo_weather.py`): district centroid (4 dp), `timezone=Asia/Kolkata`
+  (Open-Meteo truncates +05:30 to 5 h, so day D = 19:00 UTC D-1 .. 19:00 UTC D), daily
+  `temperature_2m_mean, relative_humidity_2m_mean, relative_humidity_2m_min, wind_speed_10m_max,
+  precipitation_sum, et0_fao_evapotranspiration, soil_moisture_0_to_7cm_mean`, hourly `temperature_2m`.
+  temp_max/temp_min = max/min of the day's 24 hourly values (a day with a missing hour stays NULL);
+  the API's native daily Tmax/Tmin for IFS differ from that by up to 0.65/0.83 C and are not used.
 - **Endpoints**:
-  - Forecast: `https://api.open-meteo.com/v1/forecast`
-  - Historical: `https://archive-api.open-meteo.com/v1/archive`
+  - Forecast (live, `past_days=3`, `forecast_days=3`): `https://api.open-meteo.com/v1/forecast`
+  - Historical Forecast (re-fills/backfills): `https://historical-forecast-api.open-meteo.com/v1/forecast`
+- **Training archive**: hourly IFS point series extracted from Open-Meteo's AWS archive
+  (s3://openmeteo, `ecmwf_ifs`) with Open-Meteo's cell selection and lapse correction reproduced,
+  2018-09-01..2026-11-01; equal to the Historical Forecast API within API rounding
+  (`ml/pipeline/prepare_ifs_weather.py` converts it to the builder schema).
 
 ## 3. Open-Meteo Air Quality API (Copernicus CAMS)
 - **Source**: Copernicus Atmosphere Monitoring Service (CAMS) Global and Regional atmospheric composition forecasts.

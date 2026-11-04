@@ -46,11 +46,13 @@ class Settings(BaseSettings):
     DEFAULT_COUNTRY: str = "IN"
 
     MODEL_DIR: str = str(Path(__file__).resolve().parents[2] / "models")
-    ACTIVE_WILDFIRE_MODEL: str = "wildfire_xgb_v2"
+    ACTIVE_WILDFIRE_MODEL: str = "wildfire_xgb_v3"
     ACTIVE_AQI_MODEL: str = "aqi_station_xgb_v3"
 
     OPEN_METEO_WEATHER_URL: str = "https://api.open-meteo.com/v1/forecast"
-    OPEN_METEO_ARCHIVE_URL: str = "https://archive-api.open-meteo.com/v1/archive"
+    OPEN_METEO_HISTORICAL_FORECAST_URL: str = (
+        "https://historical-forecast-api.open-meteo.com/v1/forecast"
+    )
     OPEN_METEO_AIR_QUALITY_URL: str = "https://air-quality-api.open-meteo.com/v1/air-quality"
     OPEN_METEO_GEOCODING_URL: str = "https://geocoding-api.open-meteo.com/v1/search"
 

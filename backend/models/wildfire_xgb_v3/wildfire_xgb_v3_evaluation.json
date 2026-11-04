@@ -1,0 +1,169 @@
+{
+  "model": "wildfire_xgb_v3",
+  "split": {
+    "train": "2019-2023",
+    "validation": "2024",
+    "test": "2025-01-01..2025-12-31"
+  },
+  "weather": "ECMWF IFS HRES 9 km daily (Open-Meteo archive, model ecmwf_ifs)",
+  "xgboost_device": "cuda",
+  "label": "district-day has >=1 VIIRS NOAA-20 SP detection, confidence nominal/high, type 0",
+  "best_iteration": 344,
+  "thresholds_from_validation": {
+    "moderate": 0.143,
+    "high": 0.3256,
+    "extreme": 0.5574
+  },
+  "validation": {
+    "xgboost": {
+      "roc_auc": 0.9146,
+      "pr_auc": 0.7853,
+      "positive_rate": 0.2331,
+      "n": 247416,
+      "threshold": 0.3256,
+      "precision": 0.6687,
+      "recall": 0.7498,
+      "f1": 0.7069,
+      "brier": 0.095
+    }
+  },
+  "test": {
+    "xgboost": {
+      "roc_auc": 0.9232,
+      "pr_auc": 0.8172,
+      "positive_rate": 0.2385,
+      "n": 246740,
+      "threshold": 0.3256,
+      "precision": 0.7,
+      "recall": 0.7557,
+      "f1": 0.7268,
+      "brier": 0.0902
+    },
+    "fwi_only": {
+      "roc_auc": 0.8003,
+      "pr_auc": 0.506,
+      "positive_rate": 0.2385,
+      "n": 246740
+    },
+    "climatology": {
+      "roc_auc": 0.8889,
+      "pr_auc": 0.7264,
+      "positive_rate": 0.2385,
+      "n": 246740,
+      "brier": 0.1103
+    },
+    "persistence_fires_prev_7d": {
+      "roc_auc": 0.8849,
+      "pr_auc": 0.7316,
+      "positive_rate": 0.2385,
+      "n": 246740
+    }
+  },
+  "v2_vs_v3_same_2025_rows": {
+    "v2_sha256": "eb9140bd500165c7503a7fa2d6199dd496b95ba8682336109ae9f4222f6405aa",
+    "v2_threshold_high": 0.3421,
+    "note": "v2 thresholds/climatology are v2's own (served); v3 uses its validation-year thresholds",
+    "ifs_weather_test_rows": {
+      "n": 246740,
+      "v3": {
+        "roc_auc": 0.9232,
+        "pr_auc": 0.8172,
+        "positive_rate": 0.2385,
+        "n": 246740,
+        "threshold": 0.3256,
+        "precision": 0.7,
+        "recall": 0.7557,
+        "f1": 0.7268,
+        "brier": 0.0902
+      },
+      "v2_served_climatology": {
+        "roc_auc": 0.9199,
+        "pr_auc": 0.8093,
+        "positive_rate": 0.2385,
+        "n": 246740,
+        "threshold": 0.3421,
+        "precision": 0.713,
+        "recall": 0.7325,
+        "f1": 0.7226,
+        "brier": 0.0923
+      },
+      "v2_v3_climatology": {
+        "roc_auc": 0.9202,
+        "pr_auc": 0.8101,
+        "positive_rate": 0.2385,
+        "n": 246740,
+        "threshold": 0.3421,
+        "precision": 0.7084,
+        "recall": 0.7382,
+        "f1": 0.723,
+        "brier": 0.092
+      }
+    },
+    "power_weather_test_rows": {
+      "n_power_rows": 246740,
+      "n_common_with_ifs": 246740,
+      "v3_on_ifs_weather": {
+        "roc_auc": 0.9232,
+        "pr_auc": 0.8172,
+        "positive_rate": 0.2385,
+        "n": 246740,
+        "threshold": 0.3256,
+        "precision": 0.7,
+        "recall": 0.7557,
+        "f1": 0.7268,
+        "brier": 0.0902
+      },
+      "v2_on_power_served_climatology": {
+        "roc_auc": 0.9206,
+        "pr_auc": 0.8109,
+        "positive_rate": 0.2385,
+        "n": 246740,
+        "threshold": 0.3421,
+        "precision": 0.707,
+        "recall": 0.7384,
+        "f1": 0.7224,
+        "brier": 0.0918
+      },
+      "v2_on_power_v3_climatology": {
+        "roc_auc": 0.921,
+        "pr_auc": 0.8118,
+        "positive_rate": 0.2385,
+        "n": 246740,
+        "threshold": 0.3421,
+        "precision": 0.704,
+        "recall": 0.7441,
+        "f1": 0.7235,
+        "brier": 0.0915
+      }
+    }
+  },
+  "feature_importance_gain": {
+    "climatological_fire_freq": 1452.6,
+    "fires_prev_7d": 955.11,
+    "ffmc": 165.8,
+    "fwi": 139.76,
+    "precip_sum": 118.56,
+    "consecutive_dry_days": 107.09,
+    "fires_prev_30d": 90.3,
+    "rh_mean": 48.19,
+    "precip_sum_3d": 47.52,
+    "month_sin": 33.22,
+    "lat": 29.97,
+    "lon": 25.1,
+    "month_cos": 24.0,
+    "day_of_year_cos": 22.25,
+    "temp_max_mean_7d": 21.23,
+    "temp_max": 19.79,
+    "days_since_rain_gt_10mm": 19.29,
+    "day_of_year_sin": 19.07,
+    "precip_sum_30d": 18.34,
+    "dmc": 16.67,
+    "dc": 15.58,
+    "temp_mean": 15.43,
+    "bui": 14.47,
+    "isi": 13.29,
+    "precip_sum_7d": 12.06,
+    "wind_max": 11.63,
+    "precip_sum_14d": 11.55
+  }
+}

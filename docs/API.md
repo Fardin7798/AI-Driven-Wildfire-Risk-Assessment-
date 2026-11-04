@@ -40,11 +40,11 @@ OpenAPI Docs: Enabled only in `ENV=development` at `/docs`.
 - `GET /air-quality/{region_id}/forecast`: One district: `origin_date`, `model_version`, `source`, `extrapolated` and `forecasts` [{horizon, target_date, pm25_si_pred, category}] (PM2.5 sub-index, days +1..+3), or `status: skipped` with `skip_reason` and no values. 404 when nothing is recorded.
 
 ### 6. Atmospheric Weather
-- `GET /weather/{region_id}?days=7`: Live weather and daily ERA5/forecast metrics (temp, humidity, wind, precipitation).
+- `GET /weather/{region_id}?days=7`: Daily ECMWF IFS (Open-Meteo) weather metrics (temp, humidity, wind, precipitation).
 
 ### 7. Models & Science
 - `GET /models/current`: Models actually served (read from deployed artifacts); metrics only when a real evaluation exists. The AQI entry (`aqi_station_xgb_v3`) carries test MAE h1..h3, raw-CAMS MAE on the same rows and the test disclosure, read from the model's evaluation and metadata files.
-- `GET /models/comparison`: Served wildfire model vs FWI, climatology and persistence on test year 2024, read from `models/<model>_evaluation.json`; `not_available` if that file is missing.
+- `GET /models/comparison`: Served wildfire model vs FWI, climatology and persistence on test year 2025, read from `models/<model>/<model>_evaluation.json`; `not_available` if that file is missing.
 
 ### 8. Preparedness & Meta
 - `GET /preparedness?hazard=&stage=&audience=`: Community safety protocols and civil defense speed-dials.

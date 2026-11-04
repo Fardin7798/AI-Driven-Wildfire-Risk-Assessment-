@@ -243,8 +243,9 @@ def fwi_inputs(
 ) -> dict[str, float] | None:
     """Map one day of weather to FWI inputs. Identical in training and live inference.
 
-    Uses daily max temperature, daily MEAN relative humidity (the training archive, NASA POWER,
-    has no daily RH minimum), daily max 10 m wind in km/h and 24 h precipitation.
+    Uses daily max temperature (max of the 24 hourly ECMWF IFS values of the IST day), daily
+    MEAN relative humidity (as in training; v2's NASA POWER archive had no daily RH minimum and
+    v3 kept the same inputs), daily max 10 m wind in km/h and 24 h precipitation.
     Returns None if any input is missing; callers must skip the day rather than invent values.
     """
     values = (temp_max, rh_mean, wind_max_kmh, precip_mm)

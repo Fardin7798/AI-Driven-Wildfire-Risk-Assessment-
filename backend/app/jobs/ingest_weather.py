@@ -7,7 +7,7 @@ from app.db.models.region import Region
 from app.db.session import async_session_factory
 from app.jobs.scheduler import tracked_job
 from app.providers.open_meteo_http import BATCH_PAUSE_SECONDS, OpenMeteoQuotaExceeded
-from app.providers.open_meteo_weather import OpenMeteoWeatherProvider
+from app.providers.open_meteo_weather import count_missing_temp
 from app.providers.registry import registry
 from app.services.weather_service import upsert_daily_weather
 
@@ -20,6 +20,7 @@ async def job_ingest_weather() -> int:
     weather_provider = registry.get_weather_provider("IN")
     total_written = 0
     failed_batches = 0
+    missing_temp_days = 0
     quota_error: str | None = None
 
     async with async_session_factory() as session:
@@ -40,17 +41,9 @@ async def job_ingest_weather() -> int:
             batch = regions[start : start + WEATHER_BATCH_SIZE]
             coords = [(float(r.lat), float(r.lon)) for r in batch]
             try:
-                if isinstance(weather_provider, OpenMeteoWeatherProvider):
-                    per_region = await weather_provider.fetch_weather_forecast_batch(
-                        coords, past_days=3, forecast_days=3
-                    )
-                else:  # providers without multi-location support
-                    per_region = [
-                        await weather_provider.fetch_weather_forecast(
-                            lat=lat, lon=lon, past_days=3, forecast_days=3
-                        )
-                        for lat, lon in coords
-                    ]
+                per_region = await weather_provider.fetch_weather_forecast_batch(
+                    coords, past_days=3, forecast_days=3
+                )
             except OpenMeteoQuotaExceeded as e:
                 logger.error("open_meteo_quota_exceeded_stopping", error=str(e))
                 quota_error = str(e)
@@ -65,6 +58,7 @@ async def job_ingest_weather() -> int:
                 )
                 continue
 
+            missing_temp_days += count_missing_temp(per_region)
             for region, records in zip(batch, per_region, strict=True):
                 total_written += await upsert_daily_weather(
                     session, region_id=region.id, records=records, is_forecast=False
@@ -72,6 +66,15 @@ async def job_ingest_weather() -> int:
             await session.commit()
             await asyncio.sleep(BATCH_PAUSE_SECONDS)
 
+    if missing_temp_days:
+        # Kept as NULL temp_max/temp_min (never filled); FWI and predict_risk skip such days.
+        logger.warn("weather_ingest_days_without_24_hourly_temps", count=missing_temp_days)
+    logger.info(
+        "weather_ingest_summary",
+        rows=total_written,
+        failed_batches=failed_batches,
+        days_missing_hourly_temp=missing_temp_days,
+    )
     if total_written == 0:
         reason = f"; Open-Meteo quota: {quota_error}" if quota_error else ""
         raise RuntimeError(

@@ -69,7 +69,7 @@ async def get_active_models() -> list[ModelVersionResponse]:
                 model_type="wildfire",
                 version=wf.model_version,
                 trained_at=datetime.fromisoformat(trained) if trained else None,
-                metrics=wf.metrics,
+                metrics={**wf.metrics, "test_disclosure": wf.metadata.get("test_disclosure")},
                 status="active",
                 feature_list=wf.feature_list,
                 thresholds=wf.thresholds,
@@ -98,9 +98,9 @@ async def get_model_comparison() -> ModelComparisonResponse:
     """Served wildfire model vs baselines on the held-out test year.
 
     Numbers come only from the evaluation file the training run wrote next to the artifact
-    (`<model>_evaluation.json`); without it the endpoint says `not_available`.
+    (`<MODEL_DIR>/<model>/<model>_evaluation.json`); without it the endpoint says `not_available`.
     """
-    path = Path(settings.MODEL_DIR) / f"{settings.ACTIVE_WILDFIRE_MODEL}_evaluation.json"
+    path = Path(model_loader.wildfire_model_paths(settings.ACTIVE_WILDFIRE_MODEL)["evaluation"])
     if path.exists():
         try:
             data = json.loads(path.read_text(encoding="utf-8"))

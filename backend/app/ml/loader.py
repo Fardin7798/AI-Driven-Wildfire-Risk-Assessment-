@@ -46,46 +46,71 @@ class ModelLoader:
                 sha.update(chunk)
         return sha.hexdigest()
 
+    def wildfire_model_paths(self, version: str) -> dict[str, str]:
+        """`<MODEL_DIR>/<version>/<version>{.json,_metadata.json,_evaluation.json}`."""
+        root = os.path.join(self.model_dir, version)
+        return {
+            "model": os.path.join(root, f"{version}.json"),
+            "metadata": os.path.join(root, f"{version}_metadata.json"),
+            "evaluation": os.path.join(root, f"{version}_evaluation.json"),
+        }
+
     def load_wildfire_model(self, version: str | None = None) -> ModelArtifact | None:
+        """Wildfire booster + metadata from `<MODEL_DIR>/<version>/`.
+
+        The booster must match the metadata sha256, the metadata version must equal the
+        directory name, and the booster's feature names (when stored) must equal the metadata
+        feature list. Any failure -> None, i.e. predict_risk publishes the FWI fallback only.
+        """
         ver = version or settings.ACTIVE_WILDFIRE_MODEL
         if ver in self._cache:
             return self._cache[ver]
 
-        meta_path = os.path.join(self.model_dir, f"{ver}_metadata.json")
-        model_path = os.path.join(self.model_dir, f"{ver}.json")
-
+        paths = self.wildfire_model_paths(ver)
+        meta_path, model_path = paths["metadata"], paths["model"]
         if not os.path.exists(meta_path) or not os.path.exists(model_path):
-            logger.info("wildfire_model_artifact_not_found_fallback_active", version=ver)
+            logger.error("wildfire_model_artifact_not_found_fallback_active", version=ver)
             return None
 
         try:
             with open(meta_path, encoding="utf-8") as f:
                 metadata = json.load(f)
 
-            # 1. Verify Checksum
+            if metadata.get("version", ver) != ver:
+                logger.error(
+                    "wildfire_model_version_mismatch", version=ver, metadata=metadata["version"]
+                )
+                return None
+
             expected_sha = metadata.get("sha256")
             actual_sha = self._compute_sha256(model_path)
-            if expected_sha and expected_sha != actual_sha:
+            if not expected_sha or expected_sha != actual_sha:
                 logger.error(
                     "wildfire_model_checksum_mismatch", expected=expected_sha, actual=actual_sha
                 )
                 return None
 
-            # 2. Verify Feature List
             model_features = metadata.get("feature_list") or metadata.get("features", [])
             if not model_features:
                 logger.error("wildfire_model_missing_features", version=ver)
                 return None
 
-            # 3. Load XGBoost Model Object
             try:
                 import xgboost as xgb
 
                 model_obj = xgb.Booster()
                 model_obj.load_model(model_path)
             except Exception as xgb_err:
-                logger.warn("xgboost_load_failed_using_stub", error=str(xgb_err))
+                logger.error("xgboost_load_failed_fwi_fallback", error=str(xgb_err))
                 model_obj = None
+
+            if (
+                model_obj is not None
+                and model_obj.feature_names is not None
+                and list(model_obj.feature_names) != list(model_features)
+            ):
+                logger.error("wildfire_model_feature_mismatch", version=ver)
+                return None
 
             artifact = ModelArtifact(
                 model_version=ver,

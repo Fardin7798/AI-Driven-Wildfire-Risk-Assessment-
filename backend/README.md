@@ -3,10 +3,10 @@
 Production-grade FastAPI backend and machine learning pipeline predicting wildfire risk and air quality trajectories across Indian districts.
 
 ## Key Features
-- **Wildfire Risk**: XGBoost district-day model (`wildfire_xgb_v2`, NASA FIRMS VIIRS NOAA-20 labels + NASA POWER weather, 2019-2024) with Canadian FWI fallback. See docs/MODEL_CARD.md.
+- **Wildfire Risk**: XGBoost district-day model (`wildfire_xgb_v3`, NASA FIRMS VIIRS NOAA-20 labels + ECMWF IFS HRES weather via Open-Meteo, 2019-2025) with Canadian FWI fallback. See docs/MODEL_CARD.md.
 - **Air Quality**: Indian National AQI (NAQI) calculation (CPCB standard) and a 1-3 day PM2.5 sub-index forecast from XGBoost model B (`aqi_station_xgb_v3`, no station needed). See docs/MODEL_CARD.md.
 - **Active Satellite Detections**: Live streaming thermal anomalies from NASA FIRMS Area API.
-- **Atmospheric Weather**: Live synoptic metrics and ERA5 reanalysis via Open-Meteo with tenacity retries.
+- **Atmospheric Weather**: ECMWF IFS HRES (`models=ecmwf_ifs`) daily weather via the Open-Meteo Forecast and Historical Forecast APIs; temp max/min from hourly values.
 - **Safety Preparedness**: Official civil defense safety directives and emergency speed-dials (NDMA standard).
 - **Security & Schema**: All data strictly encapsulated in PostgreSQL schema `wf` with PostGIS spatial indexes and Row Level Security.
 

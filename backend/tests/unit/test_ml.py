@@ -37,8 +37,9 @@ def test_wildfire_predictor_real_model_loading(tmp_path):
     from app.ml.loader import ModelLoader
 
     version = "test_xgb_v1"
-    model_file = tmp_path / f"{version}.json"
-    meta_file = tmp_path / f"{version}_metadata.json"
+    (tmp_path / version).mkdir()
+    model_file = tmp_path / version / f"{version}.json"
+    meta_file = tmp_path / version / f"{version}_metadata.json"
 
     X = np.random.uniform(0.1, 1.0, size=(20, len(FEATURE_NAMES)))
     y = np.random.choice([0, 1], size=20)

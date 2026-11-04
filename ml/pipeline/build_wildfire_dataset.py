@@ -10,7 +10,9 @@ and type == 0 (presumed vegetation fire) on day D, else 0. This includes agricul
 residue burning; FIRMS cannot separate it from forest fire without land-cover data.
 
 Inputs:
-  --weather  power_daily.parquet        (download_power_history.py)
+  --weather  power_daily.parquet        (download_power_history.py, NASA POWER; v2)
+             or ifs_weather.parquet     (prepare_ifs_weather.py, ECMWF IFS HRES; v3)
+             schema: gadm_id, date, temp_max, temp_mean, rh_mean, wind_max, precip_sum
   --fires    fire_counts_daily.parquet  (build_fire_labels.py)
   --gadm     GADM 4.1 level-2 GeoJSON
 Outputs:
@@ -149,6 +151,12 @@ def main() -> None:
     ap.add_argument("--start", type=date.fromisoformat, default=date(2019, 1, 1))
     ap.add_argument("--train-end-year", type=int, default=2022)
     ap.add_argument("--val-year", type=int, default=2023)
+    ap.add_argument(
+        "--end",
+        type=date.fromisoformat,
+        default=None,
+        help="last day to build; later weather days are dropped (and counted) before building",
+    )
     ap.add_argument("--out", type=Path, default=Path("data/processed/wildfire_dataset.parquet"))
     ap.add_argument("--climatology", type=Path, default=Path("data/processed/climatology.json"))
     args = ap.parse_args()
@@ -165,6 +173,10 @@ def main() -> None:
     fires["date"] = pd.to_datetime(fires["date"]).dt.date
     if weather.empty or fires.empty:
         raise SystemExit("Weather or fire input is empty; refusing to build a dataset")
+    if args.end is not None:
+        after = weather["date"] > args.end
+        print(f"dropping {int(after.sum()):,} weather district-days after {args.end}", flush=True)
+        weather = weather[~after]
 
     train_years = list(range(args.start.year, args.train_end_year + 1))
     clim = compute_climatology(fires, list(meta), train_years)

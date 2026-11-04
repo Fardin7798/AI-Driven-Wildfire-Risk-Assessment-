@@ -27,8 +27,8 @@ async def list_data_source_attributions() -> SourcesMetaResponse:
                 category="Synoptic Meteorological & Atmospheric Variables",
                 license="Creative Commons Attribution 4.0 International (CC BY 4.0)",
                 attribution_text=(
-                    "Contains modified Copernicus Climate Change Service information (ERA5), "
-                    "and Copernicus Atmosphere Monitoring Service information (CAMS)."
+                    "Weather data by Open-Meteo.com from ECMWF IFS HRES open data (CC BY 4.0); "
+                    "contains modified Copernicus Atmosphere Monitoring Service information (CAMS)."
                 ),
                 url="https://open-meteo.com/",
             ),

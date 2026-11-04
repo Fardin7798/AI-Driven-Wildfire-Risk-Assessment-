@@ -1,71 +1,95 @@
 # Model Card — Indian Wildfire Risk & Air Quality Platform
 
-Status (2026-11-03): `wildfire_xgb_v2` is served for wildfire risk; districts missing any model
-input fall back to Canadian FWI. AQI forecasts come from `aqi_station_xgb_v3` (model B). All metrics below come from the Kaggle training run
-(`shaikhfardin05/wildfire-risk-model-v2-training`, best iteration 133).
+Status (2026-11-04, branch `backend`, not yet deployed): `wildfire_xgb_v3` is the active
+wildfire model; districts missing any model input fall back to Canadian FWI. AQI forecasts come
+from `aqi_station_xgb_v3` (model B). Wildfire metrics below come from the Kaggle training run
+(`shaikhfardin05/wildfire-risk-model-v3-training`, GPU, best iteration 344).
 
 ## 1. What is served right now
 
 | Task | Version served | Type | Validated metrics |
 |---|---|---|---|
-| Wildfire risk | `wildfire_xgb_v2` | XGBoost, district x day (FWI fallback per district) | test 2024, section 2 |
+| Wildfire risk | `wildfire_xgb_v3` | XGBoost, district x day (FWI fallback per district) | test 2025, section 2 |
 | AQI 1-3 day forecast | `aqi_station_xgb_v3` | XGBoost model B (no-station), one booster per horizon: CPCB PM2.5 sub-index at t+1..t+3 from CAMS + Open-Meteo inputs at the district centroid | test 2025-11-01..2026-10-28, section 3 (second look at test) |
 
-`GET /api/v1/models/current` reports exactly this, read from the deployed artifacts.
+`GET /api/v1/models/current` reports exactly this, read from the deployed artifacts
+(`backend/models/wildfire_xgb_v3/`: booster, metadata with sha256 + thresholds + climatology,
+evaluation).
 
-## 2. Wildfire model v2
+## 2. Wildfire model v3
 
 - **Question answered**: probability that a district has at least one vegetation fire on day D.
 - **Unit**: district (GADM 4.1 India level 2, 676 districts) x day.
 - **Label**: >= 1 NASA FIRMS VIIRS NOAA-20 detection with confidence nominal/high and
   `type == 0` (presumed vegetation fire) inside the district on day D (UTC acquisition date).
   This includes agricultural residue burning; it cannot be separated without land-cover data.
-- **Features** (`WILDFIRE_V2_FEATURES` in `backend/app/domain/features.py`, 27): daily weather
-  (temp max/mean, RH mean, wind max, precipitation), rolling rain/temperature/dry-day features
-  over a 31-day window, FWI codes (FFMC, DMC, DC, ISI, BUI, FWI), seasonality, centroid lat/lon,
-  fire counts in the previous 7/30 days (VIIRS NOAA-20, confidence != low), and the district's
-  monthly fire-day rate from the training years.
-- **Excluded on purpose**: `rh_min`, `et0`, `soil_moisture` (absent from the training archive),
-  land-cover fractions (`wf.regions.landcover` empty in production).
+  Labels are identical to v2's on 2019-2024 (0 mismatches over 1,481,792 district-days).
+- **Features** (`WILDFIRE_V2_FEATURES` in `backend/app/domain/features.py`, 27, same list as v2):
+  daily weather (temp max/mean, RH mean, wind max, precipitation), rolling rain/temperature/dry-day
+  features over a 31-day window, FWI codes (FFMC, DMC, DC, ISI, BUI, FWI), seasonality, centroid
+  lat/lon, fire counts in the previous 7/30 days (VIIRS NOAA-20, confidence != low), and the
+  district's monthly fire-day rate from the training years (2019-2023).
+- **Excluded on purpose**: `rh_min`, `et0`, `soil_moisture`, land-cover fractions
+  (`wf.regions.landcover` empty in production).
 - **Same code in training and live**: the dataset builder calls `extract_features`,
   `calculate_daily_fwi` and `fwi_inputs` from the backend.
-- **Data**: FIRMS VIIRS NOAA-20 SP 2019-2024 (Area API), NASA POWER daily weather per district
-  centroid (wind converted m/s -> km/h), FWI spun up from 2018-09-01.
-- **Split**: train 2019-2022, validation 2023 (early stopping + thresholds), test 2024.
+- **Weather (what changed from v2)**: ECMWF IFS HRES 9 km via Open-Meteo (`models=ecmwf_ifs`),
+  the same model the live API serves, instead of NASA POWER. Day = Open-Meteo's
+  `timezone=Asia/Kolkata` day, i.e. 19:00..19:00 UTC (Open-Meteo truncates +05:30 to 5 h).
+  temp_max / temp_min = max / min of the 24 hourly temperature_2m values of that day;
+  temp_mean, rh_mean, wind_max, precip_sum = Open-Meteo daily aggregates.
+- **Data**: FIRMS VIIRS NOAA-20 SP 2018-12..2025-12 (Area API), IFS weather per district
+  (Open-Meteo cell selection reproduced), FWI spun up from 2018-09-01.
+- **Split**: train 2019-2023, validation 2024 (early stopping + thresholds), test 2025.
+  Params, seed and features are v2's fixed ones (no grid search).
 - **Baselines** (computed in the training script on the same test rows): FWI-only,
-  district-month climatology, persistence (`fires_prev_7d`).
+  district-month climatology, persistence (`fires_prev_7d`), and deployed v2 on the same rows.
 - **Risk thresholds**: chosen on validation only — moderate = recall >= 0.90, high = max F1,
   extreme = precision >= 0.80.
 - **Explanations**: top 3 risk-increasing factors from XGBoost TreeSHAP (`pred_contribs`).
 
-### Results (test year 2024, 247,416 district-days, 23.3% positive)
-| Model | ROC-AUC | PR-AUC |
-|---|---|---|
-| **XGBoost v2** | **0.9117** | **0.7799** |
-| Climatology (district-month) | 0.8790 | 0.6939 |
-| Persistence (`fires_prev_7d`) | 0.8728 | 0.6856 |
-| FWI only | 0.7802 | 0.4420 |
+### Results (test year 2025, 246,740 district-days, 23.85% positive)
+| Model | ROC-AUC | PR-AUC | F1 (own "high" threshold) |
+|---|---|---|---|
+| **XGBoost v3** | **0.9232** | **0.8172** | **0.7268** |
+| XGBoost v2 (deployed, same rows, IFS weather, v2 climatology + thresholds) | 0.9199 | 0.8093 | 0.7226 |
+| Climatology (district-month) | 0.8889 | 0.7264 | |
+| Persistence (`fires_prev_7d`) | 0.8849 | 0.7316 | |
+| FWI only | 0.8003 | 0.5060 | |
 
-At the "high" threshold: F1 0.7022, precision 0.6701, recall 0.7376. Brier score 0.0962.
-Thresholds (probability): moderate 0.1356, high 0.3421, extreme 0.5419.
+v3 at the "high" threshold: precision 0.7000, recall 0.7557, Brier 0.0902. Thresholds
+(probability): moderate 0.143, high 0.3256, extreme 0.5574. Validation 2024: ROC 0.9146,
+PR 0.7853, F1 0.7069. The v3 - v2 gain is small (+0.003 ROC, +0.008 PR); the main reason for v3 is
+that its training weather is the same product, model and day boundary as live weather.
+
+**Test disclosure.** The 2025 test year was exposed once before the official run: a local CPU
+smoke run of `train_wildfire_v3.py` on a 60k-row train subsample (to check the script end to end)
+printed 2025 test metrics for that throwaway model (ROC ~0.921) and for v2 on 2025 rows. Its
+outputs were deleted and nothing (features, params, thresholds, rounds) was tuned or chosen from
+it. The numbers above are the single official Kaggle run.
 
 ### Known training/serving differences
-- Training weather is NASA POWER; live weather is Open-Meteo. Same variables and units, different
-  products, so small systematic biases are expected.
+- Live weather for "today" (scored at 01:10 IST) is an IFS forecast at short lead time; training
+  used Open-Meteo's archived IFS runs (Historical Forecast API). Same model, cell and derivation;
+  past days agree within API rounding (0.05 C, 0.5 % RH, 0.05 km/h, 0.0 mm; 3 districts,
+  2026-10-25..11-01).
 - Live fire history uses VIIRS NOAA-20 **NRT**; labels use **SP** (reprocessed) data.
+- IFS model upgrades (49r1 2024-11-12, 50r1 2026-05-12) could shift weather; not separable from
+  weather in the audit.
 - `fires_prev_30d` needs 30 days of detections in `wf.fire_detections`; run
   `POST /api/v1/internal/jobs/backfill_fires` once after a fresh deploy.
 
 ### Missing weather (no imputation)
-- Training never saw a missing value: the POWER archive is a contiguous daily series (-999 kept as
-  NaN) and `train_wildfire_v2.py` refuses any NaN feature. XGBoost's native NaN handling is never
-  relied on.
-- Live inference matches that: a district-day is scored only when all 31 days of its rolling window
-  (target day and 30 before) have temp_max, temp_mean, rh_mean, wind_max and precip_sum; otherwise
-  `predict_risk` skips it and logs the reason (`weather_window_incomplete`, `no_fwi_state_today`,
-  `no_centroid`). FWI state carries over only from the previous day; any gap restarts from the
-  standard start-up codes, as in the dataset builder.
-- The NASA POWER provider (fallback only) returns -999 / absent values as None; nothing is filled.
+- Training never saw a missing value (0 missing hourly values in the IFS extraction) and
+  `train_wildfire_v3.py` refuses any NaN feature. XGBoost's native NaN handling is never relied on.
+- Live: a day with fewer than 24 hourly temperatures, or any null hour, has temp_max/temp_min =
+  NULL (counted and logged by `ingest_weather`); any value the API does not return stays NULL.
+- A district-day is scored only when all 31 days of its rolling window (target day and 30 before)
+  have temp_max, temp_mean, rh_mean, wind_max and precip_sum; otherwise `predict_risk` skips it and
+  logs the reason (`weather_window_incomplete`, `no_fwi_state_today`, `no_centroid`). FWI state
+  carries over only from the previous day; any gap restarts from the standard start-up codes, as
+  in the dataset builder.
+- There is no fallback weather source: another dataset would feed the model different weather.
 
 ## 3. AQI model B v3 (`aqi_station_xgb_v3`)
 
@@ -94,6 +118,9 @@ Model B beats raw CAMS on every horizon. The station baselines are better where 
 reports, but they cannot produce a value for a district without one, which model B is for.
 
 ## 4. Retired models
+- `wildfire_xgb_v2` (replaced 2026-11-04 by v3): same features and params, trained on NASA POWER
+  weather 2019-2022 (val 2023, test 2024: ROC 0.9117, PR 0.7799). Live weather was Open-Meteo, a
+  different product. Artifacts backed up outside the repo and in git history (up to d064070).
 - `wildfire_xgb_v1` (removed 2026-11-01): trained only on existing fire detections, target
   derived from detection confidence/FRP, features (brightness, scan, track, bright_t31) are
   measurements of a fire already burning. Leaky and impossible to compute for a district without

@@ -15,9 +15,12 @@ countries:
         - "VIIRS_NOAA20_NRT"
         - "VIIRS_NOAA21_NRT"
         - "MODIS_NRT"
+      # Wildfire weather: Open-Meteo models=ecmwf_ifs, timezone Asia/Kolkata. temp_max/temp_min
+      # are derived from HOURLY temperature_2m (see app/providers/open_meteo_weather.py).
+      weather_model: "ecmwf_ifs"
+      weather_hourly_variables:
+        - "temperature_2m"
       weather_variables:
-        - "temperature_2m_max"
-        - "temperature_2m_min"
         - "temperature_2m_mean"
         - "relative_humidity_2m_mean"
         - "relative_humidity_2m_min"

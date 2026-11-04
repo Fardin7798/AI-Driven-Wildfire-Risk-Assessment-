@@ -58,10 +58,11 @@ FEATURE_NAMES: list[str] = [
 ]
 
 
-# Features used by wildfire_xgb_v2. Every one of them can be produced identically from the
-# training archive (NASA POWER + FIRMS SP) and from live data (Open-Meteo + FIRMS NRT).
-# Excluded on purpose: rh_min, et0, soil_moisture (not in the training archive) and the
-# land-cover fractions (wf.regions.landcover is not populated in production yet).
+# Features used by wildfire_xgb_v2 and wildfire_xgb_v3 (identical list; name kept so the
+# training scripts of both versions import it unchanged). Every one of them is produced identically
+# from the training archive (ECMWF IFS HRES via Open-Meteo + FIRMS SP) and from live data
+# (Open-Meteo ecmwf_ifs + FIRMS NRT). Excluded on purpose: rh_min, et0, soil_moisture (not used
+# in training) and the land-cover fractions (wf.regions.landcover is not populated yet).
 WILDFIRE_V2_FEATURES: list[str] = [
     "temp_max",
     "temp_mean",

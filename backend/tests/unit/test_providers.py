@@ -1,7 +1,11 @@
 from datetime import date
 
 from app.providers.firms import FirmsProvider
-from app.providers.open_meteo_weather import OpenMeteoWeatherProvider
+from app.providers.open_meteo_weather import (
+    PROVIDER_FORECAST,
+    OpenMeteoWeatherProvider,
+    parse_payload,
+)
 from app.providers.registry import ProviderRegistry
 
 
@@ -30,30 +34,33 @@ def test_firms_csv_parser():
 
 
 def test_open_meteo_weather_parser():
-    """Verify parsing of Open-Meteo daily weather dictionary."""
-    sample_daily = {
-        "time": ["2026-04-10", "2026-04-11"],
-        "temperature_2m_max": [35.2, 36.1],
-        "temperature_2m_min": [22.0, 23.5],
-        "temperature_2m_mean": [28.6, 29.8],
-        "relative_humidity_2m_mean": [35.0, 32.0],
-        "relative_humidity_2m_min": [18.0, 16.0],
-        "wind_speed_10m_max": [16.4, 21.2],
-        "precipitation_sum": [0.0, 0.5],
-        "et0_fao_evapotranspiration": [5.8, 6.2],
-        "soil_moisture_0_to_7cm_mean": [0.14, 0.12],
+    """Daily aggregates from the API, temp_max/temp_min from the 24 hourly values."""
+    payload = {
+        "daily": {
+            "time": ["2026-04-10"],
+            "temperature_2m_mean": [28.6],
+            "relative_humidity_2m_mean": [35.0],
+            "relative_humidity_2m_min": [18.0],
+            "wind_speed_10m_max": [16.4],
+            "precipitation_sum": [0.0],
+            "et0_fao_evapotranspiration": [5.8],
+            "soil_moisture_0_to_7cm_mean": [0.14],
+        },
+        "hourly": {
+            "time": [f"2026-04-10T{h:02d}:00" for h in range(24)],
+            "temperature_2m": [22.0 + h * 0.5 for h in range(24)],
+        },
     }
-    provider = OpenMeteoWeatherProvider()
-    parsed = provider._parse_daily_dict(sample_daily, provider_name="open_meteo")
+    parsed = parse_payload(payload, provider_name=PROVIDER_FORECAST)
 
-    assert len(parsed) == 2
+    assert len(parsed) == 1
     d1 = parsed[0]
     assert d1.record_date == date(2026, 4, 10)
-    assert d1.temp_max == 35.2
+    assert d1.temp_max == 33.5 and d1.temp_min == 22.0
     assert d1.wind_max == 16.4
     assert d1.rh_min == 18.0
     assert d1.precip_sum == 0.0
-    assert d1.provider == "open_meteo"
+    assert d1.provider == "open_meteo_ecmwf_ifs"
 
 
 def test_provider_registry_country_config():
@@ -67,12 +74,11 @@ def test_provider_registry_country_config():
     # Providers can be instantiated
     fire_prov = reg.get_fire_provider("IN")
     weather_prov = reg.get_weather_provider("IN")
-    weather_fallback = reg.get_weather_provider("IN", fallback=True)
     aq_prov = reg.get_air_quality_provider("IN")
 
     assert fire_prov is not None
     assert weather_prov is not None
-    assert weather_fallback is not None
+    assert isinstance(weather_prov, OpenMeteoWeatherProvider)
     assert aq_prov is not None
 
 

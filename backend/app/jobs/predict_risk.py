@@ -42,7 +42,7 @@ def missing_window_dates(available: set[date], target: date) -> list[date]:
     complete weather row.
 
     Training (ml/pipeline/build_wildfire_dataset.py) only ever saw full, gap-free windows: its
-    NASA POWER archive is a contiguous daily series and train_wildfire_v2.py refuses any NaN
+    ECMWF IFS archive is a contiguous daily series and train_wildfire_v3.py refuses any NaN
     feature. A shorter window would compute precip_sum_30d, dry-day counts etc. over fewer days,
     i.e. silently treat the missing days as dry, so such district-days are skipped.
     """

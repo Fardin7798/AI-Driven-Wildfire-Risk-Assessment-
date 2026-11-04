@@ -92,9 +92,10 @@ def test_predictor_falls_back_instead_of_zero_filling(tmp_path):
         xgb.DMatrix(np.array([[1.0, 300.0], [30.0, 340.0]]), label=[0, 1], feature_names=names),
         num_boost_round=2,
     )
-    model_file = tmp_path / "toy_v1.json"
+    (tmp_path / "toy_v1").mkdir()
+    model_file = tmp_path / "toy_v1" / "toy_v1.json"
     booster.save_model(model_file)
-    (tmp_path / "toy_v1_metadata.json").write_text(
+    (tmp_path / "toy_v1" / "toy_v1_metadata.json").write_text(
         json.dumps(
             {"feature_list": names, "sha256": hashlib.sha256(model_file.read_bytes()).hexdigest()}
         )
@@ -122,24 +123,25 @@ def test_gadm_names_are_humanized():
 @pytest.mark.asyncio
 @respx.mock
 async def test_weather_batch_keeps_missing_values_as_none():
+    hours = [f"2026-11-01T{h:02d}:00" for h in range(24)]
     payload = [
         {
             "daily": {
                 "time": ["2026-11-01"],
-                "temperature_2m_max": [31.0],
                 "relative_humidity_2m_mean": [60],
                 "wind_speed_10m_max": [12.0],
                 "precipitation_sum": [0.0],
-            }
+            },
+            "hourly": {"time": hours, "temperature_2m": [25.0] * 23 + [31.0]},
         },
         {
             "daily": {
                 "time": ["2026-11-01"],
-                "temperature_2m_max": [None],
                 "relative_humidity_2m_mean": [70],
                 "wind_speed_10m_max": [8.0],
                 "precipitation_sum": [2.0],
-            }
+            },
+            "hourly": {"time": hours, "temperature_2m": [25.0] * 23 + [None]},
         },
     ]
     route = respx.get("https://api.open-meteo.com/v1/forecast").mock(
@@ -149,7 +151,7 @@ async def test_weather_batch_keeps_missing_values_as_none():
     out = await p.fetch_weather_forecast_batch([(20.9, 75.5), (21.1, 79.0)])
     assert route.call_count == 1  # one HTTP call for both districts
     assert out[0][0].temp_max == 31.0
-    assert out[1][0].temp_max is None  # never replaced with a default
+    assert out[1][0].temp_max is None  # a missing hour is never replaced with a default
     assert out[0][0].soil_moisture is None
 
 

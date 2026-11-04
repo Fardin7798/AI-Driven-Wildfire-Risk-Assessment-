@@ -28,7 +28,7 @@ graph TD
     end
 
     subgraph Machine Learning Runtime
-        XGB[XGBoost Wildfire v2<br/>FWI fallback when no artifact]
+        XGB[XGBoost Wildfire v3<br/>FWI fallback when no artifact]
         AQIF[AQI Model B v3<br/>XGBoost no-station, h1-h3]
         SHAP_EXP[TreeSHAP Explainer<br/>Top 3 Drivers]
     end
@@ -69,6 +69,6 @@ graph TD
    - Dynamic risk categorization.
    - `features.py`: Exact same feature generation used in both offline model training and online serving to eliminate train-serve skew.
 4. **Data Providers (`app/providers/`)**:
-   - Country-agnostic interfaces (`base.py`) with provider implementations for FIRMS, Open-Meteo, CPCB, and NASA POWER.
+   - Country-agnostic interfaces (`base.py`) with provider implementations for FIRMS, Open-Meteo (weather: ECMWF IFS only; air quality: CAMS) and CPCB.
 5. **Database Layer (`app/db/`)**:
    - Isolated `wf` schema in PostgreSQL with PostGIS geometric spatial indexes (`GIST`) and Row Level Security (`RLS`).
