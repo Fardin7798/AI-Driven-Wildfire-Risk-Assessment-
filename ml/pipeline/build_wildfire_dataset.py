@@ -10,8 +10,7 @@ and type == 0 (presumed vegetation fire) on day D, else 0. This includes agricul
 residue burning; FIRMS cannot separate it from forest fire without land-cover data.
 
 Inputs:
-  --weather  power_daily.parquet        (download_power_history.py, NASA POWER; v2)
-             or ifs_weather.parquet     (prepare_ifs_weather.py, ECMWF IFS HRES; v3)
+  --weather  ifs_weather.parquet        (prepare_ifs_weather.py, ECMWF IFS HRES; v3)
              schema: gadm_id, date, temp_max, temp_mean, rh_mean, wind_max, precip_sum
   --fires    fire_counts_daily.parquet  (build_fire_labels.py)
   --gadm     GADM 4.1 level-2 GeoJSON

@@ -2,11 +2,11 @@
 
 Everything here builds data from real sources and fails loudly when an input is missing.
 No script generates synthetic data. No metric is written by hand: metrics come only from
-the training scripts' output (`wildfire_v3_evaluation.json`, `wildfire_v2_evaluation.json`).
+the training scripts' output (e.g. `wildfire_v3_evaluation.json`).
 
 ## Wildfire model v3 (served) — district x day, ECMWF IFS weather
 
-Same labels, features, params and builder as v2 (below); only the weather and the split change.
+Same labels, features, params and builder as the retired v2; only the weather and the split change.
 
 ```bash
 # IFS daily archive per district (region_id x IST day, Tmax/Tmin from hourly T), produced by the
@@ -14,7 +14,7 @@ Same labels, features, params and builder as v2 (below); only the weather and th
 python ml/pipeline/prepare_ifs_weather.py --ifs data/raw/ifs/ifs_daily_20180901_20261101.parquet \
     --cells data/raw/ifs/ifs_served_cells.csv --gadm data/raw/gadm41_IND_2.json \
     --out data/processed/ifs_weather.parquet
-# FIRMS SP 2018-12-01..2025-12-31 -> build_fire_labels.py as in v2, then:
+# FIRMS SP 2018-12-01..2025-12-31 -> build_fire_labels.py (shared inputs below), then:
 python ml/pipeline/build_wildfire_dataset.py --weather data/processed/ifs_weather.parquet \
     --fires data/processed/fire_counts_daily.parquet --gadm data/raw/gadm41_IND_2.json \
     --start 2019-01-01 --train-end-year 2023 --val-year 2024 --end 2025-12-31 \
@@ -28,50 +28,26 @@ The run writes `wildfire_xgb_v3.json`, `wildfire_xgb_v3_metadata.json` and
 `wildfire_v3_evaluation.json`. Serving reads them from `backend/models/wildfire_xgb_v3/` as
 `wildfire_xgb_v3{.json,_metadata.json,_evaluation.json}` (`ACTIVE_WILDFIRE_MODEL`).
 
-## Wildfire model v2 (retired 2026-11-04) — district x day
+## Shared wildfire inputs (used by v3)
 
 Run from the repo root (Python env with `backend[pipeline]` + xgboost + scikit-learn):
 
 ```bash
 # 1. FIRMS detections, VIIRS NOAA-20 standard processing, India bbox (needs FIRMS map key)
 FIRMS_MAP_KEY=... python ml/pipeline/download_firms_history.py \
-    --source VIIRS_NOAA20_SP --start 2019-01-01 --end 2024-12-31 --out-dir data/raw/firms
+    --source VIIRS_NOAA20_SP --start 2018-12-01 --end 2025-12-31 --out-dir data/raw/firms
 
 # 2. GADM 4.1 India level-2 districts
 python backend/scripts/load_regions.py --download   # also saves data/raw/gadm41_IND_2.json
 
-# 3. Daily weather per district centroid from NASA POWER (no key; ~10 min)
-python ml/pipeline/download_power_history.py --gadm data/raw/gadm41_IND_2.json \
-    --start 2018-09-01 --end 2024-12-31 --out-dir data/raw/power
-
-# 4. District-day fire counts (spatial join)
+# 3. District-day fire counts (spatial join)
 python ml/pipeline/build_fire_labels.py --firms-dir data/raw/firms \
     --gadm data/raw/gadm41_IND_2.json --out data/processed/fire_counts_daily.parquet
-
-# 5. Feature table (uses backend/app/domain/features.py + fwi.py)
-python ml/pipeline/build_wildfire_dataset.py --weather data/raw/power/power_daily.parquet \
-    --fires data/processed/fire_counts_daily.parquet --gadm data/raw/gadm41_IND_2.json \
-    --out data/processed/wildfire_dataset.parquet --climatology data/processed/climatology.json
-
-# 6. Train + evaluate (locally or on Kaggle via ml/kaggle_wildfire_v2/)
-python ml/train/train_wildfire_v2.py --dataset data/processed/wildfire_dataset.parquet \
-    --climatology data/processed/climatology.json --out-dir backend/models
 ```
 
-Step 6 writes `wildfire_xgb_v2.json`, `wildfire_xgb_v2_metadata.json` (features, thresholds,
-metrics, sha256, climatology, fire-feature source) and `wildfire_v2_evaluation.json` (model +
-baselines on validation/test). v2 is no longer served (artifacts in git history up to d064070).
-
-### Kaggle
-`ml/kaggle_wildfire_v2/` holds the kernel metadata + notebook. It expects the Kaggle dataset
-`shaikhfardin05/india-district-wildfire-v2` containing `wildfire_dataset.parquet`,
-`climatology.json`, `ml/train/train_wildfire_v2.py` and `backend/app/domain/features.py`.
-
-```bash
-kaggle kernels push -p ml/kaggle_wildfire_v2
-kaggle kernels status shaikhfardin05/wildfire-risk-model-v2-training
-kaggle kernels output shaikhfardin05/wildfire-risk-model-v2-training -p backend/models
-```
+`wildfire_xgb_v2` (NASA POWER weather) was retired on 2026-11-04. Its training script, Kaggle
+kernel and NASA POWER downloader were removed from the repo; they remain in git history up to
+431faf2.
 
 ## AQI: PM2.5 sub-index forecast at CPCB stations (1-3 days)
 Target: the CPCB **PM2.5 sub-index of measured CPCB station PM2.5** (OpenAQ v3 daily values), at

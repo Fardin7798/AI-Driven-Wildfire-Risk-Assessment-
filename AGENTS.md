@@ -5,7 +5,7 @@ Production-grade backend and ML pipeline for "AI-Driven Wildfire Risk Assessment
 
 ## Architecture Layers
 - **Database (`wf` schema)**: PostgreSQL + PostGIS (Supabase in prod, `postgis/postgis:16-3.4` in local dev). RLS enforced on all tables.
-- **Providers Layer (`app/providers/`)**: Country-agnostic protocol interfaces for FIRMS, Open-Meteo Weather, Open-Meteo AQ / CAMS, CPCB (data.gov.in), and NASA POWER fallback.
+- **Providers Layer (`app/providers/`)**: Country-agnostic protocol interfaces for FIRMS, Open-Meteo Weather, Open-Meteo AQ / CAMS, and CPCB (data.gov.in).
 - **Domain Core (`app/domain/`)**:
   - Canadian Forest Fire Weather Index (FWI) system (FFMC, DMC, DC, ISI, BUI, FWI) with daily carry-over.
   - Indian National AQI (NAQI) piecewise linear sub-index aggregator.
@@ -15,7 +15,7 @@ Production-grade backend and ML pipeline for "AI-Driven Wildfire Risk Assessment
 - **Business Services (`app/services/`)**: Async database operations and business logic.
 - **Background Jobs (`app/jobs/`)**: APScheduler with Postgres advisory locking and `X-Job-Token` protected HTTP endpoints.
 - **API (`app/api/`)**: FastAPI, Pydantic v2 schemas, RFC 9457 errors, rate limiting, and structured JSON logs.
-- **ML Pipeline (`ml/`)**: FIRMS + NASA POWER downloaders, spatial join to districts, dataset builder, training script and Kaggle kernel (see ml/README.md).
+- **ML Pipeline (`ml/`)**: FIRMS, Open-Meteo/IFS and OpenAQ downloaders, spatial join to districts, dataset builder, training script and Kaggle kernel (see ml/README.md).
 
 ## Ground Rules
 - `main` is the owner's branch; automated agents work on branch `backend` and open a PR to main.

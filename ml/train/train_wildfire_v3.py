@@ -1,6 +1,6 @@
 """Train wildfire_xgb_v3 (district x day fire-occurrence model) and evaluate it honestly.
 
-Copy of train_wildfire_v2.py; same features, params, seed and baselines. What changed:
+Copy of the retired train_wildfire_v2.py (git history up to 431faf2); same features, params, seed and baselines. What changed:
   * weather input is ECMWF IFS HRES 9 km (the model live serving gets via Open-Meteo),
     built by ml/pipeline/prepare_ifs_weather.py + build_wildfire_dataset.py
   * split: train 2019-2023, validation 2024 (early stopping + thresholds),

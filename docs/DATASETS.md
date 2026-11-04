@@ -45,10 +45,8 @@ This platform aggregates multiple open scientific datasets for environmental ris
 - **Attribution**: "Air quality station monitoring data courtesy of Central Pollution Control Board (CPCB), Ministry of Environment, Forest and Climate Change, published on data.gov.in."
 - **Endpoint**: `https://api.data.gov.in/resource/3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69`
 
-## 4b. NASA POWER (wildfire training weather)
-- **Source**: NASA Langley POWER daily API (`T2M_MAX, T2M, RH2M, WS10M_MAX, PRECTOTCORR`) at each district centroid, 2018-09 to 2024. Used by the wildfire pipeline only; the AQI station model does not use it (POWER lags ~3 days, so day-t weather is not live at forecast time).
-- **License**: Public domain (NASA). Attribution: "Data obtained from the NASA Langley Research Center POWER Project."
-- **Downloader**: `ml/pipeline/download_power_history.py`.
+## 4b. NASA POWER (retired)
+- Was the training weather of `wildfire_xgb_v2` (retired 2026-11-04). Not used by any served model; the downloader was removed from the repo (git history up to 431faf2).
 
 ## 4c. Open-Meteo Historical Forecast API (AQI station model weather)
 - **Source**: archived Open-Meteo forecasts (first hours of each model run stitched, default "best match"), daily `temperature_2m_max, temperature_2m_mean, relative_humidity_2m_mean, wind_speed_10m_max (km/h), precipitation_sum`, `timezone=Asia/Kolkata`, at each training district centroid, 2022-07-25 to 2026-10-28.
