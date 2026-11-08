@@ -31,6 +31,7 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       ENV: production
       ENABLE_SCHEDULER: "false"
+      PYTHONUNBUFFERED: "1" # log lines reach the run log even when the job is cancelled
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
