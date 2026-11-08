@@ -7,6 +7,7 @@ value is imputed. An Open-Meteo hourly/daily quota error stops the job (rows alr
 are committed) and is raised so the run is recorded as failed.
 """
 
+import time
 from datetime import date
 from typing import Any
 
@@ -103,6 +104,7 @@ async def _write_skip(
 
 async def run_forecast_aqi(model: AqiStationModel, origin: date) -> dict[str, int]:
     written = forecast_regions = skipped = kept = 0
+    started = time.monotonic()
     async with async_session_factory() as session:
         regions = await _regions(session)
         try:
@@ -127,6 +129,12 @@ async def run_forecast_aqi(model: AqiStationModel, origin: date) -> dict[str, in
                     kept += 1
                 if i % COMMIT_EVERY == 0:
                     await session.commit()
+                    logger.info(
+                        "forecast_aqi_progress",
+                        done=i,
+                        regions=len(regions),
+                        seconds=round(time.monotonic() - started, 1),
+                    )
         finally:
             # Also on a quota stop: keep the districts finished so far.
             await session.commit()

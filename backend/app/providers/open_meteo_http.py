@@ -6,6 +6,7 @@ retrying into a longer ban.
 """
 
 import asyncio
+import time
 from typing import Any
 
 import httpx
@@ -25,13 +26,24 @@ class OpenMeteoQuotaExceeded(RuntimeError):
 async def get_json(url: str, params: dict[str, Any]) -> Any:
     last_error: Exception | None = None
     for attempt in range(1, MAX_ATTEMPTS + 1):
+        started = time.monotonic()
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 resp = await client.get(url, params=params)
         except httpx.RequestError as e:
+            logger.warn(
+                "open_meteo_request_error",
+                url=url,
+                error=type(e).__name__,
+                seconds=round(time.monotonic() - started, 1),
+                attempt=attempt,
+            )
             last_error = e
             await asyncio.sleep(2**attempt)
             continue
+        elapsed = time.monotonic() - started
+        if elapsed > 10:
+            logger.warn("open_meteo_slow_response", url=url, seconds=round(elapsed, 1))
 
         if resp.status_code == 429:
             reason = resp.text[:200]
