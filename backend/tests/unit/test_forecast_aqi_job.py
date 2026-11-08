@@ -198,9 +198,97 @@ def test_job_registered_and_scheduled_in_github_actions(monkeypatch):
     wf = Path(__file__).resolve().parents[3] / ".github" / "workflows" / "pipeline-jobs.yml"
     text = wf.read_text()
     assert 'cron: "0 5 * * *"' in text  # 05:00 UTC = 10:30 IST
-    assert 'echo "jobs=forecast_aqi"' in text
-    assert 'echo "jobs=ingest_weather update_fwi_state predict_risk"' in text
+    assert 'echo "jobs=--unless-succeeded-within=12 forecast_aqi"' in text
+    assert (
+        'echo "jobs=--unless-succeeded-within=12 ingest_weather update_fwi_state predict_risk"'
+        in text
+    )
     assert "python -m app.jobs.cli" in text
+    # No dispatch token: Render adds no dispatch jobs.
+    assert not any(k.startswith("dispatch_") for k in added)
+
+
+def test_render_dispatches_github_jobs_on_time(monkeypatch):
+    """With a token, Render's scheduler starts the GitHub jobs at 00:20, 06:20/12:20, 10:30 IST."""
+    import importlib
+
+    sched_mod = importlib.import_module("app.jobs.scheduler")
+    added: dict[str, dict[str, Any]] = {}
+
+    def add_job(func, trigger, id, **kw):
+        added[id] = kw
+
+    monkeypatch.setattr(sched_mod.settings, "ENABLE_SCHEDULER", True)
+    monkeypatch.setattr(sched_mod.settings, "GITHUB_DISPATCH_TOKEN", "t")
+    monkeypatch.setattr(sched_mod.scheduler, "add_job", add_job)
+    monkeypatch.setattr(sched_mod.scheduler, "start", lambda: None)
+    sched_mod.start_scheduler()
+    assert (added["dispatch_daily_chain"]["hour"], added["dispatch_daily_chain"]["minute"]) == (
+        0,
+        20,
+    )
+    assert added["dispatch_weather_retry"]["hour"] == "6,12"
+    assert (added["dispatch_forecast_aqi"]["hour"], added["dispatch_forecast_aqi"]["minute"]) == (
+        10,
+        30,
+    )
+
+
+async def test_github_dispatch_posts_jobs(monkeypatch):
+    from app.jobs import github_dispatch as gd
+
+    sent: dict[str, Any] = {}
+
+    class Resp:
+        status_code = 204
+        text = ""
+
+    class Client:
+        def __init__(self, *a: Any, **k: Any) -> None: ...
+
+        async def __aenter__(self) -> "Client":
+            return self
+
+        async def __aexit__(self, *e: object) -> None: ...
+
+        async def post(self, url: str, headers: dict[str, str], json: dict[str, Any]) -> Resp:
+            sent.update(url=url, auth=headers["Authorization"], body=json)
+            return Resp()
+
+    monkeypatch.setattr(gd.settings, "GITHUB_DISPATCH_TOKEN", "tok")
+    monkeypatch.setattr(gd.httpx, "AsyncClient", Client)
+    assert await gd.dispatch_pipeline_jobs("forecast_aqi") is True
+    assert sent["url"].endswith("/actions/workflows/pipeline-jobs.yml/dispatches")
+    assert sent["auth"] == "Bearer tok"
+    assert sent["body"] == {"ref": "main", "inputs": {"jobs": "forecast_aqi"}}
+
+    monkeypatch.setattr(gd.settings, "GITHUB_DISPATCH_TOKEN", "")
+    assert await gd.dispatch_pipeline_jobs("forecast_aqi") is False
+
+
+async def test_cli_skips_when_recent_success(monkeypatch):
+    from app.jobs import cli
+
+    ran: list[str] = []
+
+    async def handler() -> int:
+        ran.append("x")
+        return 1
+
+    monkeypatch.setitem(cli.JOB_MAPPING, "ingest_weather", handler)
+
+    async def yes(name: str, hours: float) -> bool:
+        return True
+
+    async def no(name: str, hours: float) -> bool:
+        return False
+
+    monkeypatch.setattr(cli, "_succeeded_within", yes)
+    assert await cli._run(["--unless-succeeded-within=12", "ingest_weather"]) == 0
+    assert ran == []
+    monkeypatch.setattr(cli, "_succeeded_within", no)
+    assert await cli._run(["--unless-succeeded-within=12", "ingest_weather"]) == 0
+    assert ran == ["x"]
 
 
 # ---------------------------------------------------------------- persistence (real Postgres)

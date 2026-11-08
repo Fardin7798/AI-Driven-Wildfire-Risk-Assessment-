@@ -29,6 +29,14 @@ class Settings(BaseSettings):
 
     JOB_TOKEN: str = "dev-job-token"
 
+    # Render is the clock for the Open-Meteo jobs: at their times it asks GitHub Actions to run
+    # .github/workflows/pipeline-jobs.yml (workflow_dispatch starts within a minute; GitHub's own
+    # cron ran 3-7 h late on 5-8 Nov 2026). Empty token = no dispatch; GitHub's cron still runs.
+    # Token needs Actions read/write on GITHUB_REPO only.
+    GITHUB_DISPATCH_TOKEN: str = ""
+    GITHUB_REPO: str = "Fardin7798/AI-Driven-Wildfire-Risk-Assessment-"
+    GITHUB_DISPATCH_REF: str = "main"
+
     FIRMS_MAP_KEY: str = ""
     FIRMS_SOURCES: str | list[str] = ["VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT", "MODIS_NRT"]
 

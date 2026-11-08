@@ -10,11 +10,41 @@ code 1 (each job records its own wf.ingestion_runs row through tracked_job).
 
 import asyncio
 import sys
+from datetime import UTC, datetime, timedelta
+
+from sqlalchemy import select
 
 from app.api.v1.internal_jobs import JOB_MAPPING
+from app.db.models.ingestion import IngestionRun
+from app.db.session import async_session_factory
+
+SKIP_FLAG = "--unless-succeeded-within="
+
+
+async def _succeeded_within(job_name: str, hours: float) -> bool:
+    since = datetime.now(UTC) - timedelta(hours=hours)
+    async with async_session_factory() as session:
+        row = await session.execute(
+            select(IngestionRun.id)
+            .where(
+                IngestionRun.job_name == job_name,
+                IngestionRun.status == "success",
+                IngestionRun.started_at >= since,
+            )
+            .limit(1)
+        )
+        return row.first() is not None
 
 
 async def _run(names: list[str]) -> int:
+    if names and names[0].startswith(SKIP_FLAG):
+        # A retry or a late GitHub cron run: skip when the first job already succeeded recently
+        # (e.g. Render dispatched it on time), so Open-Meteo quota is not spent twice.
+        hours = float(names[0][len(SKIP_FLAG) :])
+        names = names[1:]
+        if names and await _succeeded_within(names[0], hours):
+            print(f"{names[0]}: succeeded within {hours:g} h; skipped")
+            return 0
     for name in names:
         handler = JOB_MAPPING.get(name)
         if handler is None:
@@ -31,7 +61,9 @@ async def _run(names: list[str]) -> int:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("usage: python -m app.jobs.cli <job> [<job> ...]", file=sys.stderr)
+        print(
+            f"usage: python -m app.jobs.cli [{SKIP_FLAG}HOURS] <job> [<job> ...]", file=sys.stderr
+        )
         raise SystemExit(2)
     raise SystemExit(asyncio.run(_run(sys.argv[1:])))
 

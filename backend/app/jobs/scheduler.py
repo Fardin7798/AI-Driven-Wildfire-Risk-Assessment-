@@ -133,11 +133,24 @@ def start_scheduler() -> None:
     # ingest_weather -> update_fwi_state -> predict_risk and forecast_aqi run in GitHub Actions
     # (.github/workflows/pipeline-jobs.yml, via app.jobs.cli), not here: Render's shared outbound IP
     # uses up Open-Meteo's free daily quota (forecast_aqi failed 2026-11-03 and 2026-11-04).
-    jobs: list[tuple[Callable[[], Coroutine[Any, Any, int]], str, dict[str, Any]]] = [
+    jobs: list[tuple[Callable[[], Coroutine[Any, Any, Any]], str, dict[str, Any]]] = [
         (job_ingest_fires, "job_ingest_fires", {"hour": "*/3", "minute": 10}),
         (job_ingest_air_quality, "job_ingest_air_quality", {"hour": "*/6", "minute": 40}),
         (job_retention, "job_retention", {"day_of_week": "sun", "hour": 3, "minute": 0}),
     ]
+    if settings.GITHUB_DISPATCH_TOKEN:
+        from app.jobs.github_dispatch import (
+            dispatch_daily_chain,
+            dispatch_forecast_aqi,
+            dispatch_weather_retry,
+        )
+
+        # Render is only the clock here; the jobs run on GitHub Actions (see github_dispatch).
+        jobs += [
+            (dispatch_daily_chain, "dispatch_daily_chain", {"hour": 0, "minute": 20}),
+            (dispatch_weather_retry, "dispatch_weather_retry", {"hour": "6,12", "minute": 20}),
+            (dispatch_forecast_aqi, "dispatch_forecast_aqi", {"hour": 10, "minute": 30}),
+        ]
     for func, job_id, cron in jobs:
         scheduler.add_job(
             func, "cron", id=job_id, replace_existing=True, misfire_grace_time=900, **cron

@@ -3,6 +3,9 @@ name: Pipeline jobs (Open-Meteo)
 # Runs the jobs that call Open-Meteo outside Render: Render's shared outbound IP hits Open-Meteo's
 # free daily quota (forecast_aqi failed 2026-11-03 and 2026-11-04). Times are UTC (IST = UTC+5:30).
 # Each job writes its own wf.ingestion_runs row. Secret DATABASE_URL = Render's DATABASE_URL.
+# Render is the clock: when GITHUB_DISPATCH_TOKEN is set there, its scheduler starts this workflow
+# by workflow_dispatch at the times below (GitHub's own cron ran 3-7 h late on 5-8 Nov 2026).
+# The cron triggers stay as a fallback and skip when the job already succeeded within 12 h.
 on:
   schedule:
     - cron: "50 18 * * *" # 00:20 IST: weather -> FWI -> risk (daily chain)
@@ -45,9 +48,9 @@ jobs:
         run: |
           case "${{ github.event_name }}:${{ github.event.schedule }}" in
             "workflow_dispatch:"*) echo "jobs=${{ github.event.inputs.jobs }}" >> "$GITHUB_OUTPUT" ;;
-            "schedule:50 18 * * *") echo "jobs=ingest_weather update_fwi_state predict_risk" >> "$GITHUB_OUTPUT" ;;
-            "schedule:0 5 * * *") echo "jobs=forecast_aqi" >> "$GITHUB_OUTPUT" ;;
-            *) echo "jobs=ingest_weather" >> "$GITHUB_OUTPUT" ;;
+            "schedule:50 18 * * *") echo "jobs=--unless-succeeded-within=12 ingest_weather update_fwi_state predict_risk" >> "$GITHUB_OUTPUT" ;;
+            "schedule:0 5 * * *") echo "jobs=--unless-succeeded-within=12 forecast_aqi" >> "$GITHUB_OUTPUT" ;;
+            *) echo "jobs=--unless-succeeded-within=12 ingest_weather" >> "$GITHUB_OUTPUT" ;;
           esac
       - name: Run
         run: python -m app.jobs.cli ${{ steps.pick.outputs.jobs }}
