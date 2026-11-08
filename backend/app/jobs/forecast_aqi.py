@@ -1,7 +1,9 @@
 """Daily AQI forecast job: model B (no-station boosters) for every district.
 
-Origin t = yesterday (IST); h1..h3 = t+1..t+3. Each district is forecast by
-`app.ml.aqi_station_b.forecast_district` from live Open-Meteo inputs at its centroid.
+Origin t = yesterday (IST); h1..h3 = t+1..t+3. Inputs for 50 district centroids are
+fetched per Open-Meteo request (`fetch_inputs_batch`); each district is then forecast by
+`app.ml.aqi_station_b.forecast_district`. If a batch request fails (not quota), its districts
+fall back to one request pair each.
 A district without complete inputs gets a row in wf.aqi_forecast_skips with the reason; no
 value is imputed. An Open-Meteo hourly/daily quota error stops the job (rows already written
 are committed) and is raised so the run is recorded as failed.
@@ -20,11 +22,12 @@ from app.db.models.air_quality import AQIForecastB, AQIForecastSkip
 from app.db.models.region import Region
 from app.db.session import async_session_factory
 from app.jobs.scheduler import tracked_job
-from app.ml.aqi_station_b import forecast_district, origin_day
+from app.ml.aqi_station_b import fetch_inputs_batch, forecast_district, origin_day
 from app.ml.loader import AqiStationModel, model_loader
+from app.providers.open_meteo_http import OpenMeteoQuotaExceeded
 
 SOURCE = "model_b_no_station"
-COMMIT_EVERY = 50  # districts per transaction, so a quota stop keeps finished work
+COMMIT_EVERY = 50  # districts per batch request and per transaction (a quota stop keeps them)
 
 
 async def _regions(session: AsyncSession) -> list[tuple[int, float | None, float | None]]:
@@ -108,33 +111,50 @@ async def run_forecast_aqi(model: AqiStationModel, origin: date) -> dict[str, in
     async with async_session_factory() as session:
         regions = await _regions(session)
         try:
-            for i, (region_id, lat, lon) in enumerate(regions, start=1):
-                if lat is None or lon is None:
-                    result: dict[str, Any] = {
-                        "status": "skipped",
-                        "reason": "region has no centroid",
-                    }
-                else:
-                    result = await forecast_district(
-                        region_id, float(lat), float(lon), model=model, origin=origin
+            for start in range(0, len(regions), COMMIT_EVERY):
+                chunk = regions[start : start + COMMIT_EVERY]
+                located = [(r, la, lo) for r, la, lo in chunk if la is not None and lo is not None]
+                batch: dict[int, tuple[dict[str, list[Any]], dict[str, list[Any]]]] = {}
+                try:
+                    fetched = await fetch_inputs_batch(
+                        [(float(la), float(lo)) for _, la, lo in located], origin
                     )
-                if result["status"] == "ok":
-                    written += await _write_forecasts(session, result)
-                    forecast_regions += 1
-                elif await _write_skip(
-                    session, region_id, origin, model.model_version, result["reason"]
-                ):
-                    skipped += 1
-                else:
-                    kept += 1
-                if i % COMMIT_EVERY == 0:
-                    await session.commit()
-                    logger.info(
-                        "forecast_aqi_progress",
-                        done=i,
-                        regions=len(regions),
-                        seconds=round(time.monotonic() - started, 1),
-                    )
+                    batch = {r: inp for (r, _, _), inp in zip(located, fetched, strict=True)}
+                except OpenMeteoQuotaExceeded:
+                    raise
+                except Exception as e:  # fall back to one request pair per district
+                    logger.warn("forecast_aqi_batch_fetch_failed", start=start, error=str(e)[:200])
+                for region_id, lat, lon in chunk:
+                    if lat is None or lon is None:
+                        result: dict[str, Any] = {
+                            "status": "skipped",
+                            "reason": "region has no centroid",
+                        }
+                    else:
+                        result = await forecast_district(
+                            region_id,
+                            float(lat),
+                            float(lon),
+                            model=model,
+                            origin=origin,
+                            inputs=batch.get(region_id),
+                        )
+                    if result["status"] == "ok":
+                        written += await _write_forecasts(session, result)
+                        forecast_regions += 1
+                    elif await _write_skip(
+                        session, region_id, origin, model.model_version, result["reason"]
+                    ):
+                        skipped += 1
+                    else:
+                        kept += 1
+                await session.commit()
+                logger.info(
+                    "forecast_aqi_progress",
+                    done=start + len(chunk),
+                    regions=len(regions),
+                    seconds=round(time.monotonic() - started, 1),
+                )
         finally:
             # Also on a quota stop: keep the districts finished so far.
             await session.commit()

@@ -163,14 +163,47 @@ def _skip(region_id: int, origin: date, model_version: str, reason: str) -> dict
     }
 
 
+async def fetch_inputs_batch(
+    points: list[tuple[float, float]], origin: date
+) -> list[tuple[dict[str, list[Any]], dict[str, list[Any]]]]:
+    """CAMS `hourly` and weather `daily` blocks for several centroids in one request per API.
+
+    Open-Meteo answers a comma-separated coordinate list with one result per location, in order,
+    each identical to a single-location request with the same parameters (the quota counts each
+    location). Two requests per batch instead of two per district: on GitHub Actions a single
+    request often waits 60 s on a connect timeout (seen 2026-11-08), so per-district requests
+    could not finish 676 districts in 90 min.
+    """
+    if not points:
+        return []
+    lats = ",".join(format_coord(lat) for lat, _ in points)
+    lons = ",".join(format_coord(lon) for _, lon in points)
+    air_params = {**cams_params(points[0][0], points[0][1], origin), "latitude": lats}
+    air_params["longitude"] = lons
+    wx_params = {**weather_params(points[0][0], points[0][1]), "latitude": lats}
+    wx_params["longitude"] = lons
+    air = await get_json(settings.OPEN_METEO_AIR_QUALITY_URL, air_params)
+    wx = await get_json(settings.OPEN_METEO_WEATHER_URL, wx_params)
+    if len(points) == 1:
+        air, wx = [air], [wx]
+    if not (isinstance(air, list) and isinstance(wx, list)) or not (
+        len(air) == len(wx) == len(points)
+    ):
+        raise ValueError(f"batch response does not have {len(points)} locations")
+    return [(a["hourly"], w["daily"]) for a, w in zip(air, wx, strict=True)]
+
+
 async def forecast_district(
     region_id: int,
     lat: float,
     lon: float,
     model: AqiStationModel | None = None,
     origin: date | None = None,
+    inputs: tuple[dict[str, list[Any]], dict[str, list[Any]]] | None = None,
 ) -> dict[str, Any]:
-    """Fetch live inputs for one district centroid and forecast h1..h3, or skip with a reason."""
+    """Forecast h1..h3 for one district centroid, or skip with a reason. `inputs` are the CAMS
+    hourly and weather daily blocks from `fetch_inputs_batch`; without them they are fetched
+    here for this centroid alone."""
     origin = origin or origin_day()
     model = model or model_loader.load_aqi_model()
     if model is None:
@@ -191,9 +224,11 @@ async def forecast_district(
         )
 
     try:
-        air = await get_json(settings.OPEN_METEO_AIR_QUALITY_URL, cams_params(lat, lon, origin))
-        wx = await get_json(settings.OPEN_METEO_WEATHER_URL, weather_params(lat, lon))
-        row = build_features(region_id, lat, lon, origin, air["hourly"], wx["daily"])
+        if inputs is None:
+            air = await get_json(settings.OPEN_METEO_AIR_QUALITY_URL, cams_params(lat, lon, origin))
+            wx = await get_json(settings.OPEN_METEO_WEATHER_URL, weather_params(lat, lon))
+            inputs = (air["hourly"], wx["daily"])
+        row = build_features(region_id, lat, lon, origin, inputs[0], inputs[1])
     except OpenMeteoQuotaExceeded:
         raise  # the caller stops; retrying only extends the block
     except Exception as e:  # network, quota, malformed payload: no forecast, never a default

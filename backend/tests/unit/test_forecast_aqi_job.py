@@ -60,7 +60,9 @@ def _fake_get_json(hours_missing_on_origin: int = 0, quota_after: int | None = N
         calls["n"] += 1
         if quota_after is not None and calls["n"] > quota_after:
             raise OpenMeteoQuotaExceeded("Hourly API request limit exceeded")
-        return {"hourly": hourly} if "hourly" in params else {"daily": daily}
+        one = {"hourly": hourly} if "hourly" in params else {"daily": daily}
+        n = str(params["latitude"]).count(",") + 1
+        return one if n == 1 else [one] * n
 
     return fake, calls
 
@@ -133,17 +135,33 @@ async def test_job_writes_forecasts_and_skips(model, monkeypatch, fake_session):
 
 
 async def test_job_raises_on_quota_and_commits_finished_work(model, monkeypatch, fake_session):
-    fake, calls = _fake_get_json(quota_after=2)  # region 1 uses 2 calls, region 2 hits quota
+    # Batch 1 (50 districts, R1 among them) uses 2 calls; batch 2 (R2) hits the quota.
+    fake, calls = _fake_get_json(quota_after=2)
     monkeypatch.setattr(sb, "get_json", fake)
-    monkeypatch.setattr(fj, "_regions", _regions([R1, R2]))
+    filler = [(1000 + i, None, None) for i in range(fj.COMMIT_EVERY - 1)]
+    monkeypatch.setattr(fj, "_regions", _regions([R1, *filler, R2]))
 
     with pytest.raises(OpenMeteoQuotaExceeded):
         await fj.run_forecast_aqi(model, ORIGIN)
 
     assert calls["n"] == 3  # stopped at the first quota error, no retries
     assert fake_session.table_ops("aqi_forecasts_b", "insert") == 3
-    assert fake_session.table_ops("aqi_forecast_skips", "insert") == 0
+    assert fake_session.table_ops("aqi_forecast_skips", "insert") == fj.COMMIT_EVERY - 1
     assert fake_session.commits >= 1
+
+
+async def test_batch_inputs_match_single_requests(model, monkeypatch):
+    """A batched district gets the same forecast as one fetched on its own."""
+    fake, calls = _fake_get_json()
+    monkeypatch.setattr(sb, "get_json", fake)
+    single = await sb.forecast_district(R1[0], R1[1], R1[2], model=model, origin=ORIGIN)
+    fetched = await sb.fetch_inputs_batch([(R1[1], R1[2]), (R1[1], R1[2])], ORIGIN)
+    batched = await sb.forecast_district(
+        R1[0], R1[1], R1[2], model=model, origin=ORIGIN, inputs=fetched[0]
+    )
+    assert single["status"] == batched["status"] == "ok"
+    assert single["forecasts"] == batched["forecasts"]
+    assert calls["n"] == 4  # 2 single + 2 batch
 
 
 async def test_job_fails_without_model(monkeypatch):

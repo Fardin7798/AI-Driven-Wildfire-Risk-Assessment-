@@ -28,7 +28,7 @@ async def get_json(url: str, params: dict[str, Any]) -> Any:
     for attempt in range(1, MAX_ATTEMPTS + 1):
         started = time.monotonic()
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=15.0)) as client:
                 resp = await client.get(url, params=params)
         except httpx.RequestError as e:
             logger.warn(
