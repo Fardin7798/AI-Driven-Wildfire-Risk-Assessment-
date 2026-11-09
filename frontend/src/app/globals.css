@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/* tokens/tokens.json (WildfireRisk tokens v1) */
+@theme inline {
+  --color-bg: #0B0D12;
+  --color-surface: #151922;
+  --color-line: #262B36;
+  --color-muted: #9AA3B2;
+  --color-ember: #F97316;
+  --color-amber: #F59E0B;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+}
+
+html, body { background: #0B0D12; color: #fff; }
+body { font-family: var(--font-inter), system-ui, sans-serif; overflow-x: hidden; }
+
+
+
+/* MapLibre attribution in the dark theme */
+.maplibregl-ctrl-attrib.maplibregl-compact { background: #151922E6 !important; color: #9AA3B2; border: 1px solid #262B36; }
+.maplibregl-ctrl-attrib, .maplibregl-ctrl-attrib * { color: #9AA3B2 !important; }
+.maplibregl-ctrl-attrib-button { filter: invert(1) opacity(.6); }

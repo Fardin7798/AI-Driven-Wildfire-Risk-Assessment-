@@ -291,6 +291,31 @@ async def test_cli_skips_when_recent_success(monkeypatch):
     assert ran == ["x"]
 
 
+async def test_cli_skip_is_per_job(monkeypatch):
+    """2026-11-09 regression: a skipped ingest_weather must not skip FWI and risk."""
+    from app.jobs import cli
+
+    ran: list[str] = []
+
+    def make(name: str):
+        async def handler() -> int:
+            ran.append(name)
+            return 1
+
+        return handler
+
+    for n in ("ingest_weather", "update_fwi_state", "predict_risk"):
+        monkeypatch.setitem(cli.JOB_MAPPING, n, make(n))
+
+    async def only_weather(name: str, hours: float) -> bool:
+        return name == "ingest_weather"
+
+    monkeypatch.setattr(cli, "_succeeded_within", only_weather)
+    args = ["--unless-succeeded-within=12", "ingest_weather", "update_fwi_state", "predict_risk"]
+    assert await cli._run(args) == 0
+    assert ran == ["update_fwi_state", "predict_risk"]
+
+
 # ---------------------------------------------------------------- persistence (real Postgres)
 TEST_DB = os.environ.get("WF_TEST_DATABASE_URL")
 needs_db = pytest.mark.skipif(not TEST_DB, reason="WF_TEST_DATABASE_URL not set")

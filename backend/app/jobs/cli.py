@@ -37,19 +37,22 @@ async def _succeeded_within(job_name: str, hours: float) -> bool:
 
 
 async def _run(names: list[str]) -> int:
+    hours: float | None = None
     if names and names[0].startswith(SKIP_FLAG):
-        # A retry or a late GitHub cron run: skip when the first job already succeeded recently
-        # (e.g. Render dispatched it on time), so Open-Meteo quota is not spent twice.
+        # A retry or a late GitHub cron run: skip each job that already succeeded recently
+        # (e.g. Render dispatched it on time), so Open-Meteo quota is not spent twice. The check
+        # is per job: a skipped ingest_weather must not stop update_fwi_state / predict_risk
+        # (on 2026-11-09 the whole chain was skipped that way and risk stayed on 11-08).
         hours = float(names[0][len(SKIP_FLAG) :])
         names = names[1:]
-        if names and await _succeeded_within(names[0], hours):
-            print(f"{names[0]}: succeeded within {hours:g} h; skipped")
-            return 0
     for name in names:
         handler = JOB_MAPPING.get(name)
         if handler is None:
             print(f"unknown job {name!r}; valid: {sorted(JOB_MAPPING)}", file=sys.stderr)
             return 2
+        if hours is not None and await _succeeded_within(name, hours):
+            print(f"{name}: succeeded within {hours:g} h; skipped")
+            continue
         try:
             rows = await handler()
         except Exception as e:  # recorded as failed by tracked_job; stop the chain

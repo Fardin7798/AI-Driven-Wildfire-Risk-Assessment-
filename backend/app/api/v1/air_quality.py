@@ -61,7 +61,7 @@ def _serialize_aq(obs: AQObservation) -> AQObservationResponse:
 @router.get("/latest", response_model=list[AQObservationResponse])
 async def list_latest_air_quality(
     state: str | None = Query(default=None, max_length=100),
-    limit: int = Query(default=50, ge=1, le=500),
+    limit: int = Query(default=50, ge=1, le=1000),
     db: AsyncSession = Depends(get_db),
 ) -> list[AQObservationResponse]:
     """Most recent air quality observations across districts. CAMS rows are CPCB-averaged over
