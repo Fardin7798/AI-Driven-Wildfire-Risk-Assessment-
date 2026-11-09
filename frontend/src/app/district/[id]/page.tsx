@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+
 import { motion } from "framer-motion";
 import { useParams } from "next/navigation";
 import { Icon } from "@/components/Icon";
@@ -13,6 +15,14 @@ type Weather = { date: string; temp_max: number | null; temp_min: number | null;
 const day = (d: string) => new Date(`${d}T00:00:00+05:30`).toLocaleDateString("en-US", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
 
 export default function DistrictPage() {
+  return (
+    <Suspense fallback={null}>
+      <DistrictView />
+    </Suspense>
+  );
+}
+
+function DistrictView() {
   const { id } = useParams<{ id: string }>();
   const risk = useApi<Risk>(id ? `/risk/${id}` : null);
   const hist = useApi<Hist[]>(id ? `/risk/${id}/history?days=14` : null);
