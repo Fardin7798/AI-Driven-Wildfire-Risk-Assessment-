@@ -10,7 +10,7 @@ router = APIRouter(prefix="/fires", tags=["Fire Detections"])
 
 @router.get("/recent", response_model=list[FireDetectionResponse])
 async def list_recent_fires(
-    hours: int = Query(default=24, ge=1, le=168),
+    hours: int = Query(default=24, ge=1, le=720),
     bbox: str | None = Query(
         default=None,
         description="Bounding box in format 'west,south,east,north'",
@@ -26,7 +26,16 @@ async def list_recent_fires(
         parsed_bbox = (parts[0], parts[1], parts[2], parts[3])
 
     records = await get_recent_fires(session=db, hours=hours, bbox=parsed_bbox, limit=limit)
-    return [FireDetectionResponse.model_validate(r) for r in records]
+    return [
+        FireDetectionResponse.model_validate(
+            {
+                **FireDetectionResponse.model_validate(fire).model_dump(),
+                "state_name": state,
+                "district_name": district,
+            }
+        )
+        for fire, state, district in records
+    ]
 
 
 @router.get("/stats", response_model=FireStatsResponse)

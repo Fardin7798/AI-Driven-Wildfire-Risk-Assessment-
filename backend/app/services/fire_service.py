@@ -12,9 +12,14 @@ from app.domain.names import humanize_gadm_name
 
 async def get_recent_fires(
     session: AsyncSession, hours: int = 24, bbox: Sequence[float] | None = None, limit: int = 1000
-) -> list[FireDetection]:
+) -> list[tuple[FireDetection, str | None, str | None]]:
+    """Newest detections first, each with its district's state and district name (None outside)."""
     cutoff = datetime.now(UTC) - timedelta(hours=hours)
-    query = select(FireDetection).where(FireDetection.acq_datetime_utc >= cutoff)
+    query = (
+        select(FireDetection, Region.state_name, Region.district_name)
+        .outerjoin(Region, Region.id == FireDetection.region_id)
+        .where(FireDetection.acq_datetime_utc >= cutoff)
+    )
 
     if bbox and len(bbox) == 4:
         west, south, east, north = bbox
@@ -27,7 +32,7 @@ async def get_recent_fires(
 
     query = query.order_by(FireDetection.acq_datetime_utc.desc()).limit(limit)
     result = await session.execute(query)
-    return list(result.scalars().all())
+    return [(f, st, dn) for f, st, dn in result.all()]
 
 
 async def get_fire_stats(session: AsyncSession, days: int = 7) -> dict[str, Any]:

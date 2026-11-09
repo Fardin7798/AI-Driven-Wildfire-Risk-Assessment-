@@ -7,7 +7,7 @@ import { Icon, type IconName } from "@/components/Icon";
 import { CountUp } from "@/components/CountUp";
 import { NASHIK } from "@/lib/nashik-outline";
 import {
-  factorFracs, shortTime, fmt, RISK_COLORS, RISK_BADGE, NO_DATA, FACTOR_LABELS,
+  factorFracs, dayLabel, forecastWhen, fmt, RISK_COLORS, RISK_BADGE, NO_DATA, FACTOR_LABELS,
   type Risk, type AirQuality, type FireStats,
 } from "@/lib/api";
 
@@ -102,7 +102,7 @@ export function HomeMobile({ risk, aq, fires }: { risk: Risk | null; aq: AirQual
         </motion.span>
         <motion.div variants={up} custom={3} className="mt-[8px] flex items-center">
           <span className="text-[80px] font-bold leading-[88px]" style={{ color: col }}><CountUp to={pct} suffix="%" /></span>
-          <span className="ml-[14px] text-[18px] font-semibold leading-[24px]">chance of<br />wildfire today</span>
+          <span className="ml-[14px] text-[18px] font-semibold leading-[24px]">chance of<br />wildfire {risk ? forecastWhen(risk.date) : "today"}</span>
         </motion.div>
         <motion.div variants={up} custom={4} className="mt-[16px] grid grid-cols-2 gap-[12px]">
           {[
@@ -111,7 +111,7 @@ export function HomeMobile({ risk, aq, fires }: { risk: Risk | null; aq: AirQual
           ].map((t) => (
             <div key={t.l} className="relative rounded-[16px] border border-line bg-surface p-[16px]">
               <span className="flex items-center gap-[6px] text-[13px] text-muted">{t.l}{t.l === "Air quality" && (
-                <span title="AQI model is still in training; values are provisional" className="rounded-full border border-amber/60 px-[6px] py-[1px] text-[10px] font-semibold uppercase tracking-wide text-amber">Beta</span>
+                <span title="Satellite-model estimate (Copernicus CAMS, CPCB formula, last 24 h), not a ground station reading" className="rounded-full border border-amber/60 px-[6px] py-[1px] text-[10px] font-semibold uppercase tracking-wide text-amber">Estimate</span>
               )}</span>
               <Icon name={t.i} size={18} color="#9AA3B2" className="absolute right-[14px] top-[16px]" />
               <span className="mt-[6px] block text-[36px] font-bold leading-[44px]" style={{ color: t.c }}><CountUp to={t.v} /></span>
@@ -159,7 +159,7 @@ export function HomeMobile({ risk, aq, fires }: { risk: Risk | null; aq: AirQual
 
         <div className="mt-[36px] h-px bg-line" />
         <p className="mt-[16px] text-center text-[12px] leading-[18px] text-muted">
-          {risk ? `Updated ${shortTime(risk.as_of.ist)} · ` : ""}Academic decision-support tool, not an official warning. Consult IMD, CPCB, NDMA and local authorities.
+          {risk ? `Forecast for ${dayLabel(risk.date)} · ` : ""}Academic decision-support tool, not an official warning. Consult IMD, CPCB, NDMA and local authorities.
         </p>
       </motion.section>
     </div>

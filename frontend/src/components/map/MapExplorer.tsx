@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { CountUp } from "@/components/CountUp";
 import {
-  getJSON, shortTime, RISK_COLORS, RISK_BADGE, NO_DATA, FACTOR_LABELS,
+  getJSON, dayLabel, forecastWhen, RISK_COLORS, RISK_BADGE, NO_DATA, FACTOR_LABELS,
   type Risk, type AirQuality, type RiskMap, type Region,
   factorFracs,
 } from "@/lib/api";
@@ -34,6 +34,16 @@ function townDistrict(t: Town) {
   const parts = (t.display_name || "").split(",").map((x) => x.trim());
   const i = parts.lastIndexOf(t.state);
   return i > 0 ? parts[i - 1] : t.district;
+}
+
+// Nominatim often returns the same town twice (a node and an area); keep one per visible label.
+function uniqueTowns(list: Town[]) {
+  const seen = new Set<string>();
+  return list.filter((t) => {
+    const k = `${t.name}|${townDistrict(t)}|${t.state}`.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k); return true;
+  });
 }
 
 type Hover = { x: number; y: number; name: string; cls: string | null } | null;
@@ -129,39 +139,43 @@ export default function MapExplorer({ initialId, initialQuery, bare = false }: {
     if (place) map.setPaintProperty("town-line", "line-dasharray", place.real ? [1, 0] : [2, 1.5]);
   }, [place, ready]);
 
-  // selection
+  // selection data: loads with or without a working map (no WebGL must still show the panel)
+  const [region, setRegion] = useState<Region | null>(null);
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    setRisk(null); setAq(null); setRegion(null);
+    if (sel == null) { url.searchParams.delete("d"); window.history.replaceState(null, "", url); return; }
+    url.searchParams.set("d", String(sel)); window.history.replaceState(null, "", url);
+    let alive = true;
+    getJSON<Risk>(`/risk/${sel}`).then((r) => alive && setRisk(r)).catch(() => {});
+    getJSON<AirQuality>(`/air-quality/${sel}`).then((a) => alive && setAq(a)).catch(() => {});
+    getJSON<Region>(`/regions/${sel}`).then((reg) => alive && setRegion(reg)).catch(() => {});
+    return () => { alive = false; };
+  }, [sel]);
+
+  // selection drawing on the map
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
-    const url = new URL(window.location.href);
     if (sel == null) {
-      url.searchParams.delete("d"); window.history.replaceState(null, "", url);
       (map.getSource("boundary") as GeoJSONSource).setData({ type: "FeatureCollection", features: [] });
-      setRisk(null); setAq(null);
       map.fitBounds(INDIA_BOUNDS, { padding: isMobile() ? { top: 140, bottom: 90, left: 16, right: 16 } : { top: 120, bottom: 40, left: 40, right: 40 }, duration: 1800, essential: true });
       return;
     }
-    url.searchParams.set("d", String(sel)); window.history.replaceState(null, "", url);
-    let alive = true;
-    setRisk(null); setAq(null);
-    getJSON<Risk>(`/risk/${sel}`).then((r) => alive && setRisk(r)).catch(() => {});
-    getJSON<AirQuality>(`/air-quality/${sel}`).then((a) => alive && setAq(a)).catch(() => {});
-    getJSON<Region>(`/regions/${sel}`).then((reg) => {
-      if (!alive) return;
-      const cls = points?.features.find((f) => f.properties.region_id === sel)?.properties.risk_class;
-      const color = (cls && RISK_COLORS[cls]) || NO_DATA;
-      (map.getSource("boundary") as GeoJSONSource).setData({ type: "Feature", geometry: reg.geom, properties: { color, stroke: cls === "Moderate" ? "#FBBF24" : color } });
-      const town = !!place;
-      map.setPaintProperty("boundary-fill", "fill-opacity", town ? 0.03 : 0.16);
-      map.setPaintProperty("boundary-glow", "line-opacity", town ? 0 : 0.7);
-      map.setPaintProperty("boundary-line", "line-width", town ? 1 : 2.5);
-      map.setPaintProperty("boundary-line", "line-opacity", town ? 0.45 : 1);
-      map.fitBounds(bbox(town ? place!.shape : reg.geom), {
-        padding: isMobile() ? { top: 130, bottom: Math.round(window.innerHeight * 0.55) + 24, left: 32, right: 32 } : { top: 140, bottom: 80, left: 120, right: PANEL_W + PANEL_GAP + 120 }, duration: 2600, curve: 1.6, essential: true, maxZoom: town ? 13 : 9,
-      });
-    }).catch(() => {});
-    return () => { alive = false; };
-  }, [sel, ready, points, place]);
+    if (!region || region.id !== sel) return;
+    const reg = region;
+    const cls = points?.features.find((f) => f.properties.region_id === sel)?.properties.risk_class;
+    const color = (cls && RISK_COLORS[cls]) || NO_DATA;
+    (map.getSource("boundary") as GeoJSONSource).setData({ type: "Feature", geometry: reg.geom, properties: { color, stroke: cls === "Moderate" ? "#FBBF24" : color } });
+    const town = !!place;
+    map.setPaintProperty("boundary-fill", "fill-opacity", town ? 0.03 : 0.16);
+    map.setPaintProperty("boundary-glow", "line-opacity", town ? 0 : 0.7);
+    map.setPaintProperty("boundary-line", "line-width", town ? 1 : 2.5);
+    map.setPaintProperty("boundary-line", "line-opacity", town ? 0.45 : 1);
+    map.fitBounds(bbox(town ? place!.shape : reg.geom), {
+      padding: isMobile() ? { top: 130, bottom: Math.round(window.innerHeight * 0.55) + 24, left: 32, right: 32 } : { top: 140, bottom: 80, left: 120, right: PANEL_W + PANEL_GAP + 120 }, duration: 2600, curve: 1.6, essential: true, maxZoom: town ? 13 : 9,
+    });
+  }, [sel, ready, points, place, region]);
 
   const matches = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -181,7 +195,7 @@ export default function MapExplorer({ initialId, initialQuery, bare = false }: {
     let alive = true; setSearching(true);
     const t = setTimeout(() => {
       getJSON<Town[]>(`/geo/cities?q=${encodeURIComponent(s)}`)
-        .then((r) => { if (alive) setTowns((r || []).slice(0, 5)); })
+        .then((r) => { if (alive) setTowns(uniqueTowns(r || []).slice(0, 5)); })
         .catch(() => { if (alive) setTowns([]); })
         .finally(() => { if (alive) setSearching(false); });
     }, 350);
@@ -358,7 +372,7 @@ function Panel({ risk, aq, place, mobile }: { risk: Risk | null; aq: AirQuality 
             style={{ color: col, background: `${col}24`, border: `1px solid ${col}E6` }}>{RISK_BADGE[cls!] ?? "No forecast yet"}</span>
           <div className="mt-[16px] flex items-center">
             <span className="text-[64px] font-bold leading-[72px] md:text-[88px] md:leading-[96px]" style={{ color: col }}><CountUp to={Math.round(risk.probability * 100)} suffix="%" /></span>
-            <span className="ml-[16px] text-[18px] font-semibold leading-[24px]">chance of<br />wildfire today</span>
+            <span className="ml-[16px] text-[18px] font-semibold leading-[24px]">chance of<br />wildfire {forecastWhen(risk.date)}</span>
           </div>
           <div className="mt-[20px] grid grid-cols-2 gap-[16px]">
             {[
@@ -366,7 +380,7 @@ function Panel({ risk, aq, place, mobile }: { risk: Risk | null; aq: AirQuality 
               { l: "Fires nearby", i: "flame" as const, v: fires30, s: "in 30 days", c: "#FFFFFF", sc: "#9AA3B2" },
             ].map((t) => (
               <div key={t.l} className="relative h-[120px] rounded-[16px] border border-line bg-bg/60">
-                <span className="absolute left-[16px] top-[16px] flex items-center gap-[6px] text-[13px] leading-[normal] text-muted">{t.l}{t.l === "Air quality" && <Beta />}</span>
+                <span className="absolute left-[16px] top-[16px] flex items-center gap-[6px] text-[13px] leading-[normal] text-muted">{t.l}{t.l === "Air quality" && <EstTag />}</span>
                 <Icon name={t.i} size={18} color="#9AA3B2" className="absolute right-[16px] top-[16px]" />
                 <span className="absolute left-[16px] top-[38px] text-[36px] font-bold leading-[44px]" style={{ color: t.c }}><CountUp to={t.v} /></span>
                 <span className={`absolute left-[16px] top-[82px] text-[13px] leading-[normal] ${t.sc === "#9AA3B2" ? "" : "font-semibold"}`} style={{ color: t.sc }}>{t.s}</span>
@@ -389,13 +403,13 @@ function Panel({ risk, aq, place, mobile }: { risk: Risk | null; aq: AirQuality 
           <a href={`/district/${risk.region_id}`} className="mt-[28px] flex h-[52px] items-center justify-center rounded-[14px] bg-ember text-[16px] font-semibold text-white shadow-[0_0_24px_#F9731655] transition hover:brightness-110">
             Open full details
           </a>
-          <p className="mt-[16px] text-[12px] leading-[16px] text-muted" title={risk.disclaimer_short}>Updated {shortTime(risk.as_of.ist)} · Not an official warning.</p>
+          <p className="mt-[16px] text-[12px] leading-[16px] text-muted" title={risk.disclaimer_short}>Forecast for {dayLabel(risk.date)} · Not an official warning.</p>
         </>
       )}
     </motion.aside>
   );
 }
 
-function Beta() {
-  return <span title="AQI model is still in training; values are provisional" className="rounded-full border border-amber/60 px-[6px] py-[1px] text-[10px] font-semibold uppercase tracking-wide text-amber">Beta</span>;
+function EstTag() {
+  return <span title="Satellite-model estimate (Copernicus CAMS, CPCB formula, last 24 h), not a ground station reading" className="rounded-full border border-amber/60 px-[6px] py-[1px] text-[10px] font-semibold uppercase tracking-wide text-amber">Estimate</span>;
 }

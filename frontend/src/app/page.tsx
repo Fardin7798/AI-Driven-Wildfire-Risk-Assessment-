@@ -8,7 +8,7 @@ import { Icon, type IconName } from "@/components/Icon";
 import { CountUp } from "@/components/CountUp";
 import { NASHIK } from "@/lib/nashik-outline";
 import {
-  getJSON, factorFracs, shortTime, fmt, RISK_COLORS, RISK_BADGE, NO_DATA, FACTOR_LABELS,
+  getJSON, dayLabel, forecastWhen, factorFracs, fmt, RISK_COLORS, RISK_BADGE, NO_DATA, FACTOR_LABELS,
   type Risk, type AirQuality, type FireStats,
 } from "@/lib/api";
 
@@ -196,12 +196,12 @@ function YourDistrict({ risk, aq }: { risk: Risk | null; aq: AirQuality | null }
         </motion.span>
         <motion.div variants={up} custom={2} className="absolute flex items-start" style={{ left: 816, top: 412 }}>
           <span className="text-[120px] font-bold leading-[128px]" style={{ color: col }}><CountUp to={pct} suffix="%" /></span>
-          <span className="ml-[24px] mt-[36px] text-[24px] font-semibold leading-[32px]">chance of<br />wildfire today</span>
+          <span className="ml-[24px] mt-[36px] text-[24px] font-semibold leading-[32px]">chance of<br />wildfire {risk ? forecastWhen(risk.date) : "today"}</span>
         </motion.div>
         <Tile i={3} x={820} label="Air quality" icon="wind" value={aq?.aqi ?? null} sub={aq?.aqi_category ?? "–"} vcol={aqCol} subcol={aqCol} />
         <Tile i={4} x={820 + 272 + 16} label="Fires nearby" icon="flame" value={fires30} sub="in 30 days" vcol="#FFFFFF" subcol="#9AA3B2" />
         <motion.p variants={up} custom={5} className="absolute text-[13px] leading-[normal] text-muted" style={{ left: 820, top: 772 }}>
-          {risk ? `Updated ${shortTime(risk.as_of.ist)}` : "Loading today's forecast…"}
+          {risk ? `Forecast for ${dayLabel(risk.date)}` : "Loading today's forecast…"}
         </motion.p>
       </motion.div>
     </section>
@@ -213,7 +213,7 @@ function Tile({ i, x, label, icon, value, sub, vcol, subcol }: { i: number; x: n
     <motion.div variants={up} custom={i} whileHover={{ y: -4 }}
       className="absolute rounded-[16px] border border-line bg-surface" style={{ left: x, top: 584, width: 272, height: 156 }}>
       <span className="absolute flex items-center gap-[8px] text-[15px] leading-[normal] text-muted" style={{ left: 24, top: 24 }}>{label}{label === "Air quality" && (
-        <span title="AQI model is still in training; values are provisional" className="rounded-full border border-amber/60 px-[7px] py-[1px] text-[11px] font-semibold uppercase tracking-wide text-amber">Beta</span>
+        <span title="Satellite-model estimate (Copernicus CAMS, CPCB formula, last 24 h), not a ground station reading" className="rounded-full border border-amber/60 px-[7px] py-[1px] text-[11px] font-semibold uppercase tracking-wide text-amber">Estimate</span>
       )}</span>
       <Icon name={icon} size={22} color="#9AA3B2" className="absolute" style={{ left: 224, top: 22 }} />
       <span className="absolute text-[44px] font-bold leading-[52px]" style={{ left: 24, top: 52, color: vcol }}><CountUp to={value} /></span>
@@ -261,7 +261,7 @@ function WhyToday({ risk }: { risk: Risk | null }) {
         ))}
         <div className="absolute bg-line" style={{ left: 72, top: 808, width: 1296, height: 1 }} />
         <p className="absolute text-center text-[13px] leading-[normal] text-muted" style={{ left: 72, top: 836, width: 1296 }}>
-          {risk ? `Updated ${shortTime(risk.as_of.ist)} · ` : ""}Academic decision-support tool, not an official warning. Consult IMD, CPCB, NDMA and local authorities.
+          {risk ? `Forecast for ${dayLabel(risk.date)} · ` : ""}Academic decision-support tool, not an official warning. Consult IMD, CPCB, NDMA and local authorities.
         </p>
       </motion.div>
     </section>

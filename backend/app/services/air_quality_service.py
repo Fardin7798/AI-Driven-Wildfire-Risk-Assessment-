@@ -1,3 +1,5 @@
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import func, select, union_all
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,20 +15,24 @@ from app.schemas.air_quality import AQIForecastPoint, DistrictAQIForecast
 async def get_latest_air_quality(
     session: AsyncSession, state: str | None = None, limit: int = 50
 ) -> list[AQObservation]:
+    """Latest observation per district (one row each, newest first), from the last 3 days.
+    A district with no observation in that window is left out (missing stays missing)."""
+    since = datetime.now(UTC) - timedelta(days=3)
     query = (
         select(AQObservation)
         .options(selectinload(AQObservation.region))
-        .options(selectinload(AQObservation.region))
-        .order_by(AQObservation.observed_at_utc.desc())
+        .where(AQObservation.observed_at_utc >= since)
+        .distinct(AQObservation.region_id)
+        .order_by(AQObservation.region_id, AQObservation.observed_at_utc.desc())
     )
     if state:
         query = query.join(Region, AQObservation.region_id == Region.id).where(
             func.regexp_replace(func.lower(Region.state_name), "[^a-z0-9]", "", "g")
             == normalize_name_key(state)
         )
-    query = query.limit(limit)
     result = await session.execute(query)
-    return list(result.scalars().all())
+    rows = sorted(result.scalars().all(), key=lambda r: r.observed_at_utc, reverse=True)
+    return rows[:limit]
 
 
 async def get_air_quality_for_region(session: AsyncSession, region_id: int) -> AQObservation | None:

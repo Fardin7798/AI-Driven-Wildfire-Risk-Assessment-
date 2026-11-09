@@ -12,13 +12,17 @@ export const DISCLAIMER = "Academic decision-support tool only; not an official 
 export function useApi<T>(path: string | null) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   useEffect(() => {
     if (!path) return;
-    let alive = true; setData(null); setError(false);
-    getJSON<T>(path).then((d) => alive && setData(d)).catch(() => alive && setError(true));
+    let alive = true; setData(null); setError(false); setNotFound(false);
+    getJSON<T>(path).then((d) => alive && setData(d)).catch((e: Error) => {
+      if (!alive) return;
+      setError(true); setNotFound(String(e?.message ?? "").startsWith("404 "));
+    });
     return () => { alive = false; };
   }, [path]);
-  return { data, error, loading: !!path && !data && !error };
+  return { data, error, notFound, loading: !!path && !data && !error };
 }
 
 export function PageShell({ active, eyebrow, title, sub, children }: {

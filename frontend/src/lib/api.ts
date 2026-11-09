@@ -156,6 +156,22 @@ export function shortTime(v: string | null | undefined): string {
   return v.replace(" (UTC+05:30)", "");
 }
 
+/** Today's date in India as YYYY-MM-DD. */
+export function todayIST(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+}
+
+/** "2026-11-08" -> "Sun, 8 Nov". */
+export function dayLabel(d: string): string {
+  return new Date(`${d}T00:00:00+05:30`).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
+}
+
+/** "today" when the forecast is for today in India, else "on Sun, 8 Nov" (so an old forecast never reads as today's). */
+export function forecastWhen(d: string | null | undefined): string {
+  if (!d) return "today";
+  return d === todayIST() ? "today" : `on ${dayLabel(d)}`;
+}
+
 /** Indian digit grouping; null -> "–". */
 export function fmt(n: number | null | undefined, digits = 0): string {
   if (n == null || Number.isNaN(n)) return "–";

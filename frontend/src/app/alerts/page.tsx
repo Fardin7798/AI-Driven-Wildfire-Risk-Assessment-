@@ -7,7 +7,7 @@ import { PageShell, Card, Skeleton, Waking, ErrorNote, useApi, ease } from "@/co
 import { fmt } from "@/lib/api";
 
 type Stats = { period_days: number; total_detections: number; high_confidence_count: number; outside_districts: number; by_state: Record<string, number>; by_source: Record<string, number> };
-type Fire = { id: number; source: string; acq_datetime_utc: string; lat: number; lon: number; frp: number | null; confidence: string; daynight: string; region_id: number | null };
+type Fire = { id: number; source: string; acq_datetime_utc: string; lat: number; lon: number; frp: number | null; confidence: string; daynight: string; region_id: number | null; district_name: string | null; state_name: string | null };
 
 const PERIODS = [1, 7, 30];
 const when = (v: string) => {
@@ -25,7 +25,8 @@ const conf = (c: string) => {
 export default function AlertsPage() {
   const [days, setDays] = useState(7);
   const stats = useApi<Stats>(`/fires/stats?days=${days}`);
-  const recent = useApi<Fire[]>(`/fires/recent?days=1&limit=20`);
+  const recent = useApi<Fire[]>(`/fires/recent?hours=${days * 24}&limit=20`);
+  const span = days === 1 ? "24 hours" : `${days} days`;
   const s = stats.data;
   const states = s ? Object.entries(s.by_state).sort((a, b) => b[1] - a[1]).slice(0, 10) : [];
   const top = states[0]?.[1] ?? 1;
@@ -76,14 +77,14 @@ export default function AlertsPage() {
       </Card>
 
       <h2 className="mt-14 text-[28px] font-semibold">Latest detections</h2>
-      <p className="mt-2 text-[15px] text-muted">Newest 20 from the last 24 hours.</p>
+      <p className="mt-2 text-[15px] text-muted">Newest 20 from the last {span}.</p>
       {recent.error ? <div className="mt-6"><ErrorNote what="latest fires" /></div> : !recent.data ? <Skeleton h={320} className="mt-6" /> : recent.data.length === 0 ? (
-        <p className="mt-6 text-muted">No detections in the last 24 hours.</p>
+        <p className="mt-6 text-muted">No detections in the last {span}.</p>
       ) : (
-        <div className="mt-6 overflow-hidden rounded-[16px] border border-line">
-          <table className="w-full text-left text-[14px]">
+        <div className="mt-6 overflow-x-auto rounded-[16px] border border-line">
+          <table className="w-full min-w-[640px] text-left text-[14px]">
             <thead className="bg-surface text-muted">
-              <tr><th className="px-5 py-3 font-normal">Time</th><th className="px-5 py-3 font-normal">Location</th><th className="px-5 py-3 font-normal">Confidence</th><th className="px-5 py-3 font-normal">Strength</th><th className="px-5 py-3" /></tr>
+              <tr><th className="px-5 py-3 font-normal">Time</th><th className="px-5 py-3 font-normal">Place</th><th className="px-5 py-3 font-normal">Confidence</th><th className="px-5 py-3 font-normal">Strength</th><th className="px-5 py-3" /></tr>
             </thead>
             <tbody>
               {recent.data.map((f) => {
@@ -91,10 +92,13 @@ export default function AlertsPage() {
                 return (
                   <tr key={f.id} className="border-t border-line hover:bg-white/[0.03]">
                     <td className="px-5 py-3">{when(f.acq_datetime_utc)}</td>
-                    <td className="px-5 py-3 tabular-nums text-muted">{f.lat.toFixed(2)}, {f.lon.toFixed(2)}</td>
+                    <td className="px-5 py-3">
+                      {f.district_name ? <span>{f.district_name}, {f.state_name}</span> : <span className="text-muted">Outside any district</span>}
+                      <span className="block tabular-nums text-[12px] text-muted">{f.lat.toFixed(2)}, {f.lon.toFixed(2)}</span>
+                    </td>
                     <td className="px-5 py-3"><span style={{ color: c.c }}>{c.t}</span></td>
                     <td className="px-5 py-3 tabular-nums text-muted">{f.frp != null ? `${Math.round(f.frp)} MW` : "–"}</td>
-                    <td className="px-5 py-3 text-right">{f.region_id && <a href={`/district/${f.region_id}`} className="text-ember hover:underline">District</a>}</td>
+                    <td className="px-5 py-3 text-right">{f.region_id != null && <a href={`/district/${f.region_id}`} className="text-ember hover:underline">Open</a>}</td>
                   </tr>
                 );
               })}
