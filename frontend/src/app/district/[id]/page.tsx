@@ -41,6 +41,7 @@ function DistrictView() {
       {risk.notFound && <p className="rounded-[16px] border border-line bg-surface px-6 py-5 text-[15px] text-muted">No district with this number. <a href="/map" className="text-ember hover:underline">Find a district on the map</a>.</p>}
       {risk.error && !risk.notFound && <ErrorNote what="this district" />}
 
+      {!risk.notFound && (<>
       {/* Hero */}
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <Card className="relative overflow-hidden">
@@ -108,7 +109,8 @@ function DistrictView() {
       )}
 
       {/* Air quality: current CAMS estimate + model PM2.5 forecast */}
-      {!risk.notFound && <AirCard aq={aq.data} aqErr={aq.error} fc={aqf.data} fcErr={aqf.error} />}
+      <AirCard aq={aq.data} aqErr={aq.error} fc={aqf.data} fcErr={aqf.error} />
+      </>)}
 
       <a href="/stay-safe" className="mt-10 flex h-[56px] items-center justify-center rounded-[14px] bg-ember text-[17px] font-semibold shadow-[0_0_24px_#F9731655] transition hover:brightness-110 md:w-[320px]">
         How to stay safe
